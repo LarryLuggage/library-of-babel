@@ -1,0 +1,4001 @@
+[
+  {
+    "title": "An American Tragedy",
+    "author": "Theodore Dreiser",
+    "edition": "Signet Classic",
+    "shelf": 1,
+    "position": "Top Stack (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Flight",
+    "author": "Sherman Alexie",
+    "edition": "Black Cat / Grove Press",
+    "shelf": 1,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Possessed",
+    "author": "Fyodor Dostoevsky",
+    "edition": "Barnes & Noble Classics",
+    "shelf": 1,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Lucretius: The Way Things Are",
+    "author": "Lucretius (Rolfe Humphries trans.)",
+    "edition": "Indiana University Press",
+    "shelf": 1,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "My Brilliant Friend",
+    "author": "Elena Ferrante",
+    "edition": "Europa Editions",
+    "shelf": 1,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Colorless Tsukuru Tazaki and His Years of Pilgrimage",
+    "author": "Haruki Murakami",
+    "edition": "Vintage",
+    "shelf": 1,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Sons and Lovers",
+    "author": "D.H. Lawrence",
+    "edition": "Oxford World's Classics",
+    "shelf": 1,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Collected Stories of Guy de Maupassant",
+    "author": "Guy de Maupassant",
+    "edition": "Barnes & Noble Classics",
+    "shelf": 1,
+    "position": "Vertical (14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Children of the New World",
+    "author": "Assia Djebar",
+    "edition": "NYRB (New York Review Books)",
+    "shelf": 1,
+    "position": "Vertical (15)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Modern Japanese Literature",
+    "author": "Donald Keene (Editor)",
+    "edition": "Grove Press",
+    "shelf": 1,
+    "position": "Vertical (21)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Gogol's Wife and Other Stories",
+    "author": "Tommaso Landolfi",
+    "edition": "New Directions Paperbook",
+    "shelf": 1,
+    "position": "Vertical (22)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Fielding and Shamela",
+    "author": "Henry Fielding / John Andrews",
+    "edition": "Oxford World's Classics",
+    "shelf": 1,
+    "position": "Vertical (31)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Accused",
+    "author": "Bandi",
+    "edition": "Serpent's Tail",
+    "shelf": 1,
+    "position": "Vertical (38)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "On the Shortness of Life",
+    "author": "Seneca",
+    "edition": "Great Ideas / Penguin",
+    "shelf": 2,
+    "position": "Top Stack (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Obras Completas 6: El oro de los tigres / El libro de arena / La rosa profunda",
+    "author": "Jorge Luis Borges",
+    "edition": "Emecé Editores",
+    "shelf": 2,
+    "position": "Top Stack (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Three Soldiers",
+    "author": "John Dos Passos",
+    "edition": "Sentry Edition",
+    "shelf": 2,
+    "position": "Vertical (19)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Emerson's Essays",
+    "author": "Ralph Waldo Emerson",
+    "edition": "College Outline Series",
+    "shelf": 3,
+    "position": "Top Stack 1 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Old English Grammar and Reader",
+    "author": "Diamond",
+    "edition": "W.C. Brown",
+    "shelf": 3,
+    "position": "Top Stack 1 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Sense of Style",
+    "author": "Steven Pinker",
+    "edition": "Penguin",
+    "shelf": 3,
+    "position": "Top Stack 1 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "They Say / I Say",
+    "author": "Gerald Graff & Cathy Birkenstein",
+    "edition": "W. W. Norton",
+    "shelf": 3,
+    "position": "Top Stack 1 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Travels with Charley",
+    "author": "John Steinbeck",
+    "edition": "Penguin Books",
+    "shelf": 3,
+    "position": "Top Stack 2 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Canticle for Leibowitz",
+    "author": "Walter M. Miller Jr.",
+    "edition": "Bantam Spectra",
+    "shelf": 3,
+    "position": "Top Stack 2 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Dictionary of Critical Theory",
+    "author": "Buchanan",
+    "edition": "Oxford Quick Reference",
+    "shelf": 3,
+    "position": "Top Stack 2 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "What is Cinema? Volume 1",
+    "author": "André Bazin (Hugh Gray trans.)",
+    "edition": "University of California Press",
+    "shelf": 3,
+    "position": "Top Stack 2 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Diccionario Mapudungun - Olimpo",
+    "author": "Coña / Pascual",
+    "edition": "Spanish-Mapuche Dictionary",
+    "shelf": 3,
+    "position": "Top Stack 3 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Rain King",
+    "author": "Saul Bellow / Henderson",
+    "edition": "Popular Library",
+    "shelf": 3,
+    "position": "Top Stack 3 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Ragtime",
+    "author": "E.L. Doctorow",
+    "edition": "Random House",
+    "shelf": 3,
+    "position": "Top Stack 3 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Collector",
+    "author": "John Fowles",
+    "edition": "Dell",
+    "shelf": 3,
+    "position": "Top Stack 4 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Pharr - Homeric Greek",
+    "author": "Clyde Pharr",
+    "edition": "University of Oklahoma",
+    "shelf": 3,
+    "position": "Top Stack 4 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Silence of Animals",
+    "author": "John Gray",
+    "edition": "FSG",
+    "shelf": 3,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Anatomy of Melancholy",
+    "author": "Robert Burton",
+    "edition": "NYRB Classics (Blue Spine)",
+    "shelf": 3,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Birth of Biopolitics",
+    "author": "Michel Foucault",
+    "edition": "Palgrave Macmillan",
+    "shelf": 3,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Che Guevara Reader",
+    "author": "Ernesto Che Guevara",
+    "edition": "Ocean Press",
+    "shelf": 3,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Earth Dies Streaming",
+    "author": "A.S. Hamrah",
+    "edition": "n+1 books",
+    "shelf": 3,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Concise Anglo-Saxon Dictionary",
+    "author": "J.R. Clark Hall",
+    "edition": "University of Toronto Press",
+    "shelf": 3,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Book of Culture",
+    "author": "Ethel Peyser",
+    "edition": "Garden City Publishing Co. (301.153)",
+    "shelf": 3,
+    "position": "Vertical (15)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Art of the Tale",
+    "author": "Daniel Halpern (Editor)",
+    "edition": "Penguin (Orange Spine)",
+    "shelf": 3,
+    "position": "Vertical (19)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "7 Greeks",
+    "author": "Guy Davenport (Translator)",
+    "edition": "New Directions",
+    "shelf": 3,
+    "position": "Vertical (21)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Twilight of the Gods",
+    "author": "Steven Hyden",
+    "edition": "Harper Perennial",
+    "shelf": 3,
+    "position": "Vertical (22)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Trueblood",
+    "author": "Antonio Machado",
+    "edition": "Harvard",
+    "shelf": 3,
+    "position": "Vertical (23)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Port William Novels & Stories: Volume 1",
+    "author": "Wendell Berry",
+    "edition": "Library of America",
+    "shelf": 3,
+    "position": "Vertical (24)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Tennessee Williams: Collected Stories",
+    "author": "Tennessee Williams",
+    "edition": "New Directions (NDP784)",
+    "shelf": 3,
+    "position": "Vertical (25)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Walker",
+    "author": "Matthew Beaumont",
+    "edition": "Verso",
+    "shelf": 3,
+    "position": "Vertical (27)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Landscapes",
+    "author": "John Berger",
+    "edition": "Verso",
+    "shelf": 3,
+    "position": "Vertical (30)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Winter of Our Discontent",
+    "author": "John Steinbeck",
+    "edition": "Penguin Classics",
+    "shelf": 4,
+    "position": "Top Stack (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Rolling Stones: All the Songs",
+    "author": "Margotin & Guesdon",
+    "edition": "Black Dog & Leventhal",
+    "shelf": 4,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The 7 Habits of Highly Effective People",
+    "author": "Stephen R. Covey",
+    "edition": "Simon & Schuster",
+    "shelf": 4,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Norton Anthology of English Literature (Ninth Edition, Vol. D)",
+    "author": "Stephen Greenblatt",
+    "edition": "W. W. Norton & Company",
+    "shelf": 4,
+    "position": "Vertical (17)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Novels 1881-1886",
+    "author": "Henry James",
+    "edition": "Library of America",
+    "shelf": 5,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Complete Stories and Poems of Edgar Allan Poe",
+    "author": "Edgar Allan Poe",
+    "edition": "Doubleday",
+    "shelf": 5,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Satires and Epistles",
+    "author": "Horace",
+    "edition": "Satires / Classical Spine",
+    "shelf": 5,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Donoso",
+    "author": "José Donoso (The Obscene Bird of Night)",
+    "edition": "Godine",
+    "shelf": 5,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Thunder",
+    "author": "Peyrou",
+    "edition": "Vintage / Lost Books Series",
+    "shelf": 5,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "NW",
+    "author": "Zadie Smith",
+    "edition": "Penguin Books",
+    "shelf": 5,
+    "position": "Vertical (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Target in the Night",
+    "author": "Ricardo Piglia",
+    "edition": "Deep Vellum",
+    "shelf": 5,
+    "position": "Vertical (14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Absalom, Absalom!",
+    "author": "William Faulkner",
+    "edition": "Vintage International",
+    "shelf": 6,
+    "position": "Top Stack 1 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Ragged Trousered Philanthropists",
+    "author": "Robert Tressell",
+    "edition": "Lawrence & Wishart",
+    "shelf": 6,
+    "position": "Top Stack 1 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Telling Stories",
+    "author": "Joyce Carol Oates",
+    "edition": "Norton",
+    "shelf": 6,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Pragmatism",
+    "author": "William James",
+    "edition": "Harvard / Barnes & Noble",
+    "shelf": 6,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Immortality",
+    "author": "Milan Kundera",
+    "edition": "Perennial Classics",
+    "shelf": 6,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Being There",
+    "author": "Jerzy Kosinski",
+    "edition": "Bantam Books",
+    "shelf": 7,
+    "position": "Top Stack 1 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Of Mice and Men / Cannery Row",
+    "author": "John Steinbeck",
+    "edition": "Penguin / ISBN 014004891X",
+    "shelf": 7,
+    "position": "Top Stack 1 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Trouble with Being Born",
+    "author": "E.M. Cioran",
+    "edition": "Arcade Publishing",
+    "shelf": 7,
+    "position": "Top Stack 2 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Look Homeward, Angel",
+    "author": "Thomas Wolfe",
+    "edition": "Scribners",
+    "shelf": 7,
+    "position": "Top Stack 2 (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Systematic Theology: Volume III",
+    "author": "Paul Tillich",
+    "edition": "University of Chicago Press",
+    "shelf": 7,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Systematic Theology: Volume II",
+    "author": "Paul Tillich",
+    "edition": "University of Chicago Press",
+    "shelf": 7,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Systematic Theology: Volume I",
+    "author": "Paul Tillich",
+    "edition": "Duke / University of Chicago",
+    "shelf": 7,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Corruptions of Empire",
+    "author": "Alexander Cockburn",
+    "edition": "Verso",
+    "shelf": 7,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Penguin Book of Italian Short Stories",
+    "author": "Jhumpa Lahiri (Editor)",
+    "edition": "Penguin Classics",
+    "shelf": 7,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Barchester Towers",
+    "author": "Anthony Trollope",
+    "edition": "Penguin Classics",
+    "shelf": 8,
+    "position": "Top Stack (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "If on a winter's night a traveler",
+    "author": "Italo Calvino",
+    "edition": "Harcourt",
+    "shelf": 8,
+    "position": "Top Stack (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Blood Meridian",
+    "author": "Cormac McCarthy",
+    "edition": "Vintage International",
+    "shelf": 8,
+    "position": "Top Stack (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Nature / Walking",
+    "author": "Ralph Waldo Emerson / Henry David Thoreau",
+    "edition": "Beacon Press",
+    "shelf": 8,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Complete Plays",
+    "author": "Christopher Marlowe",
+    "edition": "Penguin Classics",
+    "shelf": 8,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Art of Love and Other Love Books of Ovid",
+    "author": "Ovid",
+    "edition": "Universal Library",
+    "shelf": 8,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Seven Gothic Tales",
+    "author": "Isak Dinesen",
+    "edition": "Modern Library",
+    "shelf": 8,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Brothers Karamazov",
+    "author": "Fyodor Dostoevsky",
+    "edition": "Everyman's Library",
+    "shelf": 8,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "My Name Is Red",
+    "author": "Orhan Pamuk",
+    "edition": "Vintage",
+    "shelf": 8,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Siege of Krishnapur",
+    "author": "J.G. Farrell",
+    "edition": "NYRB Classics",
+    "shelf": 9,
+    "position": "Left Stack (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Adventures and Misadventures of Maqroll",
+    "author": "Álvaro Mutis",
+    "edition": "NYRB Classics",
+    "shelf": 9,
+    "position": "Left Stack (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Geography of Rebel Light",
+    "author": "María Gabriela Llansol",
+    "edition": "P7-DBF-147",
+    "shelf": 9,
+    "position": "Left Stack (Horiz. 6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "T. Singer",
+    "author": "Dag Solstad",
+    "edition": "NDP1419",
+    "shelf": 9,
+    "position": "Left Stack (Horiz. 7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Fireflies",
+    "author": "Luis Sagasti",
+    "edition": "Charco Press",
+    "shelf": 9,
+    "position": "Left Stack (Horiz. 8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Pietr the Latvian",
+    "author": "Georges Simenon",
+    "edition": "Inspector Maigret / Penguin",
+    "shelf": 9,
+    "position": "Left Stack (Horiz. 9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Racconti Romani",
+    "author": "Alberto Moravia",
+    "edition": "Bompiani",
+    "shelf": 9,
+    "position": "Left Stack (Horiz. 12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "From A to X",
+    "author": "John Berger",
+    "edition": "Verso",
+    "shelf": 9,
+    "position": "Left Stack (Horiz. 13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Kaputt (goes europe!)",
+    "author": "Curzio Malaparte",
+    "edition": "micah / NYRB Style Variant",
+    "shelf": 9,
+    "position": "Left Stack (Horiz. 14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "It Shouldn't Happen to a Vet",
+    "author": "James Herriot",
+    "edition": "Pan Books",
+    "shelf": 9,
+    "position": "Center Leaner (Vert.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Black Spring",
+    "author": "Henry Miller",
+    "edition": "Grove Press (Hardcover)",
+    "shelf": 9,
+    "position": "Right Anchor (Vert.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Waste Books",
+    "author": "Georg Christoph Lichtenberg",
+    "edition": "NYRB Classics",
+    "shelf": 10,
+    "position": "Overhead Stack A (Photo 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Famous Speeches and Public Speaking",
+    "author": "Various",
+    "edition": "Yellow Spine",
+    "shelf": 10,
+    "position": "Overhead Stack A (Photo 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Metamorphoses",
+    "author": "Ovid",
+    "edition": "Mentor / New American Library",
+    "shelf": 10,
+    "position": "Overhead Stack A (Photo 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The People Immortal",
+    "author": "Vasily Grossman",
+    "edition": "NYRB Classics",
+    "shelf": 10,
+    "position": "Overhead Stack A (Photo 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Unfortunate Traveller and Other Works",
+    "author": "Thomas Nashe",
+    "edition": "Penguin Classics",
+    "shelf": 10,
+    "position": "Overhead Stack B (Photo 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Theogony and Works and Days",
+    "author": "Hesiod",
+    "edition": "Oxford World's Classics",
+    "shelf": 10,
+    "position": "Overhead Stack B (Photo 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Believing Christ",
+    "author": "Stephen E. Robinson",
+    "edition": "Deseret Book",
+    "shelf": 11,
+    "position": "Top Stack (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Return of the Native",
+    "author": "Thomas Hardy",
+    "edition": "Signet Classic",
+    "shelf": 11,
+    "position": "Top Stack (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Discursos Civiles",
+    "author": "Various",
+    "edition": "Libros del Ciudadano",
+    "shelf": 11,
+    "position": "Top Stack (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Signifying Monkey",
+    "author": "Henry Louis Gates Jr.",
+    "edition": "Oxford University Press",
+    "shelf": 11,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Danube",
+    "author": "Claudio Magris",
+    "edition": "Collins Harvill (Map Cover)",
+    "shelf": 11,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Dialogic Imagination",
+    "author": "M.M. Bakhtin",
+    "edition": "University of Texas Press",
+    "shelf": 11,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Tereza Batista: Home from the Wars",
+    "author": "Jorge Amado",
+    "edition": "Avon Books",
+    "shelf": 12,
+    "position": "Front Stack (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Dona Flor and Her Two Husbands",
+    "author": "Jorge Amado",
+    "edition": "Avon Books",
+    "shelf": 12,
+    "position": "Front Stack (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Palliser Novels (Two-Volume Set)",
+    "author": "Anthony Trollope",
+    "edition": "Oxford World's Classics",
+    "shelf": 12,
+    "position": "Front Stack (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Memory of Old Jack",
+    "author": "Wendell Berry",
+    "edition": "Harcourt Brace",
+    "shelf": 12,
+    "position": "Front Stack (Horiz. 5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Life and Work of D.H. Lawrence / Flame Into Being",
+    "author": "Anthony Burgess",
+    "edition": "Arbor House",
+    "shelf": 12,
+    "position": "Front Stack (Horiz. 6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Iron Maiden: Album by Album",
+    "author": "Martin Popoff",
+    "edition": "Voyageur Press",
+    "shelf": 13,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Boxers & Saints: Boxers (Vol 1)",
+    "author": "Gene Luen Yang",
+    "edition": "First Second",
+    "shelf": 13,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Boxers & Saints: Saints (Vol 2)",
+    "author": "Gene Luen Yang",
+    "edition": "First Second",
+    "shelf": 13,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "B.P.R.D. Plague of Frogs — Volume 1",
+    "author": "Mike Mignola, et al.",
+    "edition": "Dark Horse Books",
+    "shelf": 13,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "B.P.R.D. Plague of Frogs — Volume 2",
+    "author": "Mike Mignola, et al.",
+    "edition": "Dark Horse Books",
+    "shelf": 13,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "B.P.R.D. Plague of Frogs — Volume 3",
+    "author": "Mike Mignola, et al.",
+    "edition": "Dark Horse Books",
+    "shelf": 13,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "n+1: Middlemen (Number Forty-Four)",
+    "author": "Various",
+    "edition": "n+1 Foundation",
+    "shelf": 13,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "n+1: Inside Job (Number Forty-Eight)",
+    "author": "Various",
+    "edition": "n+1 Foundation",
+    "shelf": 13,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "n+1: Attachment Issue (Number Forty-Five)",
+    "author": "Various",
+    "edition": "n+1 Foundation",
+    "shelf": 13,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "n+1: Agitation (Number Forty-Six)",
+    "author": "Various",
+    "edition": "n+1 Foundation",
+    "shelf": 13,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "n+1: Passage (Number Forty-Seven)",
+    "author": "Various",
+    "edition": "n+1 Foundation",
+    "shelf": 13,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "n+1: Unreal (Number Forty-Three)",
+    "author": "Various",
+    "edition": "n+1 Foundation",
+    "shelf": 13,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Dark Horse Book of Horror",
+    "author": "Mike Mignola, et al.",
+    "edition": "Dark Horse Books",
+    "shelf": 13,
+    "position": "Vertical (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "William Shakespeare: The Complete Works (Second Edition)",
+    "author": "Wells and Taylor (Eds.)",
+    "edition": "Oxford Clarendon Press",
+    "shelf": 13,
+    "position": "Vertical (14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Dialogues",
+    "author": "Stanisław Lem",
+    "edition": "MIT Press",
+    "shelf": 14,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Emperor",
+    "author": "Ryszard Kapuściński",
+    "edition": "Vintage International",
+    "shelf": 14,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Remembrance of Things Past: Volume II",
+    "author": "Marcel Proust",
+    "edition": "Vintage Books",
+    "shelf": 14,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Fiabe Italiane",
+    "author": "Italo Calvino",
+    "edition": "Oscar Mondadori",
+    "shelf": 14,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "This Is Water",
+    "author": "David Foster Wallace",
+    "edition": "Little, Brown",
+    "shelf": 15,
+    "position": "Top Stack (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Mimesis",
+    "author": "Erich Auerbach",
+    "edition": "Princeton / A10",
+    "shelf": 15,
+    "position": "Top Stack (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Wonderful Adventures by Land and Sea",
+    "author": "Mary Seacole",
+    "edition": "Oxford (Thriftbooks)",
+    "shelf": 15,
+    "position": "Top Stack (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Spy and the Traitor",
+    "author": "Ben Macintyre",
+    "edition": "Bowy",
+    "shelf": 15,
+    "position": "Top Stack (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Blood and Thunder",
+    "author": "Hampton Sides",
+    "edition": "Anchor Books",
+    "shelf": 15,
+    "position": "Top Stack (Horiz. 5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A New Dawn for Politics",
+    "author": "Alain Badiou",
+    "edition": "Polity",
+    "shelf": 15,
+    "position": "Top Stack (Horiz. 6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Bomarzo",
+    "author": "Manuel Mujica Lainez",
+    "edition": "W7-AMC-032",
+    "shelf": 15,
+    "position": "Top Stack (Horiz. 7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Lawless Roads",
+    "author": "Graham Greene",
+    "edition": "Penguin Classics",
+    "shelf": 15,
+    "position": "Top Stack (Horiz. 8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Idylls",
+    "author": "Theocritus",
+    "edition": "Penguin Classics",
+    "shelf": 15,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Vergil's Aeneid",
+    "author": "Vergil (L.R. Lind trans.)",
+    "edition": "Indiana University Press (MB45)",
+    "shelf": 15,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Los versos del capitán",
+    "author": "Pablo Neruda",
+    "edition": "Vintage",
+    "shelf": 15,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Opened Ground: Selected Poems 1966–1996",
+    "author": "Seamus Heaney",
+    "edition": "FSG",
+    "shelf": 15,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Tropic of Squalor",
+    "author": "Mary Karr",
+    "edition": "Harper",
+    "shelf": 15,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Works of Browning",
+    "author": "Robert Browning",
+    "edition": "The Macmillan Company (Green Cloth)",
+    "shelf": 15,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Papel mojado",
+    "author": "Juan José Millás",
+    "edition": "Alianza Editorial (A)",
+    "shelf": 15,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Family and Borghesia",
+    "author": "Natalia Ginzburg",
+    "edition": "nyrb",
+    "shelf": 15,
+    "position": "Vertical (14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Against the Web",
+    "author": "Michael Brooks",
+    "edition": "Zero Books",
+    "shelf": 15,
+    "position": "Vertical (16)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Capitalist Realism",
+    "author": "Mark Fisher",
+    "edition": "Zero Books",
+    "shelf": 15,
+    "position": "Vertical (18)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "La resistencia",
+    "author": "Ernesto Sabato",
+    "edition": "Seix Barral",
+    "shelf": 15,
+    "position": "Vertical (20)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Eichmann in Jerusalem",
+    "author": "Hannah Arendt",
+    "edition": "Penguin Classics",
+    "shelf": 15,
+    "position": "Vertical (23)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Hegel, Haiti, and Universal History",
+    "author": "Susan Buck-Morss",
+    "edition": "University of Pittsburgh Press",
+    "shelf": 15,
+    "position": "Vertical (24)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Plays and Fragments",
+    "author": "Menander",
+    "edition": "Penguin Classics",
+    "shelf": 15,
+    "position": "Vertical (31)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Year with Hafiz: Daily Contemplations",
+    "author": "Daniel Ladinsky",
+    "edition": "Penguin Books",
+    "shelf": 15,
+    "position": "Vertical (33)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Call of the Wild and Selected Stories",
+    "author": "Jack London",
+    "edition": "Signet Classics",
+    "shelf": 16,
+    "position": "Top Stack Left (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Caine Mutiny",
+    "author": "Herman Wouk",
+    "edition": "Dell",
+    "shelf": 16,
+    "position": "Top Stack Left (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A New Life",
+    "author": "Bernard Malamud",
+    "edition": "Pocket Books Fiction",
+    "shelf": 16,
+    "position": "Top Stack Left (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Pastures of Heaven",
+    "author": "John Steinbeck",
+    "edition": "Penguin Books",
+    "shelf": 16,
+    "position": "Top Stack Left (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Heart of Darkness and Selected Short Fiction",
+    "author": "Joseph Conrad",
+    "edition": "Barnes & Noble Classics",
+    "shelf": 16,
+    "position": "Top Stack Left (Horiz. 5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Sea Wolf",
+    "author": "Jack London",
+    "edition": "Bantam Classics",
+    "shelf": 16,
+    "position": "Top Stack Left (Horiz. 6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Ogilvy on Advertising",
+    "author": "David Ogilvy",
+    "edition": "Vintage Books",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Jab, Jab, Jab, Right Hook",
+    "author": "Gary Vaynerchuk",
+    "edition": "HarperBusiness",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Wheelock's Latin (7th Edition)",
+    "author": "Frederic M. Wheelock",
+    "edition": "Collins Reference",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Handbook of Leftist Guerrilla Groups in Latin America",
+    "author": "Gross",
+    "edition": "Westview Press",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Collected Stories",
+    "author": "Calvert Casey",
+    "edition": "Duke University Press",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Cobra and Maitreya",
+    "author": "Severo Sarduy",
+    "edition": "Christis / 842",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Accursed",
+    "author": "Joyce Carol Oates",
+    "edition": "Ecco",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "This Is Marketing",
+    "author": "Seth Godin",
+    "edition": "Portfolio / Penguin",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Epic Content Marketing",
+    "author": "Joe Pulizzi",
+    "edition": "McGraw-Hill Education",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Alchemy: The Dark Art and Curious Science of Creating Magic",
+    "author": "Rory Sutherland",
+    "edition": "William Morrow / HarperCollins",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz. 14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Magister Ludi / The Glass Bead Game",
+    "author": "Hermann Hesse",
+    "edition": "Bantam Books",
+    "shelf": 16,
+    "position": "Top Stack Far Right (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Thirty Years War",
+    "author": "Peter H. Wilson",
+    "edition": "Belknap / Harvard University Press",
+    "shelf": 16,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The New Yorker Book of Food and Drink",
+    "author": "David Remnick (Editor)",
+    "edition": "Modern Library Paperbacks",
+    "shelf": 16,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Complete Collected Essays",
+    "author": "V.S. Pritchett",
+    "edition": "Random House",
+    "shelf": 16,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Collected Stories",
+    "author": "William Trevor",
+    "edition": "Penguin Books",
+    "shelf": 16,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Mumbo Jumbo",
+    "author": "Ishmael Reed",
+    "edition": "Scribner / Paperback",
+    "shelf": 17,
+    "position": "Top Stack Left (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Nostromo",
+    "author": "Joseph Conrad",
+    "edition": "Barnes & Noble Classics",
+    "shelf": 17,
+    "position": "Top Stack Left (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Eugene Onegin",
+    "author": "Alexander Pushkin",
+    "edition": "Princeton / Bollingen",
+    "shelf": 17,
+    "position": "Top Stack Right (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "New Oxford American Dictionary (Third Edition)",
+    "author": "Angus Stevenson & Christine Lindberg",
+    "edition": "Oxford University Press (Large Hardcover)",
+    "shelf": 17,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Jewel in the Crown / The Day of the Scorpion",
+    "author": "Paul Scott",
+    "edition": "Everyman's Library",
+    "shelf": 17,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Pursuit of Glory: Europe 1648–1815",
+    "author": "Tim Blanning",
+    "edition": "Penguin History",
+    "shelf": 17,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Fox in the Attic",
+    "author": "Richard Hughes",
+    "edition": "nyrb",
+    "shelf": 17,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Radetzky March",
+    "author": "Joseph Roth",
+    "edition": "Everyman's Library",
+    "shelf": 17,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Fine Balance",
+    "author": "Rohinton Mistry",
+    "edition": "Vintage International",
+    "shelf": 17,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Flight to Canada",
+    "author": "Ishmael Reed",
+    "edition": "Scribner Poetry",
+    "shelf": 18,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Innocence and Wisdom of Father Brown",
+    "author": "G.K. Chesterton",
+    "edition": "Barnes & Noble Classics",
+    "shelf": 18,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Battles in the Desert & Other Stories",
+    "author": "José Emilio Pacheco",
+    "edition": "New Directions (NDP637)",
+    "shelf": 18,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Tomorrow They Won't Dare To",
+    "author": "Andras",
+    "edition": "FIC 56 / Thriftbooks",
+    "shelf": 18,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "U.S.A. (The 42nd Parallel)",
+    "author": "John Dos Passos",
+    "edition": "HMCO / Houghton Mifflin",
+    "shelf": 18,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "1Q84",
+    "author": "Haruki Murakami",
+    "edition": "Vintage International",
+    "shelf": 18,
+    "position": "Vertical (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Remains of the Day",
+    "author": "Kazuo Ishiguro",
+    "edition": "Vintage",
+    "shelf": 19,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Ernesto",
+    "author": "Umberto Saba",
+    "edition": "Carcanet",
+    "shelf": 19,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Call It Sleep",
+    "author": "Henry Roth",
+    "edition": "Picador",
+    "shelf": 19,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Bread Givers",
+    "author": "Anzia Yezierska",
+    "edition": "Persea",
+    "shelf": 19,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Custody of the Eyes",
+    "author": "Diamela Eltit",
+    "edition": "Feminist Press",
+    "shelf": 19,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Il Gattopardo (The Leopard)",
+    "author": "Giuseppe Tomasi di Lampedusa",
+    "edition": "Feltrinelli",
+    "shelf": 19,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Twentieth-Century Russian Reader",
+    "author": "Clarence Brown (Editor)",
+    "edition": "Penguin / Viking Portable Variant",
+    "shelf": 19,
+    "position": "Vertical (16)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Scientific Advertising",
+    "author": "Claude C. Hopkins",
+    "edition": "Bellwether / McGraw-Hill",
+    "shelf": 19,
+    "position": "Vertical (17)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "One Man's Terrorist",
+    "author": "Daniel Finn",
+    "edition": "Verso",
+    "shelf": 20,
+    "position": "Top Stack (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "I Served the King of England",
+    "author": "Bohumil Hrabal",
+    "edition": "NDP1067",
+    "shelf": 20,
+    "position": "Top Stack (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Woman Warrior",
+    "author": "Maxine Hong Kingston",
+    "edition": "Vintage / ISBN Variant",
+    "shelf": 20,
+    "position": "Top Stack (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Good to Great",
+    "author": "Jim Collins",
+    "edition": "HarperBusiness (Red Spine Horizontal)",
+    "shelf": 20,
+    "position": "Top Stack Far Right",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Liberalism: A Counter-History",
+    "author": "Domenico Losurdo",
+    "edition": "Verso",
+    "shelf": 20,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Raza de bronce",
+    "author": "Alcides Arguedas",
+    "edition": "Colección Archivos 11",
+    "shelf": 20,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Brewer's Rogues, Villains, and Eccentrics",
+    "author": "William Donaldson",
+    "edition": "Orion Reference",
+    "shelf": 21,
+    "position": "Top Stack Left (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "American Realism Reader",
+    "author": "Various",
+    "edition": "Penguin Classics",
+    "shelf": 21,
+    "position": "Top Stack Right (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The History of Western Philosophy",
+    "author": "Bertrand Russell",
+    "edition": "Touchstone / Simon & Schuster",
+    "shelf": 21,
+    "position": "Top Stack Right (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Philosophies of India",
+    "author": "Heinrich Zimmer",
+    "edition": "Meridian Books",
+    "shelf": 21,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Poesías completas de Federico García Lorca",
+    "author": "Federico García Lorca",
+    "edition": "nyrb",
+    "shelf": 21,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Absolutely True Diary of a Part-Time Indian",
+    "author": "Sherman Alexie",
+    "edition": "Little, Brown",
+    "shelf": 21,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Dance to the Music of Time: 1st Movement",
+    "author": "Anthony Powell",
+    "edition": "University of Chicago Press",
+    "shelf": 21,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Why Read the Classics?",
+    "author": "Italo Calvino",
+    "edition": "Mariner Books",
+    "shelf": 21,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Creating Capabilities",
+    "author": "Martha C. Nussbaum",
+    "edition": "Belknap / Harvard",
+    "shelf": 21,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Urgent Copy",
+    "author": "Anthony Burgess",
+    "edition": "Norton / 804",
+    "shelf": 21,
+    "position": "Vertical (15)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "To the Lighthouse",
+    "author": "Virginia Woolf",
+    "edition": "Harcourt",
+    "shelf": 22,
+    "position": "Top Stack Right (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Conversation in the Cathedral",
+    "author": "Mario Vargas Llosa",
+    "edition": "FSG",
+    "shelf": 22,
+    "position": "Top Stack Right (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Kristin Lavransdatter",
+    "author": "Sigrid Undset (Tiina Nunnally trans.)",
+    "edition": "Penguin Classics Deluxe Edition",
+    "shelf": 22,
+    "position": "Top Stack Right (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Ice Trilogy",
+    "author": "Vladimir Sorokin",
+    "edition": "nyrb",
+    "shelf": 22,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Fifth Business",
+    "author": "Robertson Davies",
+    "edition": "Penguin Classics",
+    "shelf": 22,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Haunted Castles",
+    "author": "Ray Russell",
+    "edition": "Penguin Horror",
+    "shelf": 22,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Sugar and Other Stories",
+    "author": "A.S. Byatt",
+    "edition": "Vintage",
+    "shelf": 23,
+    "position": "Top Stack Left (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Howards End and A Room with a View",
+    "author": "E.M. Forster",
+    "edition": "Signet Classic",
+    "shelf": 23,
+    "position": "Top Stack Right (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Decameron",
+    "author": "Giovanni Boccaccio",
+    "edition": "Modern Library",
+    "shelf": 23,
+    "position": "Top Stack Right (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Gods, Determinations and Preparatory Meditations",
+    "author": "Edward Taylor",
+    "edition": "Critical Edition / Patterson",
+    "shelf": 23,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The David Foster Wallace Reader",
+    "author": "David Foster Wallace",
+    "edition": "Little, Brown",
+    "shelf": 23,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Omnibus of Crime",
+    "author": "Dorothy L. Sayers (Editor)",
+    "edition": "Harcourt, Brace and Company",
+    "shelf": 23,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Theodor W. Adorno: Notes to Literature (Volume One)",
+    "author": "Theodor W. Adorno",
+    "edition": "Columbia University Press",
+    "shelf": 23,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Collected Poems of W.B. Yeats",
+    "author": "W.B. Yeats (Richard J. Finneran ed.)",
+    "edition": "Scribner Paperback Poetry",
+    "shelf": 23,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "La Historia",
+    "author": "Caparrós",
+    "edition": "587 / Anagrama Style Variant",
+    "shelf": 23,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Ben Jonson and the Cavalier Poets",
+    "author": "Hugh Maclean (Editor)",
+    "edition": "Norton Critical Editions",
+    "shelf": 23,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Classical Essays / Tropical Essays",
+    "author": "Various",
+    "edition": "Iyer / Vintage",
+    "shelf": 23,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Man Who Was Thursday",
+    "author": "G.K. Chesterton",
+    "edition": "Carroll & Graf",
+    "shelf": 23,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Idea of Perfection: The Poetry and Prose of Paul Valéry",
+    "author": "Paul Valéry",
+    "edition": "FSG / 75",
+    "shelf": 23,
+    "position": "Vertical (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Creative Act",
+    "author": "Rick Rubin",
+    "edition": "Penguin Press",
+    "shelf": 23,
+    "position": "Vertical (15)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "On the Road",
+    "author": "Jack Kerouac",
+    "edition": "Penguin Classics",
+    "shelf": 24,
+    "position": "Top Stack Left (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Book of Disquiet",
+    "author": "Fernando Pessoa",
+    "edition": "New Directions (Green Pattern)",
+    "shelf": 24,
+    "position": "Top Stack Left (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Modern Japanese Short Stories",
+    "author": "Various",
+    "edition": "Tuttle Publishing",
+    "shelf": 24,
+    "position": "Top Stack Far Right (Horiz.)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "East Bay Greas",
+    "author": "Eric Miles Williamson",
+    "edition": "Ador / 99",
+    "shelf": 24,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Orange Tree",
+    "author": "Carlos Fuentes",
+    "edition": "Farrar, Straus and Giroux",
+    "shelf": 24,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Late Mattia Pascal",
+    "author": "Luigi Pirandello",
+    "edition": "nyrb",
+    "shelf": 24,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Stranger",
+    "author": "Albert Camus",
+    "edition": "Vintage / Alfred A. Knopf",
+    "shelf": 24,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Red Cavalry and Other Stories",
+    "author": "Isaac Babel",
+    "edition": "Penguin Classics",
+    "shelf": 24,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Light in August",
+    "author": "William Faulkner",
+    "edition": "Vintage",
+    "shelf": 24,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Wilderness Station: Selected Stories, 1968–1994",
+    "author": "Alice Munro",
+    "edition": "Vintage",
+    "shelf": 24,
+    "position": "Vertical (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "No Country for Old Men",
+    "author": "Cormac McCarthy",
+    "edition": "Vintage",
+    "shelf": 24,
+    "position": "Vertical (14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Hit Makers",
+    "author": "Derek Thompson",
+    "edition": "Penguin Books / Hit Sign",
+    "shelf": 24,
+    "position": "Vertical (15)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Imagined Communities",
+    "author": "Benedict Anderson",
+    "edition": "Verso",
+    "shelf": 24,
+    "position": "Vertical (16)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Bobby Fischer Teaches Chess",
+    "author": "Bobby Fischer",
+    "edition": "Margulies & Mosenfelder",
+    "shelf": 24,
+    "position": "Vertical (20)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "After Borges",
+    "author": "Dillard",
+    "edition": "LSJU",
+    "shelf": 24,
+    "position": "Vertical (25)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Old Gringo",
+    "author": "Carlos Fuentes",
+    "edition": "Perennial Library",
+    "shelf": 25,
+    "position": "Top Stack Left (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Axel's Castle",
+    "author": "Edmund Wilson",
+    "edition": "Scribners (SL 12)",
+    "shelf": 25,
+    "position": "Top Stack Left (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Essays of Elia & Last Essays of Elia",
+    "author": "Charles Lamb",
+    "edition": "Gold Medal Seal Spine",
+    "shelf": 25,
+    "position": "Top Stack Left (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "La ciudad y los perros",
+    "author": "Mario Vargas Llosa",
+    "edition": "Real Academia Española",
+    "shelf": 25,
+    "position": "Top Stack Center (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Personal Matter",
+    "author": "Kenzaburo Oe",
+    "edition": "Grove Press",
+    "shelf": 25,
+    "position": "Top Stack Center (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Theory of the American Novel",
+    "author": "Perkins",
+    "edition": "143",
+    "shelf": 25,
+    "position": "Top Stack Center (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Originals: How Non-Conformists Move the World",
+    "author": "Adam Grant",
+    "edition": "Viking",
+    "shelf": 25,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Ghosts of My Life",
+    "author": "Mark Fisher",
+    "edition": "Zero Books",
+    "shelf": 25,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Complete Stories",
+    "author": "Clarice Lispector",
+    "edition": "New Directions (NDP1409)",
+    "shelf": 25,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Rules for Radicals",
+    "author": "Saul D. Alinsky",
+    "edition": "Vintage",
+    "shelf": 25,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Works of Love",
+    "author": "Søren Kierkegaard",
+    "edition": "Harper Perennial Modern Thought",
+    "shelf": 25,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Albert Camus: The Rebel",
+    "author": "Albert Camus",
+    "edition": "Vintage",
+    "shelf": 25,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Penguin History of Britain 1603–1714",
+    "author": "Mark Kishlansky",
+    "edition": "Penguin Books",
+    "shelf": 25,
+    "position": "Vertical (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Absolute Monarchs",
+    "author": "John Julius Norwich",
+    "edition": "Random House",
+    "shelf": 25,
+    "position": "Vertical (15)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Fear and Trembling / The Book on Adler",
+    "author": "Søren Kierkegaard",
+    "edition": "Everyman's Library",
+    "shelf": 25,
+    "position": "Vertical (18)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Collection of Essays",
+    "author": "George Orwell",
+    "edition": "Harcourt",
+    "shelf": 25,
+    "position": "Vertical (23)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "All Will Have Vengeance",
+    "author": "Various",
+    "edition": "Blue Spine Variant",
+    "shelf": 26,
+    "position": "Top Stack Left (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Return of the King",
+    "author": "J.R.R. Tolkien",
+    "edition": "Houghton Mifflin",
+    "shelf": 26,
+    "position": "Top Stack Left (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Long Ships",
+    "author": "Frans G. Bengtsson",
+    "edition": "nyrb",
+    "shelf": 26,
+    "position": "Top Stack Center (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Society of the Spectacle",
+    "author": "Guy Debord",
+    "edition": "Zone Books",
+    "shelf": 26,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Norton Anthology of English Literature (Vol. B)",
+    "author": "Greenblatt (Editor)",
+    "edition": "W. W. Norton & Company (Ninth Edition)",
+    "shelf": 26,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "American Democratic Socialism",
+    "author": "Gary Dorrien",
+    "edition": "Yale University Press",
+    "shelf": 26,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Rise and Fall of Communism",
+    "author": "Archie Brown",
+    "edition": "Ecco",
+    "shelf": 26,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Travels in Hyperreality",
+    "author": "Umberto Eco",
+    "edition": "HBJ",
+    "shelf": 26,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Quo Vadis",
+    "author": "Henryk Sienkiewicz",
+    "edition": "Barnes & Noble",
+    "shelf": 27,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Collected Poems",
+    "author": "John Wheelwright",
+    "edition": "New Directions (NDP544)",
+    "shelf": 27,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Woman in Arabia: The Writings of the Queen of the Desert",
+    "author": "Gertrude Bell",
+    "edition": "Penguin Classics (B-Bell How)",
+    "shelf": 27,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "East of Eden",
+    "author": "John Steinbeck",
+    "edition": "Penguin Classics",
+    "shelf": 27,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Religio Medici and Urne-Buriall",
+    "author": "Sir Thomas Browne",
+    "edition": "nyrb",
+    "shelf": 27,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Poetry Comes Out of My Mouth",
+    "author": "Mario Santiago Papasquiaro",
+    "edition": "Diálogos",
+    "shelf": 27,
+    "position": "Vertical (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Total Art of Stalinism",
+    "author": "Boris Groys",
+    "edition": "Verso",
+    "shelf": 28,
+    "position": "Top Stack Left (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "I Will Have Vengeance",
+    "author": "Maurizio de Giovanni",
+    "edition": "Europa Editions",
+    "shelf": 28,
+    "position": "Top Stack Right (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Return of the King",
+    "author": "J.R.R. Tolkien",
+    "edition": "Houghton Mifflin",
+    "shelf": 28,
+    "position": "Top Stack Right (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Selected Essays",
+    "author": "T.S. Eliot",
+    "edition": "Faber & Faber",
+    "shelf": 28,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Chronicles of a Liquid Society",
+    "author": "Umberto Eco",
+    "edition": "Harcourt HMH",
+    "shelf": 28,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Norton Anthology of English Literature (Vol. B)",
+    "author": "Greenblatt (Editor)",
+    "edition": "W. W. Norton & Company (Ninth Edition)",
+    "shelf": 28,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "American Democratic Socialism",
+    "author": "Gary Dorrien",
+    "edition": "Yale University Press",
+    "shelf": 28,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Rise and Fall of Communism",
+    "author": "Archie Brown",
+    "edition": "Ecco",
+    "shelf": 28,
+    "position": "Vertical (14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Poetics of Space",
+    "author": "Gaston Bachelard",
+    "edition": "Penguin Classics",
+    "shelf": 29,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Difficult Loves",
+    "author": "Italo Calvino",
+    "edition": "Harcourt Brace",
+    "shelf": 29,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Plague",
+    "author": "Albert Camus",
+    "edition": "Vintage",
+    "shelf": 29,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Passage to India",
+    "author": "E.M. Forster",
+    "edition": "Everyman's Library",
+    "shelf": 29,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Shipping News",
+    "author": "E. Annie Proulx",
+    "edition": "Touchstone",
+    "shelf": 29,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Spoon River Anthology",
+    "author": "Edgar Lee Masters",
+    "edition": "Barnes & Noble",
+    "shelf": 29,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Las novelas de Torquemada",
+    "author": "Benito Pérez Galdós",
+    "edition": "Vintage / 88",
+    "shelf": 30,
+    "position": "Horizontal Stack (Top)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Geography of the Imagination",
+    "author": "Guy Davenport",
+    "edition": "David R. Godine",
+    "shelf": 30,
+    "position": "Horizontal Stack (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Collected Stories",
+    "author": "V.S. Pritchett",
+    "edition": "Vintage",
+    "shelf": 30,
+    "position": "Horizontal Stack (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Treasure Chest",
+    "author": "Johann Peter Hebel",
+    "edition": "Penguin Classics",
+    "shelf": 30,
+    "position": "Horizontal Stack (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Schattenform (Shadow Form)",
+    "author": "Michael Lentz",
+    "edition": "S. Fischer Verlag (Bespoke Typographic Spine)",
+    "shelf": 30,
+    "position": "Horizontal Stack (Base)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Selected Non-Fictions",
+    "author": "Jorge Luis Borges",
+    "edition": "Penguin Classics Deluxe Edition",
+    "shelf": 31,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Chaucer's London",
+    "author": "D.W. Robertson Jr.",
+    "edition": "Wiley",
+    "shelf": 31,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Notebooks 1936–1947",
+    "author": "Victor Serge",
+    "edition": "nyrb",
+    "shelf": 31,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Villains of All Nations: Atlantic Pirates in the Golden Age",
+    "author": "Marcus Rediker",
+    "edition": "Verso",
+    "shelf": 31,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Penguin Book of French Short Stories: Volume 2",
+    "author": "Patrick de Marneffe (Editor)",
+    "edition": "Penguin Books",
+    "shelf": 31,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Selected Prose 1909–1965",
+    "author": "Ezra Pound",
+    "edition": "New Directions (NDP396)",
+    "shelf": 31,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Sound and the Fury",
+    "author": "William Faulkner",
+    "edition": "Vintage",
+    "shelf": 31,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Penguin Book of French Short Stories: Volume 1",
+    "author": "Colette to Marie NDiaye",
+    "edition": "Penguin Modern Classics",
+    "shelf": 31,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Fellowship of the Ring (The Lord of the Rings, Part 1)",
+    "author": "J.R.R. Tolkien",
+    "edition": "Houghton Mifflin",
+    "shelf": 31,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Modern Philosophy",
+    "author": "Roger Scruton",
+    "edition": "Penguin",
+    "shelf": 31,
+    "position": "Vertical (14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Los relatos, 4",
+    "author": "Julio Cortázar",
+    "edition": "Alianza Editorial (631)",
+    "shelf": 32,
+    "position": "Top Stack Left (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Los relatos, 3",
+    "author": "Julio Cortázar",
+    "edition": "Alianza Editorial (1128)",
+    "shelf": 32,
+    "position": "Top Stack Left (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Los relatos, 2",
+    "author": "Julio Cortázar",
+    "edition": "Alianza Editorial (624)",
+    "shelf": 32,
+    "position": "Top Stack Left (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Los relatos, 1",
+    "author": "Julio Cortázar",
+    "edition": "Alianza Editorial (615)",
+    "shelf": 32,
+    "position": "Top Stack Left (Horiz. 5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Naked Masks",
+    "author": "Luigi Pirandello",
+    "edition": "Dutton",
+    "shelf": 32,
+    "position": "Top Stack Center (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "O. Henry's New York",
+    "author": "O. Henry",
+    "edition": "Heritage Press Variant",
+    "shelf": 32,
+    "position": "Top Stack Center (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Madame Bovary",
+    "author": "Gustave Flaubert",
+    "edition": "Folio Classique",
+    "shelf": 32,
+    "position": "Top Stack Center (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "To Kill a Mockingbird",
+    "author": "Harper Lee",
+    "edition": "Grand Central Publishing",
+    "shelf": 32,
+    "position": "Top Stack Right (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Gargantua and Pantagruel",
+    "author": "François Rabelais",
+    "edition": "Penguin Classics",
+    "shelf": 32,
+    "position": "Top Stack Right (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Tale of Two Cities",
+    "author": "Charles Dickens",
+    "edition": "Everyday/Penguin",
+    "shelf": 32,
+    "position": "Top Stack Right (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Flowers for Algernon",
+    "author": "Daniel Keyes",
+    "edition": "Harvest Books",
+    "shelf": 32,
+    "position": "Top Stack Right (Horiz. 6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Lord Jim",
+    "author": "Joseph Conrad",
+    "edition": "Modern Library",
+    "shelf": 32,
+    "position": "Top Stack Right (Horiz. 8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Plays and Masques",
+    "author": "Ben Jonson",
+    "edition": "Norton Critical Edition",
+    "shelf": 32,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Rabbit, Run",
+    "author": "John Updike",
+    "edition": "Fawcett Crest",
+    "shelf": 32,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Sightseeing",
+    "author": "Rattawut Lapcharoensap",
+    "edition": "Grove Press",
+    "shelf": 32,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Peasants and Other Stories",
+    "author": "Anton Chekhov",
+    "edition": "Barnes & Noble Classics",
+    "shelf": 32,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Man's Fate",
+    "author": "André Malraux",
+    "edition": "Vintage Books",
+    "shelf": 32,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Brave New World",
+    "author": "Aldous Huxley",
+    "edition": "Harper Perennial",
+    "shelf": 32,
+    "position": "Vertical (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Imperium",
+    "author": "Ryszard Kapuściński",
+    "edition": "Vintage International",
+    "shelf": 32,
+    "position": "Vertical (16)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Shakespearean Tragedy",
+    "author": "A.C. Bradley",
+    "edition": "Penguin Classics",
+    "shelf": 32,
+    "position": "Vertical (17)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Man for All Seasons",
+    "author": "Robert Bolt",
+    "edition": "Vintage",
+    "shelf": 32,
+    "position": "Vertical (19)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Adventure of French Philosophy",
+    "author": "Alain Badiou",
+    "edition": "Verso",
+    "shelf": 32,
+    "position": "Vertical (20)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "William Blake",
+    "author": "William Blake",
+    "edition": "The Viking Portable Library",
+    "shelf": 32,
+    "position": "Vertical (21)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Complete Poems",
+    "author": "D.H. Lawrence",
+    "edition": "Penguin Classics",
+    "shelf": 32,
+    "position": "Vertical (22)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Revolt of the Masses",
+    "author": "José Ortega y Gasset",
+    "edition": "W. W. Norton & Company",
+    "shelf": 32,
+    "position": "Vertical (24)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Black Jacobins",
+    "author": "C.L.R. James",
+    "edition": "Vintage",
+    "shelf": 32,
+    "position": "Vertical (25)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Rimbaud: Complete Works, Selected Letters",
+    "author": "Arthur Rimbaud (Wallace Fowlie trans.)",
+    "edition": "University of Chicago Press",
+    "shelf": 32,
+    "position": "Vertical (27)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Selected Papers of Bertrand Russell",
+    "author": "Bertrand Russell",
+    "edition": "Modern Library",
+    "shelf": 32,
+    "position": "Vertical (28)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Don Quixote",
+    "author": "Miguel de Cervantes",
+    "edition": "Modern Library",
+    "shelf": 32,
+    "position": "Vertical (32)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Pensées",
+    "author": "Blaise Pascal",
+    "edition": "Penguin Classics",
+    "shelf": 33,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Colossus of Maroussi",
+    "author": "Henry Miller",
+    "edition": "New Directions (NDP108)",
+    "shelf": 33,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Cassirer: An Essay on Man",
+    "author": "Ernst Cassirer",
+    "edition": "Yale University Press / Chicago",
+    "shelf": 33,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Death and Life of Great American Cities",
+    "author": "Jane Jacobs",
+    "edition": "Modern Library / Random House",
+    "shelf": 33,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Marquise of O— and Other Stories",
+    "author": "Heinrich von Kleist",
+    "edition": "Penguin Classics",
+    "shelf": 33,
+    "position": "Vertical (7)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Lives of the Poets",
+    "author": "Michael Schmidt",
+    "edition": "Vintage",
+    "shelf": 33,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Common Sense and Other Writings",
+    "author": "Thomas Paine",
+    "edition": "Modern Library College Editions",
+    "shelf": 33,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "El espejo enterrado",
+    "author": "Carlos Fuentes",
+    "edition": "Alfaguara",
+    "shelf": 34,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Essential Writings of Christian Mysticism",
+    "author": "Bernard McGinn (Editor)",
+    "edition": "Modern Library Classics",
+    "shelf": 34,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Tropic of Cancer",
+    "author": "Henry Miller",
+    "edition": "Modern Classics",
+    "shelf": 34,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Burning Down the Haus: Punk Rock, Revolution, and the Fall of the Berlin Wall",
+    "author": "Tim Mohr",
+    "edition": "Algonquin Paperbacks",
+    "shelf": 34,
+    "position": "Vertical (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Rob Roy",
+    "author": "Sir Walter Scott",
+    "edition": "Signet Classics",
+    "shelf": 34,
+    "position": "Vertical (14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "To the Finland Station",
+    "author": "Edmund Wilson",
+    "edition": "nyrb",
+    "shelf": 35,
+    "position": "Vertical (1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Typhoon and Other Tales",
+    "author": "Joseph Conrad",
+    "edition": "Signet Classics",
+    "shelf": 35,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Hobbit",
+    "author": "J.R.R. Tolkien",
+    "edition": "Ballantine Books",
+    "shelf": 35,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "delete",
+    "author": "Mayer-Schönberger",
+    "edition": "Princeton",
+    "shelf": 35,
+    "position": "Vertical (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Midnight in Sicily",
+    "author": "Peter Robb",
+    "edition": "Harvill / Thriftbooks",
+    "shelf": 35,
+    "position": "Vertical (15)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Time's Arrow",
+    "author": "Martin Amis",
+    "edition": "Vintage",
+    "shelf": 36,
+    "position": "Desk Stack (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Complete Odes and Epodes",
+    "author": "Horace",
+    "edition": "Oxford World's Classics",
+    "shelf": 36,
+    "position": "Desk Stack (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Complete Odes",
+    "author": "Pindar",
+    "edition": "Oxford World's Classics",
+    "shelf": 36,
+    "position": "Desk Stack (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Marginalia on Casanova — St. Orpheus Breviary",
+    "author": "Miklós Szentkuthy",
+    "edition": "Contra Mundum Press",
+    "shelf": 36,
+    "position": "Desk Stack (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Spectator Bird",
+    "author": "Wallace Stegner",
+    "edition": "Library Variant",
+    "shelf": 36,
+    "position": "Desk Stack (Horiz. 5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Tortilla Flat",
+    "author": "John Steinbeck",
+    "edition": "Penguin Classics",
+    "shelf": 36,
+    "position": "Desk Stack (Horiz. 6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "La Araucana",
+    "author": "Alonso de Ercilla",
+    "edition": "Books / Editorial",
+    "shelf": 36,
+    "position": "Desk Stack (Horiz. 8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Berlin Game",
+    "author": "Len Deighton",
+    "edition": "Alfred A. Knopf (Hardcover Horizontal)",
+    "shelf": 36,
+    "position": "Top Stack Overhead",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Selected Satires of Lucian",
+    "author": "Lucian",
+    "edition": "Norton",
+    "shelf": 36,
+    "position": "Vertical Right (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Crossing to Safety",
+    "author": "Wallace Stegner",
+    "edition": "Penguin Classics",
+    "shelf": 36,
+    "position": "Vertical Right (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Selected Works",
+    "author": "John Dryden",
+    "edition": "Rec / RE",
+    "shelf": 36,
+    "position": "Vertical Right (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Bleak House",
+    "author": "Charles Dickens",
+    "edition": "Signet Classics",
+    "shelf": 36,
+    "position": "Vertical Right (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Aftermath: Life in the Fallout of the Third Reich, 1945–1955",
+    "author": "Harald Jähner",
+    "edition": "Vintage",
+    "shelf": 36,
+    "position": "Vertical Right (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Songs of a Dead Dreamer and Grimscribe",
+    "author": "Thomas Ligotti",
+    "edition": "Penguin Classics",
+    "shelf": 36,
+    "position": "Vertical Right (12)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Armageddon Averted: The Soviet Collapse",
+    "author": "Stephen Kotkin",
+    "edition": "Oxford University Press",
+    "shelf": 36,
+    "position": "Vertical Right (13)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Antivorlds",
+    "author": "Andrei Voznesensky",
+    "edition": "Anchor Books",
+    "shelf": 37,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Cosmological Eye",
+    "author": "Henry Miller",
+    "edition": "New Directions (ND Paperbook 109)",
+    "shelf": 37,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Understanding Günter Grass",
+    "author": "Alan Frank Keele",
+    "edition": "University of South Carolina Press",
+    "shelf": 37,
+    "position": "Vertical (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Dragon Reborn (The Wheel of Time, Book 3)",
+    "author": "Robert Jordan",
+    "edition": "Tor Fantasy",
+    "shelf": 37,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Eye of the World (The Wheel of Time, Book 1)",
+    "author": "Robert Jordan",
+    "edition": "Tor Fantasy",
+    "shelf": 37,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Great Hunt (The Wheel of Time, Book 2)",
+    "author": "Robert Jordan",
+    "edition": "Tor Fantasy",
+    "shelf": 37,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Emporium / Mind Bending Conundrums",
+    "author": "Joseph Conrad / Various",
+    "edition": "Puzzle Compendium",
+    "shelf": 38,
+    "position": "Top Stack Left (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Self-Editing for Fiction Writers",
+    "author": "Renni Browne & Dave King",
+    "edition": "William Morrow",
+    "shelf": 38,
+    "position": "Top Stack Left (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "At the Mind's Limits",
+    "author": "Jean Améry",
+    "edition": "Schocken Books",
+    "shelf": 38,
+    "position": "Top Stack Left (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Zen and the Art of Motorcycle Maintenance",
+    "author": "Robert M. Pirsig",
+    "edition": "Harper Torchbook",
+    "shelf": 38,
+    "position": "Top Stack Center (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Magnificent Ambersons",
+    "author": "Booth Tarkington",
+    "edition": "Tor Classics",
+    "shelf": 38,
+    "position": "Top Stack Center (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Wisdom of the Desert",
+    "author": "Thomas Merton",
+    "edition": "New Directions (NDP295)",
+    "shelf": 38,
+    "position": "Top Stack Right (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Federalist Papers",
+    "author": "Hamilton, Madison, Jay",
+    "edition": "Signet Classics",
+    "shelf": 38,
+    "position": "Top Stack Right (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Robert Frost's Poems",
+    "author": "Robert Frost",
+    "edition": "Washington Square Press",
+    "shelf": 38,
+    "position": "Top Stack Right (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Three Novels: Molloy, Malone Dies, The Unnamable",
+    "author": "Samuel Beckett",
+    "edition": "Grove Press",
+    "shelf": 38,
+    "position": "Top Stack Right (Horiz. 6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Economics and the Left",
+    "author": "C.J. Polychroniou (Editor)",
+    "edition": "Verso (Yellow Spine)",
+    "shelf": 38,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Collected Poems: 1909–1962",
+    "author": "T.S. Eliot",
+    "edition": "Harcourt",
+    "shelf": 38,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Balcony in the Forest",
+    "author": "Julien Gracq",
+    "edition": "nyrb",
+    "shelf": 38,
+    "position": "Vertical (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Soviet Tragedy",
+    "author": "Martin Malia",
+    "edition": "Free Press",
+    "shelf": 38,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Plan for Escape",
+    "author": "Adolfo Bioy Casares",
+    "edition": "Graywolf Press",
+    "shelf": 38,
+    "position": "Vertical (15)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Molière: The Complete Richard Wilbur Translations (Vol 1)",
+    "author": "Molière",
+    "edition": "Theatre Communications Group",
+    "shelf": 38,
+    "position": "Vertical (21)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Molière: The Complete Richard Wilbur Translations (Vol 2)",
+    "author": "Molière",
+    "edition": "Theatre Communications Group",
+    "shelf": 38,
+    "position": "Vertical (22)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Dictionary of Philosophy",
+    "author": "Antony Flew",
+    "edition": "Pan Reference",
+    "shelf": 38,
+    "position": "Vertical (24)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Dostoevsky Reads Hegel in Siberia and Buries the Cat",
+    "author": "László F. Földényi",
+    "edition": "Yale University Press",
+    "shelf": 38,
+    "position": "Vertical (27)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Irish Writing 1789–1939",
+    "author": "Stephen Regan (Editor)",
+    "edition": "Oxford World's Classics",
+    "shelf": 39,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Doctor Zhivago",
+    "author": "Boris Pasternak (Max Hayward & Manya Harari trans.)",
+    "edition": "Vintage",
+    "shelf": 39,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Oroonoko, The Rover, and Other Works",
+    "author": "Aphra Behn",
+    "edition": "Penguin Classics",
+    "shelf": 39,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Rising Up and Rising Down: Some Thoughts on Violence, Freedom, and Urgent Means",
+    "author": "William T. Vollmann",
+    "edition": "Ecco (One-Volume Abridged Edition)",
+    "shelf": 39,
+    "position": "Vertical (10)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Dead Center",
+    "author": "Luke Savage",
+    "edition": "O/R Books",
+    "shelf": 40,
+    "position": "Top Stack Left (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Maoism: A Global History",
+    "author": "Julia Lovell / Jonathan Spence",
+    "edition": "Vintage (M-A-O Spine)",
+    "shelf": 40,
+    "position": "Top Stack Left (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "This Hallowed Ground",
+    "author": "Bruce Catton",
+    "edition": "Doubleday / Historical",
+    "shelf": 40,
+    "position": "Top Stack Left (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Sobre héroes y tumbas",
+    "author": "Ernesto Sabato",
+    "edition": "Booket",
+    "shelf": 40,
+    "position": "Top Stack Center (Horiz. 1)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Disionario secreto, I",
+    "author": "Camilo José Cela",
+    "edition": "Alianza Editorial",
+    "shelf": 40,
+    "position": "Top Stack Center (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Pacific",
+    "author": "Tom Drury",
+    "edition": "Tom Drury Fiction",
+    "shelf": 40,
+    "position": "Top Stack Center (Horiz. 5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Cranford",
+    "author": "Elizabeth Gaskell",
+    "edition": "Penguin Classics",
+    "shelf": 40,
+    "position": "Top Stack Right (Horiz. 2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Two Towers (The Lord of the Rings, Part 2)",
+    "author": "J.R.R. Tolkien",
+    "edition": "Houghton Mifflin",
+    "shelf": 40,
+    "position": "Top Stack Right (Horiz. 3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A Walk to An Ant Hill",
+    "author": "Frans G. Bengtsson",
+    "edition": "Trans. / Historical",
+    "shelf": 40,
+    "position": "Top Stack Right (Horiz. 4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Histories",
+    "author": "Herodotus",
+    "edition": "Penguin Classics",
+    "shelf": 40,
+    "position": "Top Stack Right (Horiz. 5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Nature of the Gods",
+    "author": "Cicero",
+    "edition": "Oxford World's Classics",
+    "shelf": 40,
+    "position": "Top Stack Overhead (Far R)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Cheyenne Autumn",
+    "author": "Mari Sandoz",
+    "edition": "Avon",
+    "shelf": 40,
+    "position": "Top Stack Overhead (Far R)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Thoreau: Walden and Other Writings",
+    "author": "Henry David Thoreau",
+    "edition": "Bantam Classics",
+    "shelf": 40,
+    "position": "Top Stack Overhead (Far R)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "A New History of Western Philosophy",
+    "author": "Anthony Kenny",
+    "edition": "Oxford University Press",
+    "shelf": 40,
+    "position": "Vertical (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Norton Anthology of English Literature (Vol. C)",
+    "author": "Greenblatt (Editor)",
+    "edition": "W. W. Norton & Company (Ninth Edition)",
+    "shelf": 40,
+    "position": "Vertical (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Scorched Earth",
+    "author": "Jonathan Crary",
+    "edition": "Verso",
+    "shelf": 40,
+    "position": "Vertical (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Narcoland",
+    "author": "Anabel Hernández",
+    "edition": "Verso",
+    "shelf": 40,
+    "position": "Vertical (5)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Sixty Stories",
+    "author": "Donald Barthelme",
+    "edition": "Penguin Classics",
+    "shelf": 40,
+    "position": "Vertical (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "In Parenthesis",
+    "author": "David Jones",
+    "edition": "nyrb",
+    "shelf": 40,
+    "position": "Vertical (11)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Perennial Philosophy",
+    "author": "Aldous Huxley",
+    "edition": "Harper Perennial Modern Thought",
+    "shelf": 40,
+    "position": "Vertical (14)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Life and Fate",
+    "author": "Vasily Grossman",
+    "edition": "nyrb",
+    "shelf": 40,
+    "position": "Vertical (15)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "That Awful Mess on the Via Merulana",
+    "author": "Carlo Emilio Gadda",
+    "edition": "nyrb",
+    "shelf": 40,
+    "position": "Vertical (17)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Karl Marx",
+    "author": "Karl Marx",
+    "edition": "The Viking Portable Library",
+    "shelf": 40,
+    "position": "Vertical (18)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Along Heroic Lines",
+    "author": "Michael Wood",
+    "edition": "Oxford University Press",
+    "shelf": 40,
+    "position": "Vertical (19)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Enlightenment: The Science of Freedom",
+    "author": "Peter Gay",
+    "edition": "W. W. Norton & Company (N875)",
+    "shelf": 40,
+    "position": "Vertical (22)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Tailor of Ulm",
+    "author": "Lucio Magri",
+    "edition": "Verso",
+    "shelf": 40,
+    "position": "Vertical (24)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Notebooks of Joseph Joubert",
+    "author": "Joseph Joubert (Paul Auster trans.)",
+    "edition": "nyrb",
+    "shelf": 40,
+    "position": "Vertical (29)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "History of the Peloponnesian War",
+    "author": "Thucydides",
+    "edition": "Penguin Classics",
+    "shelf": 40,
+    "position": "Vertical (31)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Selected Essays",
+    "author": "Samuel Johnson",
+    "edition": "Penguin Classics",
+    "shelf": 40,
+    "position": "Vertical (34)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Wayward Bus",
+    "author": "John Steinbeck",
+    "edition": "Bantam Books",
+    "shelf": 41,
+    "position": "Horizontal Stack (Top)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Sweet Thursday",
+    "author": "John Steinbeck",
+    "edition": "Penguin Books",
+    "shelf": 41,
+    "position": "Horizontal Stack (2)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "The Red Pony",
+    "author": "John Steinbeck",
+    "edition": "Viking / Compass",
+    "shelf": 41,
+    "position": "Horizontal Stack (3)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Justine",
+    "author": "Lawrence Durrell",
+    "edition": "Pocket Books Fiction",
+    "shelf": 41,
+    "position": "Horizontal Stack (4)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Vicente Huidobro: Altazor",
+    "author": "Vicente Huidobro",
+    "edition": "Editorial Altazor",
+    "shelf": 41,
+    "position": "Horizontal Stack (6)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Writing About Movies (Third Edition)",
+    "author": "Karen Gocsik",
+    "edition": "W. W. Norton & Company",
+    "shelf": 41,
+    "position": "Horizontal Stack (8)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Steinbeck: A Life in Letters",
+    "author": "Elaine Steinbeck & Robert Wallsten",
+    "edition": "Penguin Books",
+    "shelf": 41,
+    "position": "Horizontal Stack (9)",
+    "top_category": null,
+    "sub_category": null
+  },
+  {
+    "title": "Pale Horse, Pale Rider",
+    "author": "Katherine Anne Porter",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz.)",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014706835.jpg"
+  },
+  {
+    "title": "The Red Badge of Courage",
+    "author": "Stephen Crane",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz.)",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014706835.jpg"
+  },
+  {
+    "title": "Five Comedies of Aristophanes",
+    "author": "Aristophanes",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz.)",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014706835.jpg"
+  },
+  {
+    "title": "The Mayor of Casterbridge",
+    "author": "Thomas Hardy",
+    "edition": "Signet Classic (likely)",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz.)",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014706835.jpg"
+  },
+  {
+    "title": "The Bantam New College Spanish & English Dictionary",
+    "author": "S.B. Williams",
+    "edition": "Bantam",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz.)",
+    "top_category": "History & Reference",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014706835.jpg"
+  },
+  {
+    "title": "The Grapes of Wrath",
+    "author": "John Steinbeck",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 16,
+    "position": "Top Stack Right (Horiz.)",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014706835.jpg"
+  },
+  {
+    "title": "Omeros",
+    "author": "Derek Walcott",
+    "edition": "FSG",
+    "shelf": 6,
+    "position": "Overhead Stack A",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014559285.jpg"
+  },
+  {
+    "title": "Siddhartha",
+    "author": "Hermann Hesse",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 16,
+    "position": "Top Stack (Horiz.)",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014728122.jpg"
+  },
+  {
+    "title": "Angle of Repose",
+    "author": "Wallace Stegner",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 16,
+    "position": "Top Stack (Horiz.)",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014728122.jpg"
+  },
+  {
+    "title": "Man and His Symbols",
+    "author": "Carl G. Jung",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 16,
+    "position": "Top Stack (Horiz.)",
+    "top_category": "Philosophy & Theory",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014728122.jpg"
+  },
+  {
+    "title": "Collected Plays: One",
+    "author": "Bertolt Brecht",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 21,
+    "position": "Vertical",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014800429.jpg"
+  },
+  {
+    "title": "Selected Lives",
+    "author": "Plutarch",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 21,
+    "position": "Vertical",
+    "top_category": "History & Reference",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_014800429.jpg"
+  },
+  {
+    "title": "El Señor Presidente (title to confirm)",
+    "author": "Miguel Ángel Asturias",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 36,
+    "position": "Top Stack (Horiz.)",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_015111806.jpg"
+  },
+  {
+    "title": "The Winds of War",
+    "author": "Herman Wouk",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 40,
+    "position": "Top Stack (Horiz.)",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_015116127.jpg"
+  },
+  {
+    "title": "The Collected Poems",
+    "author": "Sylvia Plath",
+    "edition": "(spine visible, edition unconfirmed)",
+    "shelf": 40,
+    "position": "Vertical",
+    "top_category": "Literature",
+    "sub_category": null,
+    "source": "photo audit",
+    "source_photo": "PXL_20260522_015120912.jpg"
+  }
+]

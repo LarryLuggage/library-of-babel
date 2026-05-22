@@ -1,0 +1,326 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+}
+
+.catalogue-page {
+  --catalogue-paper: #ebe0c4;
+  --catalogue-paper-light: #f6efd9;
+  --catalogue-ink: #211b18;
+  --catalogue-faded-ink: #5a4337;
+  --catalogue-rule: #765847;
+  --catalogue-rubric: #7b2124;
+  --catalogue-green: #284d43;
+  background:
+    linear-gradient(90deg, rgba(33, 27, 24, 0.1), transparent 8%, transparent 92%, rgba(33, 27, 24, 0.12)),
+    repeating-linear-gradient(
+      0deg,
+      rgba(255, 255, 255, 0.06) 0,
+      rgba(255, 255, 255, 0.06) 1px,
+      transparent 1px,
+      transparent 7px
+    ),
+    var(--catalogue-paper);
+  color: var(--catalogue-ink);
+  font-family: "Iowan Old Style", "Palatino Linotype", Baskerville, Georgia,
+    serif;
+  min-height: 100vh;
+  padding: clamp(1.25rem, 2.8vw, 3rem);
+}
+
+.catalogue-masthead,
+.catalogue-frontmatter,
+.catalogue-ledger {
+  margin-inline: auto;
+  max-width: 92rem;
+}
+
+.catalogue-masthead {
+  border-block: 3px double var(--catalogue-rule);
+  display: grid;
+  justify-items: center;
+  padding-block: clamp(1.5rem, 3vw, 3.25rem);
+  text-align: center;
+}
+
+.catalogue-kicker,
+.catalogue-ledger-heading p {
+  color: var(--catalogue-rubric);
+  font-size: 0.82rem;
+  font-variant: small-caps;
+  font-weight: 700;
+  margin: 0;
+  text-transform: lowercase;
+}
+
+.catalogue-masthead h1 {
+  border-bottom: 1px solid var(--catalogue-rule);
+  color: var(--catalogue-ink);
+  font-size: clamp(3.3rem, 9vw, 8.6rem);
+  font-weight: 500;
+  line-height: 0.88;
+  margin: 0.4rem 0 0;
+  max-width: 64rem;
+  padding-bottom: clamp(0.8rem, 1.6vw, 1.25rem);
+  text-transform: uppercase;
+  width: 100%;
+}
+
+.catalogue-dek {
+  color: var(--catalogue-faded-ink);
+  font-size: clamp(1.15rem, 1.9vw, 1.75rem);
+  line-height: 1.35;
+  margin: clamp(1rem, 2vw, 1.8rem) 0 0;
+  max-width: 48rem;
+}
+
+.catalogue-totals {
+  border-top: 1px solid var(--catalogue-rule);
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: clamp(1.35rem, 2.8vw, 2.4rem) 0 0;
+  max-width: 48rem;
+  padding-top: 1rem;
+  width: 100%;
+}
+
+.catalogue-totals div {
+  border-left: 1px solid rgba(118, 88, 71, 0.72);
+  padding-inline: clamp(0.75rem, 1.6vw, 1.25rem);
+}
+
+.catalogue-totals div:first-child {
+  border-left: 0;
+  padding-left: 0;
+}
+
+.catalogue-totals dt,
+.catalogue-divisions h2,
+.catalogue-alphabet h2 {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.8rem;
+  font-variant: small-caps;
+  font-weight: 700;
+  line-height: 1;
+  margin: 0;
+}
+
+.catalogue-totals dd {
+  color: var(--catalogue-green);
+  font-size: clamp(1.8rem, 3.2vw, 3rem);
+  line-height: 1;
+  margin: 0.48rem 0 0;
+}
+
+.catalogue-frontmatter {
+  border-bottom: 1px solid var(--catalogue-rule);
+  display: grid;
+  gap: clamp(1.5rem, 3vw, 3rem);
+  grid-template-columns: minmax(20rem, 1fr) minmax(18rem, 1fr);
+  padding-block: clamp(1.45rem, 3vw, 2.5rem);
+}
+
+.catalogue-divisions ul {
+  display: grid;
+  gap: 0.35rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  list-style: none;
+  margin: 0.95rem 0 0;
+  padding: 0;
+}
+
+.catalogue-divisions li {
+  border-bottom: 1px dotted rgba(90, 67, 55, 0.76);
+  display: flex;
+  gap: 0.65rem;
+  justify-content: space-between;
+  min-width: 0;
+  padding-bottom: 0.25rem;
+}
+
+.catalogue-divisions span {
+  min-width: 0;
+}
+
+.catalogue-divisions strong {
+  color: var(--catalogue-rubric);
+  font-weight: 600;
+}
+
+.catalogue-alphabet ol {
+  display: grid;
+  gap: 0.4rem;
+  grid-template-columns: repeat(auto-fit, minmax(2.4rem, 1fr));
+  list-style: none;
+  margin: 0.95rem 0 0;
+  padding: 0;
+}
+
+.catalogue-alphabet a {
+  border: 1px solid rgba(118, 88, 71, 0.86);
+  color: var(--catalogue-ink);
+  display: grid;
+  font-size: 1.16rem;
+  height: 2.5rem;
+  place-items: center;
+  text-decoration: none;
+}
+
+.catalogue-alphabet a:hover,
+.catalogue-alphabet a:focus-visible {
+  background: var(--catalogue-rubric);
+  border-color: var(--catalogue-rubric);
+  color: var(--catalogue-paper-light);
+}
+
+.catalogue-ledger {
+  padding-top: clamp(2rem, 4vw, 4rem);
+}
+
+.catalogue-ledger-heading {
+  border-bottom: 3px double var(--catalogue-rule);
+  margin-bottom: 1.5rem;
+  padding-bottom: clamp(0.9rem, 2vw, 1.35rem);
+  text-align: center;
+}
+
+.catalogue-ledger-heading h2 {
+  color: var(--catalogue-ink);
+  font-size: clamp(2rem, 4vw, 4.2rem);
+  font-weight: 500;
+  line-height: 1;
+  margin: 0.4rem 0 0;
+}
+
+.catalogue-letter {
+  display: grid;
+  gap: clamp(1rem, 2vw, 2rem);
+  grid-template-columns: clamp(3.4rem, 7vw, 6.4rem) minmax(0, 1fr);
+  padding-block: clamp(1.25rem, 2.5vw, 2.4rem);
+}
+
+.catalogue-letter + .catalogue-letter {
+  border-top: 1px solid rgba(118, 88, 71, 0.75);
+}
+
+.catalogue-letter h3 {
+  align-self: start;
+  border: 1px solid var(--catalogue-rule);
+  color: var(--catalogue-rubric);
+  font-size: clamp(2rem, 4vw, 4rem);
+  font-weight: 500;
+  line-height: 1;
+  margin: 0;
+  padding: 0.45rem 0.25rem 0.36rem;
+  position: sticky;
+  text-align: center;
+  top: 1rem;
+}
+
+.catalogue-letter ol {
+  column-gap: clamp(1.5rem, 3vw, 3.25rem);
+  columns: 2 30rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.catalogue-entry {
+  break-inside: avoid;
+  border-bottom: 1px dotted rgba(90, 67, 55, 0.58);
+  display: grid;
+  gap: 0.35rem 0.7rem;
+  grid-template-columns: 2.4rem minmax(0, 1fr);
+  line-height: 1.38;
+  padding-block: 0.48rem 0.68rem;
+}
+
+.catalogue-entry-number {
+  color: var(--catalogue-rubric);
+  font-variant-numeric: tabular-nums;
+  grid-row: span 2;
+  padding-top: 0.08rem;
+}
+
+.catalogue-entry p {
+  font-size: clamp(1rem, 1.2vw, 1.13rem);
+  margin: 0;
+  min-width: 0;
+}
+
+.catalogue-author {
+  font-weight: 700;
+}
+
+.catalogue-entry cite {
+  font-style: italic;
+}
+
+.catalogue-edition {
+  color: var(--catalogue-faded-ink);
+}
+
+.catalogue-division {
+  color: var(--catalogue-green);
+  display: block;
+  font-size: 0.93em;
+  font-variant: small-caps;
+}
+
+.catalogue-location {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.92rem;
+  font-variant-numeric: tabular-nums;
+  grid-column: 2;
+}
+
+@media (max-width: 52rem) {
+  .catalogue-frontmatter {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogue-letter {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogue-letter h3 {
+    position: static;
+    width: 3.8rem;
+  }
+}
+
+@media (max-width: 34rem) {
+  .catalogue-page {
+    padding-inline: 0.85rem;
+  }
+
+  .catalogue-divisions ul {
+    grid-template-columns: 1fr;
+  }
+
+  .catalogue-entry {
+    grid-template-columns: 2rem minmax(0, 1fr);
+  }
+}

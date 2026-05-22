@@ -1,0 +1,614 @@
+[
+  {
+    "title": "Aesthetic Theory",
+    "author": "Theodor W. Adorno",
+    "category": "Frankfurt School & Aesthetics",
+    "edition": "University of Minnesota Press Paperback"
+  },
+  {
+    "title": "Notes to Literature: Volume One",
+    "author": "Theodor W. Adorno",
+    "category": "Frankfurt School & Aesthetics",
+    "edition": "Columbia University Press Paperback"
+  },
+  {
+    "title": "Notes to Literature: Volume Two",
+    "author": "Theodor W. Adorno",
+    "category": "Frankfurt School & Aesthetics",
+    "edition": "Columbia University Press Paperback"
+  },
+  {
+    "title": "Aesthetics and Politics",
+    "author": "Theodor W. Adorno, Walter Benjamin, Ernst Bloch, Bertolt Brecht, Georg Lukács",
+    "category": "Marxist Aesthetics",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "Illuminations",
+    "author": "Walter Benjamin",
+    "category": "Frankfurt School & Aesthetics",
+    "edition": "Schocken Books Paperback"
+  },
+  {
+    "title": "Mythologies",
+    "author": "Roland Barthes",
+    "category": "Structuralism & Semiotics",
+    "edition": "Hill and Wang Paperback"
+  },
+  {
+    "title": "The Savage Mind",
+    "author": "Claude Lévi-Strauss",
+    "category": "Structuralism & Anthropology",
+    "edition": "University of Chicago Press Paperback"
+  },
+  {
+    "title": "Of Grammatology",
+    "author": "Jacques Derrida",
+    "category": "Post-Structuralism & Deconstruction",
+    "edition": "Johns Hopkins University Press Paperback"
+  },
+  {
+    "title": "A Derrida Reader: Between the Blinds",
+    "author": "Jacques Derrida (Peggy Kamuf ed.)",
+    "category": "Post-Structuralism & Deconstruction",
+    "edition": "Columbia University Press Paperback"
+  },
+  {
+    "title": "Anti-Oedipus: Capitalism and Schizophrenia",
+    "author": "Gilles Deleuze & Félix Guattari",
+    "category": "Continental Philosophy",
+    "edition": "Penguin Classics Paperback"
+  },
+  {
+    "title": "A Thousand Plateaus: Capitalism and Schizophrenia",
+    "author": "Gilles Deleuze & Félix Guattari",
+    "category": "Continental Philosophy",
+    "edition": "University of Minnesota Press Paperback"
+  },
+  {
+    "title": "Simulacra and Simulation",
+    "author": "Jean Baudrillard",
+    "category": "Postmodern Theory",
+    "edition": "University of Michigan Press Paperback"
+  },
+  {
+    "title": "The Society of the Spectacle",
+    "author": "Guy Debord",
+    "category": "Situationist International",
+    "edition": "Zone Books Paperback"
+  },
+  {
+    "title": "Critique of Everyday Life: The Three-Volume Text",
+    "author": "Henri Lefebvre",
+    "category": "Marxist Geography & Urbanism",
+    "edition": "Verso Books One-Volume Edition"
+  },
+  {
+    "title": "The Postmodern Condition",
+    "author": "Jean-François Lyotard",
+    "category": "Postmodern Theory",
+    "edition": "University of Minnesota Press Paperback"
+  },
+  {
+    "title": "Postmodernism, or, The Cultural Logic of Late Capitalism",
+    "author": "Fredric Jameson",
+    "category": "Marxist Cultural Criticism",
+    "edition": "Duke University Press Paperback"
+  },
+  {
+    "title": "The Prison-House of Language",
+    "author": "Fredric Jameson",
+    "category": "Formalism & Structuralism",
+    "edition": "Princeton University Press Paperback"
+  },
+  {
+    "title": "The Philosophical Discourse of Modernity",
+    "author": "Jürgen Habermas",
+    "category": "Critical Theory",
+    "edition": "MIT Press Paperback"
+  },
+  {
+    "title": "Capital: Volume 1",
+    "author": "Karl Marx",
+    "category": "Political Economy",
+    "edition": "Penguin Classics Paperback"
+  },
+  {
+    "title": "The Viking Portable Library: Karl Marx",
+    "author": "Karl Marx",
+    "category": "Political Economy",
+    "edition": "Viking Portable Library Paperback"
+  },
+  {
+    "title": "A Companion to Marx's Capital",
+    "author": "David Harvey",
+    "category": "Marxist Geography & Political Economy",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "The Condition of Postmodernity",
+    "author": "David Harvey",
+    "category": "Marxist Geography & Spatial Theory",
+    "edition": "Blackwell Publishers Paperback"
+  },
+  {
+    "title": "Prison Notebooks",
+    "author": "Antonio Gramsci",
+    "category": "Marxist Political Theory",
+    "edition": "Lawrence & Wishart / International Publishers"
+  },
+  {
+    "title": "The Destruction of Reason",
+    "author": "Georg Lukács",
+    "category": "Marxist Philosophy",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "The Historical Novel",
+    "author": "Georg Lukács",
+    "category": "Marxist Literary Criticism",
+    "edition": "Beacon Press Paperback"
+  },
+  {
+    "title": "The Origin of Capitalism",
+    "author": "Ellen Meiksins Wood",
+    "category": "Political Economy & History",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "Progress and Poverty",
+    "author": "Henry George",
+    "category": "Political Economy",
+    "edition": "Modern Library Paperback"
+  },
+  {
+    "title": "Karl Marx's Theory of History: A Defence",
+    "author": "G.A. Cohen",
+    "category": "Analytical Marxism",
+    "edition": "Princeton University Press Paperback"
+  },
+  {
+    "title": "An Essay on Liberation",
+    "author": "Herbert Marcuse",
+    "category": "Frankfurt School & New Left",
+    "edition": "Beacon Press Paperback"
+  },
+  {
+    "title": "The State and Revolution",
+    "author": "V.I. Lenin",
+    "category": "Marxist Political Theory",
+    "edition": "Penguin Classics Paperback"
+  },
+  {
+    "title": "Literature and Revolution",
+    "author": "Leon Trotsky",
+    "category": "Marxist Literary Criticism",
+    "edition": "Pathfinder Press Paperback"
+  },
+  {
+    "title": "History of the Russian Revolution",
+    "author": "Leon Trotsky",
+    "category": "Marxist History & Theory",
+    "edition": "Pathfinder Press Paperback"
+  },
+  {
+    "title": "Open Veins of Latin America",
+    "author": "Eduardo Galeano",
+    "category": "Dependency Theory & Political Economy",
+    "edition": "Monthly Review Press Paperback"
+  },
+  {
+    "title": "Marx y América Latina",
+    "author": "José M. Aricó",
+    "category": "Latin American Marxism",
+    "edition": "Alianza Editorial Paperback"
+  },
+  {
+    "title": "Marx and Freud in Latin America",
+    "author": "Bruno Bosteels",
+    "category": "Latin American Political Theory",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "The Actuality of Communism",
+    "author": "Bruno Bosteels",
+    "category": "Contemporary Left Theory",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "Ideology",
+    "author": "Terry Eagleton",
+    "category": "Marxist Literary Criticism & Theory",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "The Fragile Absolute",
+    "author": "Slavoj Žižek",
+    "category": "Contemporary Psychoanalytic Theory",
+    "edition": "Verso Books Essential Žižek Series"
+  },
+  {
+    "title": "First As Tragedy, Then As Farce",
+    "author": "Slavoj Žižek",
+    "category": "Contemporary Political Theory",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "Mapping Ideology",
+    "author": "Slavoj Žižek (Editor)",
+    "category": "Contemporary Political Theory",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "God in Pain: Inversions of Apocalypse",
+    "author": "Slavoj Žižek & Boris Gunjević",
+    "category": "Theology & Philosophy",
+    "edition": "Seven Stories Press Paperback"
+  },
+  {
+    "title": "Event: A Philosophical Journey Through A Concept",
+    "author": "Slavoj Žižek",
+    "category": "Contemporary Philosophy",
+    "edition": "Melville House Paperback"
+  },
+  {
+    "title": "The Year of Dreaming Dangerously",
+    "author": "Slavoj Žižek",
+    "category": "Contemporary Political Theory",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "Capitalist Realism: Is There No Alternative?",
+    "author": "Mark Fisher",
+    "category": "Contemporary Cultural Theory",
+    "edition": "Zero Books Paperback"
+  },
+  {
+    "title": "Ghosts of My Life: Writings on Depression, Hauntology and Lost Futures",
+    "author": "Mark Fisher",
+    "category": "Contemporary Cultural Theory",
+    "edition": "Zero Books Paperback"
+  },
+  {
+    "title": "Against the Web: A Cosmopolitan Answer to the New Right",
+    "author": "Michael Brooks",
+    "category": "Contemporary Left Theory",
+    "edition": "Zero Books Paperback"
+  },
+  {
+    "title": "Give Them an Argument: Logic for the Left",
+    "author": "Ben Burgis",
+    "category": "Contemporary Left Theory",
+    "edition": "Zero Books Paperback"
+  },
+  {
+    "title": "The FNL of the End of History",
+    "author": "Alex Hochuli, George Hoare, Philip Cunliffe",
+    "category": "Contemporary Political Theory",
+    "edition": "Zero Books Paperback"
+  },
+  {
+    "title": "Democracy and Other Neoliberal Fantasies",
+    "author": "Jodi Dean",
+    "category": "Contemporary Political Theory",
+    "edition": "Duke University Press Paperback"
+  },
+  {
+    "title": "Scorched Earth: Beyond the Digital Age to a Post-Capitalist World",
+    "author": "Jonathan Crary",
+    "category": "Contemporary Social Theory",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "Being and Nothingness",
+    "author": "Jean-Paul Sartre",
+    "category": "Existentialism",
+    "edition": "Washington Square Press Paperback"
+  },
+  {
+    "title": "What Is Literature? and Other Essays",
+    "author": "Jean-Paul Sartre",
+    "category": "Existentialism & Aesthetics",
+    "edition": "Harvard University Press Paperback"
+  },
+  {
+    "title": "The Rebel",
+    "author": "Albert Camus",
+    "category": "Existentialism & Absurdism",
+    "edition": "Vintage Books Paperback"
+  },
+  {
+    "title": "The Myth of Sisyphus and Other Essays",
+    "author": "Albert Camus",
+    "category": "Existentialism & Absurdism",
+    "edition": "Vintage Books Paperback"
+  },
+  {
+    "title": "Basic Writings",
+    "author": "Martin Heidegger",
+    "category": "Phenomenology & Ontology",
+    "edition": "Harper Perennial Modern Thought"
+  },
+  {
+    "title": "The Rigor of Angels: Heidegger, Bohr, and the Quest for the Nature of Reality",
+    "author": "William Egginton",
+    "category": "Philosophy of Science",
+    "edition": "Pantheon Books Hardcover"
+  },
+  {
+    "title": "The World as Will and Representation: Volume 1",
+    "author": "Arthur Schopenhauer",
+    "category": "19th Century German Philosophy",
+    "edition": "Dover Publications Paperback"
+  },
+  {
+    "title": "Essays and Aphorisms",
+    "author": "Arthur Schopenhauer",
+    "category": "19th Century German Philosophy",
+    "edition": "Penguin Classics Paperback"
+  },
+  {
+    "title": "The Viking Portable Library: Nietzsche",
+    "author": "Friedrich Nietzsche",
+    "category": "19th Century German Philosophy",
+    "edition": "Penguin Books Paperback"
+  },
+  {
+    "title": "Phenomenology of Spirit",
+    "author": "G.W.F. Hegel (A.V. Miller trans.)",
+    "category": "German Idealism",
+    "edition": "Oxford University Press Paperback"
+  },
+  {
+    "title": "Critique of Pure Reason",
+    "author": "Immanuel Kant",
+    "category": "Enlightenment Philosophy",
+    "edition": "Penguin Classics Paperback"
+  },
+  {
+    "title": "The Cambridge Companion to Kant",
+    "author": "Paul Guyer (Editor)",
+    "category": "Enlightenment Philosophy",
+    "edition": "Cambridge University Press Paperback"
+  },
+  {
+    "title": "Major Works",
+    "author": "Ludwig Wittgenstein",
+    "category": "Analytic Philosophy",
+    "edition": "Harper Perennial Paperback"
+  },
+  {
+    "title": "Philosophical Explanations",
+    "author": "Robert Nozick",
+    "category": "Analytic Philosophy & Epistemology",
+    "edition": "Belknap / Harvard University Press Paperback"
+  },
+  {
+    "title": "Anarchy, State, and Utopia",
+    "author": "Robert Nozick",
+    "category": "Libertarian & Political Philosophy",
+    "edition": "Basic Books Paperback"
+  },
+  {
+    "title": "The Crooked Timber of Humanity",
+    "author": "Isaiah Berlin",
+    "category": "History of Ideas",
+    "edition": "Princeton University Press Paperback"
+  },
+  {
+    "title": "Eichmann in Jerusalem: A Report on the Banality of Evil",
+    "author": "Hannah Arendt",
+    "category": "Political Philosophy",
+    "edition": "Penguin Classics Paperback"
+  },
+  {
+    "title": "The Life You Save May Be Your Own",
+    "author": "Paul Elie",
+    "category": "Theology & Intellectual History",
+    "edition": "Farrar, Straus and Giroux Paperback"
+  },
+  {
+    "title": "The Republic",
+    "author": "Plato",
+    "category": "Classical Philosophy",
+    "edition": "Penguin Classics Paperback"
+  },
+  {
+    "title": "Five Dialogues",
+    "author": "Plato",
+    "category": "Classical Philosophy",
+    "edition": "Hackett Publishing Paperback"
+  },
+  {
+    "title": "The Nicomachean Ethics",
+    "author": "Aristotle",
+    "category": "Classical Philosophy",
+    "edition": "Oxford World's Classics Paperback"
+  },
+  {
+    "title": "Poetics",
+    "author": "Aristotle",
+    "category": "Classical Philosophy",
+    "edition": "W. W. Norton & Company Critical Edition"
+  },
+  {
+    "title": "Greek and Roman Philosophy After Aristotle",
+    "author": "Jason L. Saunders (Editor)",
+    "category": "Hellenistic Philosophy",
+    "edition": "Free Press Paperback"
+  },
+  {
+    "title": "Discourses on Livy",
+    "author": "Niccolò Machiavelli",
+    "category": "Renaissance Political Thought",
+    "edition": "Barnes & Noble Classics Paperback"
+  },
+  {
+    "title": "The Prince",
+    "author": "Niccolò Machiavelli",
+    "category": "Renaissance Political Thought",
+    "edition": "University of Chicago Press Paperback"
+  },
+  {
+    "title": "The Book of God",
+    "author": "Baruch Spinoza",
+    "category": "Early Modern Philosophy",
+    "edition": "The Wisdom Library Hardcover"
+  },
+  {
+    "title": "The Social Contract and Discourse on the Origin of Inequality",
+    "author": "Jean-Jacques Rousseau",
+    "category": "Enlightenment Philosophy",
+    "edition": "Pocket Books Paperback"
+  },
+  {
+    "title": "The Confessions",
+    "author": "Jean-Jacques Rousseau",
+    "category": "Enlightenment Philosophy",
+    "edition": "Penguin Classics Paperback"
+  },
+  {
+    "title": "Montaigne's Essays: A Selection",
+    "author": "Michel de Montaigne",
+    "category": "Renaissance Philosophy",
+    "edition": "NYRB Classics Paperback"
+  },
+  {
+    "title": "The Essays of Montaigne (Volume 25)",
+    "author": "Michel de Montaigne",
+    "category": "Renaissance Philosophy",
+    "edition": "Britannica Great Books Hardcover"
+  },
+  {
+    "title": "More • Utopia",
+    "author": "Thomas More",
+    "category": "Renaissance Philosophy",
+    "edition": "Classical Paperback Edition"
+  },
+  {
+    "title": "Introduction to St. Thomas Aquinas",
+    "author": "Anton C. Pegis (Editor)",
+    "category": "Medieval Scholasticism",
+    "edition": "Modern Library Hardcover"
+  },
+  {
+    "title": "Confessions",
+    "author": "Saint Augustine",
+    "category": "Late Antiquity Theology",
+    "edition": "Oxford World's Classics Paperback"
+  },
+  {
+    "title": "The Problems of Philosophy",
+    "author": "Bertrand Russell",
+    "category": "Analytic Philosophy & Epistemology",
+    "edition": "Oxford University Press Paperback"
+  },
+  {
+    "title": "Leisure: The Basis of Culture",
+    "author": "Josef Pieper",
+    "category": "20th Century Thomism",
+    "edition": "Ignatius Press Paperback"
+  },
+  {
+    "title": "Gödel, Escher, Bach: An Eternal Golden Braid",
+    "author": "Douglas R. Hofstadter",
+    "category": "Systems, Cognitive Science & Logic",
+    "edition": "Vintage Books Paperback"
+  },
+  {
+    "title": "It's Not Luck",
+    "author": "Eliyahu M. Goldratt",
+    "category": "Systems Theory & Management",
+    "edition": "North River Press Paperback"
+  },
+  {
+    "title": "The Freud Reader",
+    "author": "Sigmund Freud (Peter Gay ed.)",
+    "category": "Psychoanalysis",
+    "edition": "W. W. Norton & Company Paperback"
+  },
+  {
+    "title": "The Gaze of Orpheus",
+    "author": "Maurice Blanchot",
+    "category": "Post-Structuralist Aesthetics",
+    "edition": "Station Hill Press Paperback"
+  },
+  {
+    "title": "Graphs, Maps, Trees: Abstract Models for Literary History",
+    "author": "Franco Moretti",
+    "category": "Quantitative Literary Sociology",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "Rise of the Novel",
+    "author": "Ian Watt",
+    "category": "Linguistics & Literary Sociology",
+    "edition": "University of California Press Paperback"
+  },
+  {
+    "title": "The Novel and the Police",
+    "author": "D.A. Miller",
+    "category": "Structuralist Literary Criticism",
+    "edition": "University of California Press Paperback"
+  },
+  {
+    "title": "The Cambridge Companion to Kant",
+    "author": "Paul Guyer (Editor)",
+    "category": "Critical Philosophy",
+    "edition": "Cambridge University Press Paperback"
+  },
+  {
+    "title": "The Technological Society",
+    "author": "Jacques Ellul",
+    "category": "Sociology of Technology",
+    "edition": "Vintage Books Paperback"
+  },
+  {
+    "title": "War and Cinema: The Logistics of Perception",
+    "author": "Paul Virilio",
+    "category": "Media, Technology & Space",
+    "edition": "Verso Books Paperback"
+  },
+  {
+    "title": "delete: The Virtue of Forgetting in the Digital Age",
+    "author": "Viktor Mayer-Schönberger",
+    "category": "Sociology of Technology",
+    "edition": "Princeton University Press Hardcover"
+  },
+  {
+    "title": "Fragments of an Infinite Memory: My Life with the Internet",
+    "author": "Maël Renouard",
+    "category": "Sociology of Technology",
+    "edition": "NYRB Classics Paperback"
+  },
+  {
+    "title": "The Field of Cultural Production",
+    "author": "Pierre Bourdieu",
+    "category": "Sociology of Culture & Language",
+    "edition": "Columbia University Press Paperback"
+  },
+  {
+    "title": "Ways of Seeing",
+    "author": "John Berger",
+    "category": "Visual Sociology & Marxist Criticism",
+    "edition": "BBC / Penguin Books Paperback"
+  },
+  {
+    "title": "The Spectre of Babeuf",
+    "author": "Ian Birchall",
+    "category": "Political Theory",
+    "edition": "Palgrave Macmillan Hardcover"
+  },
+  {
+    "title": "A Modern Introduction to Philosophy (Third Edition)",
+    "author": "Paul Edwards & Arthur Pap",
+    "category": "General Reference",
+    "edition": "Free Press Hardcover"
+  },
+  {
+    "title": "30-Second Philosophies",
+    "author": "Barry Loewer (Editor)",
+    "category": "General Reference",
+    "edition": "Quarto Publishing Hardcover"
+  }
+]
