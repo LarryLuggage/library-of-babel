@@ -1,41 +1,27 @@
 import fullShelfCatalogue from "../../shelf_catalog_full.json";
-
-type CatalogueBook = {
-  author: string;
-  edition: string;
-  position: string;
-  shelf: number;
-  sub_category: string | null;
-  title: string;
-  top_category: string | null;
-};
+import { CatalogueConstellation } from "./catalogue-constellation";
+import {
+  compareCatalogueBooks,
+  getDivision,
+  type CatalogueBook,
+} from "@/lib/books/catalogue";
 
 const books = fullShelfCatalogue as CatalogueBook[];
-const titleCollator = new Intl.Collator("en", {
-  numeric: true,
-  sensitivity: "base",
-});
-
-function compareEntries(first: CatalogueBook, second: CatalogueBook) {
-  return (
-    titleCollator.compare(first.author, second.author) ||
-    titleCollator.compare(first.title, second.title) ||
-    first.shelf - second.shelf
-  );
-}
 
 function getInitial(author: string) {
-  return author.match(/[a-z]/i)?.[0].toLocaleUpperCase("en-US") ?? "#";
+  const searchableAuthor = author
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+
+  return searchableAuthor.match(/[a-z]/i)?.[0].toLocaleUpperCase("en-US") ?? "#";
 }
 
-function getDivision(book: CatalogueBook) {
-  return book.sub_category ?? book.top_category ?? "Unclassified";
-}
-
-const catalogueEntries = [...books].sort(compareEntries).map((book, index) => ({
-  ...book,
-  number: index + 1,
-}));
+const catalogueEntries = [...books]
+  .sort(compareCatalogueBooks)
+  .map((book, index) => ({
+    ...book,
+    number: index + 1,
+  }));
 
 const catalogueByInitial = Map.groupBy(catalogueEntries, (book) =>
   getInitial(book.author),
@@ -104,6 +90,8 @@ export default function Home() {
           </ol>
         </nav>
       </section>
+
+      <CatalogueConstellation books={catalogueEntries} />
 
       <section className="catalogue-ledger" aria-labelledby="ledger-title">
         <div className="catalogue-ledger-heading">
