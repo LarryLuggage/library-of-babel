@@ -33,3 +33,19 @@ With the introduction of enriched synopsis descriptions and categorization tags 
 ### Consequences
 * Clicking any author ledger entry dynamically overlay-scales a beautiful, vintage card detailing all book information, including edition, divisions, synopsis, and tags.
 * Keeps the main ledger layout compact and readable while revealing metadata context on demand.
+
+## ADR 3: Interactive Tags & Hoisted State Subject Index Overlay
+
+### Context
+With the introduction of the library detail card modal and the constellation detail panel, tags were rendered as static text badges. Users needed a way to discover other volumes sharing the same subject or tag without leaving the interactive visualization map or losing their place in the ledger.
+
+### Decision
+1. **Interactive Tags**: We replaced static tag labels with interactive buttons (`.catalogue-tag-interactive`) in both the constellation detail sidebar and the library detail card overlay.
+2. **Hoisted State Management**: We converted `page.tsx` into a Client Component to manage hoisted states: `activeBook` and `activeTag`. This allows sibling components to trigger overlays page-wide:
+   - Clicking a tag in the constellation detail panel opens the page-level Subject Index Overlay.
+   - Clicking a tag in the Library Detail Card updates the state to show the Subject Index Overlay.
+3. **Subject Index Drawer Card**: We created `tag-matches-overlay.tsx` to list all volumes sharing the active tag. Book items in this list are clickable links that close the search overlay and immediately open the corresponding `BookDetailCard` overlay.
+
+### Consequences
+* Users can pivot between books and subjects fluidly across all sections of the application.
+* The state is clean, modularized, and centralized at the page level, allowing any visualization node or catalog card to drive details on demand.

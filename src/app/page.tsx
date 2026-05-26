@@ -1,6 +1,11 @@
+"use client";
+
+import { useState } from "react";
 import fullShelfCatalogue from "../../shelf_catalog_full.json";
 import { CatalogueConstellation } from "./catalogue-constellation";
 import { CatalogueLedger } from "./catalogue-ledger";
+import { BookDetailCard } from "./book-detail-card";
+import { TagMatchesOverlay } from "./tag-matches-overlay";
 import {
   compareCatalogueBooks,
   type CatalogueBook,
@@ -39,6 +44,9 @@ const divisions = Object.entries(
   .sort((first, second) => second.count - first.count);
 
 export default function Home() {
+  const [activeBook, setActiveBook] = useState<(CatalogueBook & { number: number }) | null>(null);
+  const [activeTag, setActiveTag] = useState<string | null>(null);
+
   return (
     <main className="catalogue-page">
       <header className="catalogue-masthead">
@@ -91,9 +99,26 @@ export default function Home() {
         </nav>
       </section>
 
-      <CatalogueConstellation books={catalogueEntries} />
+      <CatalogueConstellation books={catalogueEntries} onTagClick={setActiveTag} />
 
-      <CatalogueLedger entries={catalogueEntries} />
+      <CatalogueLedger entries={catalogueEntries} onBookClick={setActiveBook} />
+
+      {activeBook && (
+        <BookDetailCard
+          book={activeBook}
+          onClose={() => setActiveBook(null)}
+          onTagClick={setActiveTag}
+        />
+      )}
+
+      {activeTag && (
+        <TagMatchesOverlay
+          tag={activeTag}
+          books={catalogueEntries}
+          onClose={() => setActiveTag(null)}
+          onBookClick={setActiveBook}
+        />
+      )}
     </main>
   );
 }

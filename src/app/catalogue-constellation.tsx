@@ -79,8 +79,10 @@ function getReasonLabel(reasons: string[]) {
 
 export function CatalogueConstellation({
   books,
+  onTagClick,
 }: {
   books: CatalogueBook[];
+  onTagClick?: (tag: string) => void;
 }) {
   const booksByKey = useMemo(
     () => new Map(books.map((book) => [getBookKey(book), book])),
@@ -207,11 +209,25 @@ export function CatalogueConstellation({
           )}
           {selectedConnection.book.tags && selectedConnection.book.tags.length > 0 && (
             <div className="catalogue-map-tags" aria-label="Book tags">
-              {selectedConnection.book.tags.map((tag) => (
-                <span key={tag} className="catalogue-tag">
-                  {tag}
-                </span>
-              ))}
+              {selectedConnection.book.tags.map((tag) => {
+                if (onTagClick) {
+                  return (
+                    <button
+                      key={tag}
+                      className="catalogue-tag catalogue-tag-interactive"
+                      onClick={() => onTagClick(tag)}
+                      type="button"
+                    >
+                      {tag}
+                    </button>
+                  );
+                }
+                return (
+                  <span key={tag} className="catalogue-tag">
+                    {tag}
+                  </span>
+                );
+              })}
             </div>
           )}
           <h4>Why it appears</h4>
