@@ -4,6 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "apply:book-enrichment": "node scripts/apply-catalogue-enrichment.mjs",
+    "enrich:books": "node scripts/enrich-catalogue-books.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint"

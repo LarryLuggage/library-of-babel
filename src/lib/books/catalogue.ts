@@ -3,7 +3,9 @@ export type CatalogueBook = {
   edition: string;
   position: string;
   shelf: number;
+  summary?: string | null;
   sub_category: string | null;
+  tags?: string[];
   title: string;
   top_category: string | null;
 };
@@ -62,6 +64,24 @@ function addShelfConnection(
   return 0;
 }
 
+function addTagConnection(
+  focus: CatalogueBook,
+  candidate: CatalogueBook,
+  reasons: string[],
+) {
+  const candidateTags = new Set(candidate.tags ?? []);
+  const sharedTags = (focus.tags ?? []).filter((tag) => candidateTags.has(tag));
+
+  if (sharedTags.length === 0) {
+    return 0;
+  }
+
+  const visibleTags = sharedTags.slice(0, 3).join(", ");
+
+  reasons.push(`Shared catalogue tags: ${visibleTags}.`);
+  return Math.min(sharedTags.length * 3, 12);
+}
+
 export function compareCatalogueBooks(
   first: CatalogueBook,
   second: CatalogueBook,
@@ -91,6 +111,8 @@ export function getCatalogueConnection(
 
   const reasons: string[] = [];
   let score = addDivisionConnection(focus, candidate, reasons);
+
+  score += addTagConnection(focus, candidate, reasons);
 
   if (focus.author === candidate.author && focus.author !== "Various") {
     reasons.unshift(`Another work by ${focus.author}.`);

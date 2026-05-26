@@ -200,6 +200,20 @@ export function CatalogueConstellation({
               </dd>
             </div>
           </dl>
+          {selectedConnection.book.summary && (
+            <p className="catalogue-map-summary">
+              {selectedConnection.book.summary}
+            </p>
+          )}
+          {selectedConnection.book.tags && selectedConnection.book.tags.length > 0 && (
+            <div className="catalogue-map-tags" aria-label="Book tags">
+              {selectedConnection.book.tags.map((tag) => (
+                <span key={tag} className="catalogue-tag">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
           <h4>Why it appears</h4>
           <ul>
             {selectedConnection.reasons.map((reason) => (
