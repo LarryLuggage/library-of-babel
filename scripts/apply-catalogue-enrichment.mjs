@@ -31,6 +31,7 @@ const nextCatalogue = catalogue.map((book) => {
     ...book,
     summary: enrichedBook.summary,
     tags: enrichedBook.tags,
+    publish_year: enrichedBook.sources?.open_library?.first_publish_year ?? null,
   };
 });
 

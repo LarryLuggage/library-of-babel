@@ -8,6 +8,7 @@ export type CatalogueBook = {
   tags?: string[];
   title: string;
   top_category: string | null;
+  publish_year: number | null;
 };
 
 export type CatalogueConnection = {

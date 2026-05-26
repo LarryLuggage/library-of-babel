@@ -49,3 +49,26 @@ With the introduction of the library detail card modal and the constellation det
 ### Consequences
 * Users can pivot between books and subjects fluidly across all sections of the application.
 * The state is clean, modularized, and centralized at the page level, allowing any visualization node or catalog card to drive details on demand.
+
+## ADR 4: Bibliographic Pathfinding & Tag Co-occurrence Graph Algorithms
+
+### Context
+To further enhance the semantic capabilities of the Library of Babel, the application required two new relational visualizers:
+1. A **Tag Co-occurrence Constellation** map showing relationships between frequently co-occurring topic tags in the library.
+2. A **Pathfinder** graph search showing the shortest semantic path connecting any two arbitrary volumes.
+
+### Decision
+1. **Breadth-First Search (BFS) Pathfinding**:
+   - Implemented a BFS algorithm in `src/lib/books/relations.ts` and `src/app/pathfinder-modal.tsx` to compute the shortest path between any two volumes.
+   - Using a level-by-level traversal ensures that the minimum number of hops (concept bridges) is identified.
+   - For path-length ties, the algorithm selects the path with the highest cumulative similarity score.
+2. **Tag Co-occurrence Matrix**:
+   - Designed a tag co-occurrence matrix in `src/lib/books/relations.ts` and `src/app/catalogue-constellation.tsx` to map nodes representing subject tags and links representing their co-occurrence frequency across volumes.
+3. **Hoisted States and Layout View Tabs**:
+   - Centralized state management in `src/app/page.tsx` using layout selector tabs to switch between the "Similarity Constellation" and "Tag Constellation", and between the "Shelf Ledger" and a horizontal "Chronological Scroll" grouped by decade.
+   - Introduced a "Borges' Oracle" (Aleph Modal) to generate random book suggestions with retro typewriter quotes.
+
+### Consequences
+* The application now supports full semantic tracing across 887 books.
+* Visualization pages dynamically adapt to modes without breaking state.
+* The Next.js production build succeeds with zero ESLint/TypeScript errors and warnings.
