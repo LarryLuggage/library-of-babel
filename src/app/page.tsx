@@ -1,8 +1,8 @@
 import fullShelfCatalogue from "../../shelf_catalog_full.json";
 import { CatalogueConstellation } from "./catalogue-constellation";
+import { CatalogueLedger } from "./catalogue-ledger";
 import {
   compareCatalogueBooks,
-  getDivision,
   type CatalogueBook,
 } from "@/lib/books/catalogue";
 
@@ -93,40 +93,7 @@ export default function Home() {
 
       <CatalogueConstellation books={catalogueEntries} />
 
-      <section className="catalogue-ledger" aria-labelledby="ledger-title">
-        <div className="catalogue-ledger-heading">
-          <p>Complete shelf ledger</p>
-          <h2 id="ledger-title">Entries by author</h2>
-        </div>
-
-        {[...catalogueByInitial.entries()].map(([initial, entries]) => (
-          <section
-            className="catalogue-letter"
-            id={`author-${initial}`}
-            key={initial}
-          >
-            <h3>{initial}</h3>
-            <ol>
-              {entries.map((book) => (
-                <li className="catalogue-entry" key={book.number}>
-                  <span className="catalogue-entry-number">{book.number}</span>
-                  <p>
-                    <span className="catalogue-author">{book.author}.</span>{" "}
-                    <cite>{book.title}.</cite>{" "}
-                    <span className="catalogue-edition">{book.edition}.</span>
-                    <span className="catalogue-division">
-                      {getDivision(book)}.
-                    </span>
-                  </p>
-                  <span className="catalogue-location">
-                    Shelf {book.shelf}. {book.position}.
-                  </span>
-                </li>
-              ))}
-            </ol>
-          </section>
-        ))}
-      </section>
+      <CatalogueLedger entries={catalogueEntries} />
     </main>
   );
 }
