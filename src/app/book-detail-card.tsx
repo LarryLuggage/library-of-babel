@@ -1,18 +1,37 @@
 "use client";
 
-import { type CatalogueBook } from "@/lib/books/catalogue";
+import { useMemo } from "react";
+import {
+  getBookKey,
+  getNearestConnections,
+  type CatalogueBook,
+} from "@/lib/books/catalogue";
 
 type LedgerBook = CatalogueBook & { number: number };
 
 export function BookDetailCard({
   book,
+  books,
+  onBookClick,
   onClose,
+  onStartPath,
   onTagClick,
 }: {
   book: LedgerBook;
+  books: LedgerBook[];
+  onBookClick: (book: LedgerBook) => void;
   onClose: () => void;
+  onStartPath: () => void;
   onTagClick?: (tag: string) => void;
 }) {
+  const relatedBooks = useMemo(
+    () =>
+      getNearestConnections(book, books, 3)
+        .map((connection) => books.find((candidate) => getBookKey(candidate) === getBookKey(connection.book)))
+        .filter((candidate): candidate is LedgerBook => Boolean(candidate)),
+    [book, books],
+  );
+
   return (
     <div
       className="catalogue-modal-overlay"
@@ -67,26 +86,52 @@ export function BookDetailCard({
           )}
 
           {book.tags && book.tags.length > 0 && (
-            <div className="card-tags" aria-label="Tags">
-              {book.tags.map((tag) => {
-                if (onTagClick) {
+            <div className="card-subjects">
+              <h4>Filter the catalogue by subject</h4>
+              <div className="card-tags" aria-label="Subject filters">
+                {book.tags.map((tag) => {
+                  if (onTagClick) {
+                    return (
+                      <button
+                        key={tag}
+                        className="card-tag catalogue-tag-interactive"
+                        onClick={() => onTagClick(tag)}
+                        type="button"
+                        aria-label={`Show catalogue volumes tagged ${tag}`}
+                      >
+                        {tag}
+                      </button>
+                    );
+                  }
                   return (
-                    <button
-                      key={tag}
-                      className="card-tag catalogue-tag-interactive"
-                      onClick={() => onTagClick(tag)}
-                      type="button"
-                    >
+                    <span key={tag} className="card-tag">
                       {tag}
-                    </button>
+                    </span>
                   );
-                }
-                return (
-                  <span key={tag} className="card-tag">
-                    {tag}
-                  </span>
-                );
-              })}
+                })}
+              </div>
+            </div>
+          )}
+
+          <div className="card-primary-actions">
+            <button type="button" onClick={onStartPath}>
+              Start a path from this volume
+            </button>
+          </div>
+
+          {relatedBooks.length > 0 && (
+            <div className="card-related-books">
+              <h4>Related volumes</h4>
+              <ul>
+                {relatedBooks.map((relatedBook) => (
+                  <li key={getBookKey(relatedBook)}>
+                    <button type="button" onClick={() => onBookClick(relatedBook)}>
+                      <cite>{relatedBook.title}</cite>
+                      <span>{relatedBook.author} · Shelf {relatedBook.shelf}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
             </div>
           )}
         </div>

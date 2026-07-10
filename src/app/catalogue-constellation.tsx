@@ -49,6 +49,10 @@ function getDefaultBookKey(books: CatalogueBook[]) {
   return getBookKey(borgesAnchor ?? books[0]);
 }
 
+function getBookLabel(book: CatalogueBook) {
+  return `${book.author}: ${book.title}`;
+}
+
 function getPosition(index: number, count: number) {
   const angle = -Math.PI / 2 + (index / count) * Math.PI * 2;
   const radius = 228;
@@ -111,6 +115,15 @@ export function CatalogueConstellation({
   const [connectionKey, setConnectionKey] = useState("");
 
   const focusBook = booksByKey.get(focusKey) ?? books[0];
+  const [focusSearch, setFocusSearch] = useState(() => getBookLabel(focusBook));
+  const [showFocusResults, setShowFocusResults] = useState(false);
+  const focusMatches = useMemo(() => {
+    const query = focusSearch.trim().toLocaleLowerCase("en-US");
+    if (!query) return books.slice(0, 10);
+    return books
+      .filter((book) => getBookLabel(book).toLocaleLowerCase("en-US").includes(query))
+      .slice(0, 10);
+  }, [books, focusSearch]);
   const connections = useMemo(
     () => positionConnections(getNearestConnections(focusBook, books, NEIGHBOR_COUNT)),
     [books, focusBook],
@@ -230,20 +243,52 @@ export function CatalogueConstellation({
           {mode === "similarity" ? (
             <>
               <label htmlFor="focus-volume">Focus volume</label>
-              <select
+              <div className="catalogue-map-search">
+              <input
                 id="focus-volume"
+                type="search"
+                role="combobox"
+                aria-autocomplete="list"
+                aria-controls="focus-volume-results"
+                aria-expanded={showFocusResults}
+                placeholder="Search title or author"
                 onChange={(event) => {
-                  setConnectionKey("");
-                  setFocusKey(event.target.value);
+                  setFocusSearch(event.target.value);
+                  setShowFocusResults(true);
                 }}
-                value={focusKey}
-              >
-                {books.map((book) => (
-                  <option key={getBookKey(book)} value={getBookKey(book)}>
-                    {book.author}: {book.title}
-                  </option>
-                ))}
-              </select>
+                onFocus={() => setShowFocusResults(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setShowFocusResults(false);
+                }}
+                value={focusSearch}
+              />
+              {showFocusResults && (
+                <ul id="focus-volume-results" role="listbox" className="catalogue-map-search-results">
+                  {focusMatches.map((book) => {
+                    const bookKey = getBookKey(book);
+                    return (
+                      <li key={bookKey} role="none">
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={bookKey === focusKey}
+                          onClick={() => {
+                            setConnectionKey("");
+                            setFocusKey(bookKey);
+                            setFocusSearch(getBookLabel(book));
+                            setShowFocusResults(false);
+                          }}
+                        >
+                          <strong>{book.author}</strong>
+                          <span>{book.title}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                  {focusMatches.length === 0 && <li className="no-matches" role="option" aria-disabled="true" aria-selected="false">No volumes match</li>}
+                </ul>
+              )}
+              </div>
             </>
           ) : (
             <>
@@ -322,6 +367,7 @@ export function CatalogueConstellation({
                   }}
                   title={getReasonLabel(connection.reasons)}
                   type="button"
+                  aria-label={`${connection.book.title} by ${connection.book.author}. ${getReasonLabel(connection.reasons)}`}
                 >
                   <cite>{connection.book.title}</cite>
                   <span>{connection.book.author}</span>
@@ -382,6 +428,7 @@ export function CatalogueConstellation({
                   }}
                   title={`Co-occurs ${tc.count} times`}
                   type="button"
+                  aria-label={`${tc.tag}, shared by ${tc.count} volumes with ${focusTag}`}
                 >
                   <strong className="font-mono text-center block w-full">{tc.tag}</strong>
                   <span className="text-center block w-full text-xs">Shared: {tc.count} vols</span>
@@ -495,6 +542,35 @@ export function CatalogueConstellation({
           )
         )}
       </div>
+
+      <details className="catalogue-map-list">
+        <summary>
+          {mode === "similarity" ? "View these book relationships as a list" : "View these tag relationships as a list"}
+        </summary>
+        {mode === "similarity" ? (
+          <ol>
+            {connections.map((connection) => (
+              <li key={getBookKey(connection.book)}>
+                <button type="button" onClick={() => setConnectionKey(getBookKey(connection.book))}>
+                  <strong>{connection.book.title}</strong>
+                  <span>{connection.book.author} — {getReasonLabel(connection.reasons)}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <ol>
+            {tagConnections.map((connection) => (
+              <li key={connection.tag}>
+                <button type="button" onClick={() => setSelectedTagKey(connection.tag)}>
+                  <strong>{connection.tag}</strong>
+                  <span>Shared by {connection.count} volumes with {focusTag}</span>
+                </button>
+              </li>
+            ))}
+          </ol>
+        )}
+      </details>
     </section>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import fullShelfCatalogue from "../../shelf_catalog_full.json";
 import { CatalogueConstellation } from "./catalogue-constellation";
 import { CatalogueLedger } from "./catalogue-ledger";
@@ -10,6 +10,7 @@ import { ChronologicalScroll } from "./chronological-scroll";
 import { PathfinderModal } from "./pathfinder-modal";
 import {
   compareCatalogueBooks,
+  getBookKey,
   type CatalogueBook,
 } from "@/lib/books/catalogue";
 
@@ -45,39 +46,86 @@ const divisions = Object.entries(
   }))
   .sort((first, second) => second.count - first.count);
 
+const tagFrequency = new Map<string, number>();
+for (const book of books) {
+  for (const tag of book.tags ?? []) {
+    tagFrequency.set(tag, (tagFrequency.get(tag) ?? 0) + 1);
+  }
+}
+
+const catalogueTags = [...tagFrequency.entries()]
+  .sort(
+    ([firstTag, firstCount], [secondTag, secondCount]) =>
+      secondCount - firstCount || firstTag.localeCompare(secondTag),
+  )
+  .slice(0, 100)
+  .map(([tag]) => tag);
+
+const catalogueShelves = [...new Set(books.map((book) => book.shelf))].sort(
+  (first, second) => first - second,
+);
+
+function getSearchText(book: CatalogueBook) {
+  return [
+    book.author,
+    book.title,
+    book.edition,
+    book.position,
+    book.shelf,
+    book.top_category,
+    book.sub_category,
+    ...(book.tags ?? []),
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLocaleLowerCase("en-US");
+}
+
 // Simple typewriter helper for the Aleph overlay
 function TypewriterText({ text, speed = 25 }: { text: string; speed?: number }) {
-  const [displayed, setDisplayed] = useState("");
-  const [prevText, setPrevText] = useState(text);
-
-  if (text !== prevText) {
-    setPrevText(text);
-    setDisplayed("");
-  }
+  const [characterCount, setCharacterCount] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
-    let index = 0;
-    const interval = setInterval(() => {
-      setDisplayed((prev) => prev + text.charAt(index));
-      index++;
-      if (index >= text.length) {
-        clearInterval(interval);
-      }
-    }, speed);
-    return () => clearInterval(interval);
-  }, [text, speed]);
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const updatePreference = () => setPrefersReducedMotion(mediaQuery.matches);
+    updatePreference();
+    mediaQuery.addEventListener("change", updatePreference);
+    return () => mediaQuery.removeEventListener("change", updatePreference);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion || characterCount >= text.length) return;
+    const timeout = window.setTimeout(
+      () => setCharacterCount((count) => Math.min(count + 1, text.length)),
+      speed,
+    );
+    return () => window.clearTimeout(timeout);
+  }, [characterCount, prefersReducedMotion, speed, text.length]);
+
+  const visibleCharacterCount = prefersReducedMotion ? text.length : characterCount;
 
   return (
-    <p className="aleph-text font-mono">
-      {displayed}
-      <span className="aleph-cursor">_</span>
-    </p>
+    <>
+      <p className="aleph-text font-mono" aria-hidden="true">
+        {text.slice(0, visibleCharacterCount)}
+        {visibleCharacterCount < text.length && <span className="aleph-cursor">_</span>}
+      </p>
+      <p className="sr-only">{text}</p>
+    </>
   );
 }
 
 export default function Home() {
   const [activeBook, setActiveBook] = useState<(CatalogueBook & { number: number }) | null>(null);
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [catalogueQuery, setCatalogueQuery] = useState("");
+  const [divisionFilter, setDivisionFilter] = useState("");
+  const [tagFilter, setTagFilter] = useState("");
+  const [shelfFilter, setShelfFilter] = useState("");
+  const [authorInitial, setAuthorInitial] = useState("");
 
   // Layout View Tabs State
   const [mapMode, setMapMode] = useState<"similarity" | "tag">("similarity");
@@ -86,6 +134,7 @@ export default function Home() {
   // Modals / Overlays State
   const [isPathfinderOpen, setIsPathfinderOpen] = useState(false);
   const [isAlephOpen, setIsAlephOpen] = useState(false);
+  const [pathfinderSourceKey, setPathfinderSourceKey] = useState<string | null>(null);
 
   // Aleph quotes selection state
   const alephQuotes = [
@@ -94,6 +143,52 @@ export default function Home() {
     "The Library of Babel is infinite, periodic, and eternal. In its galleries, shelves, and volumes, all combinations of the orthographic symbols are registered. To consult the Aleph is to peer into the center of this vast library, where every volume is simultaneously present."
   ];
   const [quoteIndex, setQuoteIndex] = useState(0);
+
+  const filteredCatalogueEntries = useMemo(() => {
+    const normalizedQuery = catalogueQuery
+      .trim()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .toLocaleLowerCase("en-US");
+
+    return catalogueEntries.filter((book) => {
+      if (normalizedQuery && !getSearchText(book).includes(normalizedQuery)) {
+        return false;
+      }
+      if (divisionFilter && book.top_category !== divisionFilter) return false;
+      if (tagFilter && !book.tags?.includes(tagFilter)) return false;
+      if (shelfFilter && book.shelf !== Number(shelfFilter)) return false;
+      if (authorInitial && getInitial(book.author) !== authorInitial) return false;
+      return true;
+    });
+  }, [authorInitial, catalogueQuery, divisionFilter, shelfFilter, tagFilter]);
+
+  const hasCatalogueFilters = Boolean(
+    catalogueQuery || divisionFilter || tagFilter || shelfFilter || authorInitial,
+  );
+
+  const clearCatalogueFilters = () => {
+    setCatalogueQuery("");
+    setDivisionFilter("");
+    setTagFilter("");
+    setShelfFilter("");
+    setAuthorInitial("");
+  };
+
+  const openPathfinder = (sourceBook?: CatalogueBook & { number: number }) => {
+    setPathfinderSourceKey(sourceBook ? getBookKey(sourceBook) : null);
+    setIsPathfinderOpen(true);
+  };
+
+  const filterByTag = (tag: string) => {
+    setActiveBook(null);
+    setActiveTag(null);
+    setTagFilter(tag);
+    setBottomView("ledger");
+    window.requestAnimationFrame(() => {
+      document.getElementById("catalogue-search")?.scrollIntoView({ behavior: "smooth" });
+    });
+  };
 
   return (
     <main className="catalogue-page">
@@ -128,9 +223,13 @@ export default function Home() {
           <button
             type="button"
             className="toolbar-btn font-mono"
-            onClick={() => setIsPathfinderOpen(true)}
+            onClick={() => openPathfinder()}
           >
-            ❖ CONSULT THE PATHFINDER
+            <span aria-hidden="true">❖</span>
+            <span className="toolbar-btn-copy">
+              <strong>Find a connection</strong>
+              <small>Trace a path between two books</small>
+            </span>
           </button>
           <button
             type="button"
@@ -140,8 +239,84 @@ export default function Home() {
               setIsAlephOpen(true);
             }}
           >
-            👁 CONSULT THE ALEPH
+            <span aria-hidden="true">👁</span>
+            <span className="toolbar-btn-copy">
+              <strong>The Aleph</strong>
+              <small>Reveal a catalogue meditation</small>
+            </span>
           </button>
+        </div>
+      </section>
+
+      <section
+        className="catalogue-search-panel"
+        id="catalogue-search"
+        aria-labelledby="catalogue-search-title"
+      >
+        <div className="catalogue-search-heading">
+          <p>Public finding aid</p>
+          <h2 id="catalogue-search-title">Search the catalogue</h2>
+          <p>
+            Find a volume by title, author, subject, shelf, or catalogue detail.
+          </p>
+        </div>
+
+        <div className="catalogue-search-controls">
+          <label className="catalogue-search-query">
+            <span>Title, author, or keyword</span>
+            <input
+              type="search"
+              value={catalogueQuery}
+              onChange={(event) => setCatalogueQuery(event.target.value)}
+              placeholder="Try Borges, poetry, or Penguin Classics"
+            />
+          </label>
+
+          <label>
+            <span>Division</span>
+            <select
+              value={divisionFilter}
+              onChange={(event) => setDivisionFilter(event.target.value)}
+            >
+              <option value="">All divisions</option>
+              {divisions.map((division) => (
+                <option key={division.name} value={division.name}>
+                  {division.name}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Popular subject</span>
+            <select value={tagFilter} onChange={(event) => setTagFilter(event.target.value)}>
+              <option value="">All subjects</option>
+              {catalogueTags.map((tag) => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
+          </label>
+
+          <label>
+            <span>Shelf</span>
+            <select value={shelfFilter} onChange={(event) => setShelfFilter(event.target.value)}>
+              <option value="">All shelves</option>
+              {catalogueShelves.map((shelf) => (
+                <option key={shelf} value={shelf}>Shelf {shelf}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+
+        <div className="catalogue-search-status" aria-live="polite">
+          <p>
+            <strong>{filteredCatalogueEntries.length}</strong>{" "}
+            {filteredCatalogueEntries.length === 1 ? "volume" : "volumes"} found
+            {authorInitial && <> under author index {authorInitial}</>}.
+          </p>
+          {hasCatalogueFilters && (
+            <button type="button" onClick={clearCatalogueFilters}>Clear search</button>
+          )}
         </div>
       </section>
 
@@ -161,9 +336,24 @@ export default function Home() {
         <nav className="catalogue-alphabet" aria-label="Author index">
           <h2>Author index</h2>
           <ol>
+            <li>
+              <a
+                href="#ledger-title"
+                aria-current={!authorInitial ? "location" : undefined}
+                onClick={() => setAuthorInitial("")}
+              >
+                All
+              </a>
+            </li>
             {[...catalogueByInitial.keys()].map((initial) => (
               <li key={initial}>
-                <a href={`#author-${initial}`}>{initial}</a>
+                <a
+                  href="#ledger-title"
+                  aria-current={authorInitial === initial ? "location" : undefined}
+                  onClick={() => setAuthorInitial(initial)}
+                >
+                  {initial}
+                </a>
               </li>
             ))}
           </ol>
@@ -214,17 +404,26 @@ export default function Home() {
       </div>
 
       {bottomView === "ledger" ? (
-        <CatalogueLedger entries={catalogueEntries} onBookClick={setActiveBook} />
+        <CatalogueLedger
+          key={[catalogueQuery, divisionFilter, tagFilter, shelfFilter, authorInitial].join("|")}
+          entries={filteredCatalogueEntries}
+          onBookClick={setActiveBook}
+        />
       ) : (
         <ChronologicalScroll books={catalogueEntries} onBookClick={setActiveBook} />
       )}
 
-      {/* Book details overlay */}
-      {activeBook && (
-        <BookDetailCard
-          book={activeBook}
-          onClose={() => setActiveBook(null)}
-          onTagClick={setActiveTag}
+      {/* Pathfinder Overlay */}
+      {isPathfinderOpen && (
+        <PathfinderModal
+          key={pathfinderSourceKey ?? "blank-pathfinder"}
+          books={catalogueEntries}
+          initialSource={
+            catalogueEntries.find((book) => getBookKey(book) === pathfinderSourceKey) ?? null
+          }
+          isObscured={Boolean(activeBook || activeTag)}
+          onClose={() => setIsPathfinderOpen(false)}
+          onBookClick={setActiveBook}
         />
       )}
 
@@ -238,20 +437,37 @@ export default function Home() {
         />
       )}
 
-      {/* Pathfinder Overlay */}
-      {isPathfinderOpen && (
-        <PathfinderModal
+      {/* Book details overlay. It follows Pathfinder so it can sit above it. */}
+      {activeBook && (
+        <BookDetailCard
+          book={activeBook}
           books={catalogueEntries}
-          onClose={() => setIsPathfinderOpen(false)}
           onBookClick={setActiveBook}
+          onClose={() => setActiveBook(null)}
+          onStartPath={() => {
+            const sourceBook = activeBook;
+            setActiveBook(null);
+            openPathfinder(sourceBook);
+          }}
+          onTagClick={filterByTag}
         />
       )}
 
       {/* Aleph Overlay Modal */}
       {isAlephOpen && (
         <div className="catalogue-modal-overlay aleph-overlay" onClick={() => setIsAlephOpen(false)}>
-          <div className="aleph-container" onClick={(e) => e.stopPropagation()}>
-            <button className="card-close-slip aleph-close-slip" onClick={() => setIsAlephOpen(false)}>
+          <div
+            className="aleph-container"
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="aleph-title"
+          >
+            <button
+              className="card-close-slip aleph-close-slip"
+              onClick={() => setIsAlephOpen(false)}
+              aria-label="Close the Aleph"
+            >
               <span className="slip-cancel">Close</span>
               <span className="slip-stamp font-mono">DISMISS</span>
             </button>
@@ -265,10 +481,10 @@ export default function Home() {
 
             <div className="aleph-cardstock">
               <span className="card-rubric-tag font-mono text-center block mb-2">speculum mundi</span>
-              <h2 className="aleph-heading font-serif text-center italic text-3xl">The Aleph of Babel</h2>
+              <h2 id="aleph-title" className="aleph-heading font-serif text-center italic text-3xl">The Aleph of Babel</h2>
               
               <div className="aleph-typewriter-box">
-                <TypewriterText text={alephQuotes[quoteIndex]} />
+                <TypewriterText key={quoteIndex} text={alephQuotes[quoteIndex]} />
               </div>
 
               <div className="aleph-actions">

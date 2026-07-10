@@ -11,16 +11,26 @@ import {
 
 interface PathfinderModalProps<T extends CatalogueBook = CatalogueBook> {
   books: T[];
+  initialSource?: T | null;
+  isObscured?: boolean;
   onClose: () => void;
   onBookClick: (book: T) => void;
 }
 
-export function PathfinderModal<T extends CatalogueBook>({ books, onClose, onBookClick }: PathfinderModalProps<T>) {
+export function PathfinderModal<T extends CatalogueBook>({
+  books,
+  initialSource = null,
+  isObscured = false,
+  onClose,
+  onBookClick,
+}: PathfinderModalProps<T>) {
   // State for search query and selected books
-  const [sourceSearch, setSourceSearch] = useState("");
+  const [sourceSearch, setSourceSearch] = useState(
+    initialSource ? `${initialSource.author}: ${initialSource.title}` : "",
+  );
   const [targetSearch, setTargetSearch] = useState("");
 
-  const [sourceBook, setSourceBook] = useState<T | null>(null);
+  const [sourceBook, setSourceBook] = useState<T | null>(initialSource);
   const [targetBook, setTargetBook] = useState<T | null>(null);
 
   const [showSourceDropdown, setShowSourceDropdown] = useState(false);
@@ -37,23 +47,23 @@ export function PathfinderModal<T extends CatalogueBook>({ books, onClose, onBoo
 
   // Filter books based on search input
   const filteredSourceBooks = useMemo(() => {
-    if (!sourceSearch.trim()) return sortedBooks.slice(0, 100);
+    if (!sourceSearch.trim()) return sortedBooks.slice(0, 12);
     const q = sourceSearch.toLowerCase();
     return sortedBooks.filter(
       (b) =>
         b.title.toLowerCase().includes(q) ||
         b.author.toLowerCase().includes(q)
-    );
+    ).slice(0, 12);
   }, [sortedBooks, sourceSearch]);
 
   const filteredTargetBooks = useMemo(() => {
-    if (!targetSearch.trim()) return sortedBooks.slice(0, 100);
+    if (!targetSearch.trim()) return sortedBooks.slice(0, 12);
     const q = targetSearch.toLowerCase();
     return sortedBooks.filter(
       (b) =>
         b.title.toLowerCase().includes(q) ||
         b.author.toLowerCase().includes(q)
-    );
+    ).slice(0, 12);
   }, [sortedBooks, targetSearch]);
 
   // Pathfinder BFS Logic
@@ -170,7 +180,11 @@ export function PathfinderModal<T extends CatalogueBook>({ books, onClose, onBoo
   }, [pathResult]);
 
   return (
-    <div className="catalogue-modal-overlay" onClick={onClose}>
+    <div
+      className={`catalogue-modal-overlay ${isObscured ? "catalogue-modal-obscured" : ""}`}
+      onClick={onClose}
+      aria-hidden={isObscured || undefined}
+    >
       <div
         className="catalogue-pathfinder-card"
         onClick={(e) => e.stopPropagation()}
@@ -202,28 +216,41 @@ export function PathfinderModal<T extends CatalogueBook>({ books, onClose, onBoo
                 type="text"
                 placeholder="Search source volume..."
                 value={sourceSearch}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-controls="source-volume-options"
+                aria-expanded={showSourceDropdown}
                 onChange={(e) => {
                   setSourceSearch(e.target.value);
+                  setSourceBook(null);
                   setShowSourceDropdown(true);
                 }}
                 onFocus={() => setShowSourceDropdown(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setShowSourceDropdown(false);
+                }}
               />
               {showSourceDropdown && (
-                <ul className="select-dropdown-list">
+                <ul className="select-dropdown-list" id="source-volume-options" role="listbox">
                   {filteredSourceBooks.map((b) => (
-                    <li
-                      key={getBookKey(b)}
-                      onClick={() => {
-                        setSourceBook(b);
-                        setSourceSearch(`${b.author}: ${b.title}`);
-                        setShowSourceDropdown(false);
-                      }}
-                    >
-                      <strong>{b.author}</strong> — <span>{b.title}</span>
+                    <li key={getBookKey(b)} role="none">
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={Boolean(sourceBook) && getBookKey(sourceBook ?? b) === getBookKey(b)}
+                        onClick={() => {
+                          setSourceBook(b);
+                          setSourceSearch(`${b.author}: ${b.title}`);
+                          setShowSourceDropdown(false);
+                          setErrorMsg("");
+                        }}
+                      >
+                        <strong>{b.author}</strong> — <span>{b.title}</span>
+                      </button>
                     </li>
                   ))}
                   {filteredSourceBooks.length === 0 && (
-                    <li className="no-matches">No volumes match</li>
+                    <li className="no-matches" role="option" aria-disabled="true" aria-selected="false">No volumes match</li>
                   )}
                 </ul>
               )}
@@ -248,28 +275,41 @@ export function PathfinderModal<T extends CatalogueBook>({ books, onClose, onBoo
                 type="text"
                 placeholder="Search target volume..."
                 value={targetSearch}
+                role="combobox"
+                aria-autocomplete="list"
+                aria-controls="target-volume-options"
+                aria-expanded={showTargetDropdown}
                 onChange={(e) => {
                   setTargetSearch(e.target.value);
+                  setTargetBook(null);
                   setShowTargetDropdown(true);
                 }}
                 onFocus={() => setShowTargetDropdown(true)}
+                onKeyDown={(event) => {
+                  if (event.key === "Escape") setShowTargetDropdown(false);
+                }}
               />
               {showTargetDropdown && (
-                <ul className="select-dropdown-list">
+                <ul className="select-dropdown-list" id="target-volume-options" role="listbox">
                   {filteredTargetBooks.map((b) => (
-                    <li
-                      key={getBookKey(b)}
-                      onClick={() => {
-                        setTargetBook(b);
-                        setTargetSearch(`${b.author}: ${b.title}`);
-                        setShowTargetDropdown(false);
-                      }}
-                    >
-                      <strong>{b.author}</strong> — <span>{b.title}</span>
+                    <li key={getBookKey(b)} role="none">
+                      <button
+                        type="button"
+                        role="option"
+                        aria-selected={Boolean(targetBook) && getBookKey(targetBook ?? b) === getBookKey(b)}
+                        onClick={() => {
+                          setTargetBook(b);
+                          setTargetSearch(`${b.author}: ${b.title}`);
+                          setShowTargetDropdown(false);
+                          setErrorMsg("");
+                        }}
+                      >
+                        <strong>{b.author}</strong> — <span>{b.title}</span>
+                      </button>
                     </li>
                   ))}
                   {filteredTargetBooks.length === 0 && (
-                    <li className="no-matches">No volumes match</li>
+                    <li className="no-matches" role="option" aria-disabled="true" aria-selected="false">No volumes match</li>
                   )}
                 </ul>
               )}
@@ -313,10 +353,10 @@ export function PathfinderModal<T extends CatalogueBook>({ books, onClose, onBoo
               {/* Start node */}
               <div className="pathfinder-step-book source-node">
                 <div className="node-marker font-mono">START</div>
-                <div className="book-details" onClick={() => onBookClick(pathResult[0])} role="button" tabIndex={0}>
+                <button className="book-details" onClick={() => onBookClick(pathResult[0])} type="button">
                   <h4>{pathResult[0].title}</h4>
                   <p>{pathResult[0].author} • <span className="text-green-800">{getDivision(pathResult[0])}</span> • Shelf {pathResult[0].shelf}</p>
-                </div>
+                </button>
               </div>
 
               {/* Steps and Intermediate nodes */}
@@ -340,10 +380,10 @@ export function PathfinderModal<T extends CatalogueBook>({ books, onClose, onBoo
                     <div className="node-marker font-mono">
                       {idx === pathSteps.length - 1 ? "END" : `STEP ${idx + 1}`}
                     </div>
-                    <div className="book-details" onClick={() => onBookClick(step.to)} role="button" tabIndex={0}>
+                    <button className="book-details" onClick={() => onBookClick(step.to)} type="button">
                       <h4>{step.to.title}</h4>
                       <p>{step.to.author} • <span className="text-green-800">{getDivision(step.to)}</span> • Shelf {step.to.shelf}</p>
-                    </div>
+                    </button>
                   </div>
                 </div>
               ))}
