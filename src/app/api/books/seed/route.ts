@@ -1,9 +1,23 @@
+import { timingSafeEqual } from "node:crypto";
+
 import { parseBookSeedPayload, SeedPayloadError } from "@/lib/books/seed";
 import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 
 const UPSERT_BATCH_SIZE = 250;
+const MAX_SEED_PAYLOAD_BYTES = 5 * 1024 * 1024;
 
 export const runtime = "nodejs";
+
+function tokensMatch(provided: string, expected: string): boolean {
+  const providedBuffer = Buffer.from(provided, "utf8");
+  const expectedBuffer = Buffer.from(expected, "utf8");
+
+  if (providedBuffer.length !== expectedBuffer.length) {
+    return false;
+  }
+
+  return timingSafeEqual(providedBuffer, expectedBuffer);
+}
 
 function getSeedAuthError(request: Request) {
   const expectedToken = process.env.BOOK_SEED_TOKEN;
@@ -15,11 +29,67 @@ function getSeedAuthError(request: Request) {
     );
   }
 
-  if (request.headers.get("authorization") !== `Bearer ${expectedToken}`) {
+  const providedAuth = request.headers.get("authorization") ?? "";
+  if (!tokensMatch(providedAuth, `Bearer ${expectedToken}`)) {
     return Response.json({ error: "Unauthorized." }, { status: 401 });
   }
 
   return null;
+}
+
+class PayloadTooLargeError extends Error {
+  constructor() {
+    super("Seed payload exceeds the 5 MB size limit.");
+    this.name = "PayloadTooLargeError";
+  }
+}
+
+async function readBoundedJsonBody(request: Request): Promise<unknown> {
+  const contentLengthHeader = request.headers.get("content-length");
+  if (contentLengthHeader) {
+    const contentLength = Number(contentLengthHeader);
+    if (Number.isFinite(contentLength) && contentLength > MAX_SEED_PAYLOAD_BYTES) {
+      throw new PayloadTooLargeError();
+    }
+  }
+
+  if (!request.body) {
+    const text = await request.text();
+    if (Buffer.byteLength(text, "utf8") > MAX_SEED_PAYLOAD_BYTES) {
+      throw new PayloadTooLargeError();
+    }
+    return JSON.parse(text);
+  }
+
+  const reader = request.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalBytes = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) {
+      break;
+    }
+
+    if (value) {
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_SEED_PAYLOAD_BYTES) {
+        await reader.cancel();
+        throw new PayloadTooLargeError();
+      }
+      chunks.push(value);
+    }
+  }
+
+  const combined = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    combined.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  const text = new TextDecoder("utf-8", { fatal: true }).decode(combined);
+  return JSON.parse(text);
 }
 
 function getBatches<T>(items: T[]) {
@@ -42,8 +112,15 @@ export async function POST(request: Request) {
   let payload: unknown;
 
   try {
-    payload = await request.json();
-  } catch {
+    payload = await readBoundedJsonBody(request);
+  } catch (error) {
+    if (error instanceof PayloadTooLargeError) {
+      return Response.json(
+        { error: error.message },
+        { status: 413 },
+      );
+    }
+
     return Response.json(
       { error: "Request body must be valid JSON." },
       { status: 400 },
@@ -77,10 +154,11 @@ export async function POST(request: Request) {
   try {
     supabase = createSupabaseAdminClient();
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Supabase is not configured.";
-
-    return Response.json({ error: message }, { status: 503 });
+    console.error("Supabase admin client configuration error:", error);
+    return Response.json(
+      { error: "Supabase is not configured." },
+      { status: 503 },
+    );
   }
 
   let upserted = 0;
@@ -88,15 +166,13 @@ export async function POST(request: Request) {
   for (const batch of getBatches(parsedPayload.books)) {
     const { data, error } = await supabase
       .from("books")
-      .upsert(batch, { onConflict: "title,author" })
+      .upsert(batch, { onConflict: "book_key" })
       .select("id");
 
     if (error) {
+      console.error("Supabase book upsert failed:", error);
       return Response.json(
-        {
-          error: "Supabase book upsert failed.",
-          message: error.message,
-        },
+        { error: "Supabase book upsert failed." },
         { status: 500 },
       );
     }

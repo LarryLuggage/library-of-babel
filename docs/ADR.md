@@ -72,3 +72,46 @@ To further enhance the semantic capabilities of the Library of Babel, the applic
 * The application now supports full semantic tracing across 887 books.
 * Visualization pages dynamically adapt to modes without breaking state.
 * The Next.js production build succeeds with zero ESLint/TypeScript errors and warnings.
+
+## ADR 5: Data Hygiene, Surname Indexing, Graph Density Tuning & Native Dialog Accessibility
+
+### Context
+A comprehensive codebase and UX audit revealed that the client was shipping a redundant 1.3 MB `book-enrichment.json` import for publication years already present in `shelf_catalog_full.json`, the similarity graph had 63.9% edge density (primarily due to broad `top_category` scores and injected division tags), `PathfinderModal` duplicated BFS greedily instead of using `relations.ts`, 7 Shelf 26 entries duplicated Shelf 28's photo seam, several Open Library `publish_year` values reflected reprints or wrong works, author indexing sorted by given name instead of surname, and custom `div` modals lacked `Escape`/focus restoration and responsive layout polish.
+
+### Decision
+1. **Idempotent Data Cleanup (`scripts/clean-catalogue-data.mjs`)**:
+   - Deduplicated the 7 overlapping Shelf 26 seam entries (reducing total base volumes from 887 to 880 while preserving distinct multi-copy editions), normalized `"El Señor Presidente (title to confirm)"`, corrected 7 verified Open Library mis-dates, and stripped 26 noisy/foreign/division-duplicate tags (`literature`, `large type books`, `translations into english`, `new york times reviewed`, etc.).
+   - Hardened `scripts/enrich-catalogue-books.mjs` with the expanded `TAG_BLOCKLIST` and an author-overlap gate before accepting Open Library matches.
+2. **Surname-First Author Indexing & Tuned Graph (`src/lib/books/catalogue.ts`, `src/lib/books/relations.ts`)**:
+   - Implemented `getAuthorSortKey` and `getAuthorInitial` (handling parenthetical qualifiers, multi-author separators, generational suffixes, and noble/prepositional particles such as `de`, `von`, `del`, `di`) so `"Jorge Luis Borges"` files under **B**.
+   - Removed `top_category`-only edges and scored shared non-noise tags by inverse document frequency (`buildTagFrequencyMap`), paired with a precomputed `CatalogueGraph` in `relations.ts` using high-signal edges (`score >= 4`) first and falling back to `score >= 2` only when disconnected.
+   - Added `tagCounts` and `cooccurrenceMap` to `TagCooccurrenceData` for O(1) lookup in `CatalogueConstellation`.
+3. **Server Component Shell & Modern Web Accessibility (`src/app/**`)**:
+   - Converted `src/app/page.tsx` to a dynamic `async` Server Component hydrating `CatalogueApp` (`src/app/catalogue-app.tsx`), and removed the 1.3 MB `book-enrichment.json` import from `chronological-scroll.tsx`.
+   - Wired active filters directly into `ChronologicalScroll`, promoted matching results (`#catalogue-results`) immediately below `#catalogue-search` when filters are active, made Principal Divisions clickable toggles, and unified tag exploration around `TagMatchesOverlay`.
+   - Replaced custom modal overlays with a shared native `<dialog>` wrapper (`src/app/modal-dialog.tsx`) using `showModal()`, `closedby="any"` plus Safari pointer bounding-rect light-dismiss fallback, and `overscroll-behavior: contain` on `dialog:modal` and `dialog::backdrop`.
+   - Upgraded tablists to WAI-ARIA `tablist`/`tab`/`tabpanel` with arrow-key navigation and `::after` border indicators, converted clickable `<li>`/`<span>` items to nested native `<button>` elements, fixed `.card-rod-hole` footer overlap, and switched the mobile constellation (`<= 38rem`) to a non-overlapping 2-column grid.
+
+### Consequences
+* Client static JS bundles no longer contain either `book-enrichment.json` or `shelf_catalog_full.json`.
+* Pathfinder traces meaningful 2–4 hop conceptual bridges instead of collapsing nearly every pair to 1–2 hops, and mobile renders with zero horizontal overflow or overlapping cards.
+
+## ADR 6: Dual-Mode Book Tracker Persistence & CRUD Architecture
+
+### Context
+While the application worked well as a read-only visual catalog, a personal book tracker requires creating/editing/removing volumes and tracking reading status (`unread`, `reading`, `finished`, `dnf`), 1–5 star ratings, completion dates, loans, and personal notes. Additionally, `public.books` lacked bibliographic/tracker columns, `unique (title, author)` collided on multi-copy editions, and local development had no `.env.local` Supabase configuration.
+
+### Decision
+1. **Extended Schema & Migration (`supabase/migrations/20261120000000_extend_books_tracker.sql`)**:
+   - Extended `public.books` with `book_key`, `position`, `top_category`, `sub_category`, `summary`, `tags`, `publish_year`, `reading_status`, `rating`, `date_started`, `date_finished`, `personal_notes`, `loaned_to`, and `updated_at`.
+   - Replaced `unique (title, author)` with `books_book_key_idx` on `(book_key)` and `books_copy_identity_idx` on `(title, author, coalesce(shelf_row, -1), coalesce(position, ''))` so distinct physical copies do not collide, and removed the redundant `unique_connection_pair` constraint.
+2. **Dual-Mode Repository & Hardened API (`src/lib/books/repository.ts`, `validation.ts`, `src/app/api/books/**`)**:
+   - Built `repository.ts` to read/write via Supabase when `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY`/`SUPABASE_SERVICE_ROLE_KEY` are present, and fall back automatically to an atomic JSON overlay (`data/book-tracker-state.json`, overridable via `BOOK_TRACKER_STATE_PATH`) merged over `shelf_catalog_full.json` in local dev.
+   - Added `GET`/`POST /api/books` and `PATCH`/`DELETE /api/books/[id]` backed by strict runtime validation (`validation.ts`), and hardened `POST /api/books/seed` with `crypto.timingSafeEqual`, a 5 MB payload cap (`413`), and sanitized `500` responses.
+3. **Interactive Book Tracker UI & Test Suite**:
+   - Added masthead `Finished`/`Reading` counters, a `Reading status` filter (including `"Loaned out"`), `BookEditorModal` (`Add volume` / `Edit volume`), inline **Reading Ledger** controls and non-shifting delete confirmation inside `BookDetailCard`, and ledger badges.
+   - Added Vitest (`vitest.config.ts`) with 29 unit and integration tests covering surname sorting, graph pathfinding, validation, seed parsing, local repository roundtrips, and `/api/books` route handlers.
+
+### Consequences
+* Reading progress and catalog edits persist immediately out-of-the-box in local mode and seamlessly promote to Supabase once `.env.local` credentials are configured and migrations are applied.
+* Core bibliographic logic, graph algorithms, and API mutations are guarded by automated Vitest checks alongside ESLint, TypeScript, and Next.js production builds.

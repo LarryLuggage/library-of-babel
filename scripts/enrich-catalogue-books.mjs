@@ -14,21 +14,41 @@ const OPEN_LIBRARY_FIELDS = [
 const MAX_TAGS = 14;
 const TAG_BLOCKLIST = new Set([
   "accessible book",
+  "amerikanisches englisch",
   "bibliography",
   "book club editions",
   "book reviews",
   "books and reading",
   "borrowable books",
   "classic",
+  "classic fiction",
+  "classic literature",
+  "classics",
   "english",
   "english language",
+  "english translations",
   "fiction",
+  "fiction general",
+  "fictional works",
   "general",
+  "history reference",
+  "in english",
   "in library",
   "internet archive wishlist",
+  "large type books",
+  "literature",
+  "new york times bestseller",
+  "new york times reviewed",
+  "nyt",
   "open library staff picks",
+  "philosophy theory",
   "protected daisy",
   "readers",
+  "roman",
+  "romans nouvelles",
+  "short stories single author",
+  "spanish language books",
+  "translations into english",
   "vfiction",
 ]);
 const TAG_PHRASE_BLOCKLIST = [
@@ -110,15 +130,18 @@ function normalize(value) {
 }
 
 function normalizeTag(value, book) {
-  let normalized = normalize(value);
+  const rawNormalized = normalize(value);
+  if (!rawNormalized || TAG_BLOCKLIST.has(rawNormalized)) {
+    return null;
+  }
+
   const keepFictionSuffix = new Set([
-    "classic fiction",
     "didactic fiction",
     "historical fiction",
     "science fiction",
-  ]).has(normalized);
+  ]).has(rawNormalized);
 
-  normalized = normalized
+  const normalized = rawNormalized
     .replace(/\bfictional works by one author\b/g, "")
     .replace(/^fiction\s+/, "")
     .replace(keepFictionSuffix ? /$^/ : /\s+fiction$/g, "")
@@ -256,9 +279,13 @@ async function searchOpenLibrary(book) {
   url.searchParams.set("fields", OPEN_LIBRARY_FIELDS);
 
   const result = await fetchJson(url);
-  const matches = [...(result?.docs ?? [])].sort((first, second) =>
-    rankOpenLibraryResult(book, first, second),
-  );
+  const matches = [...(result?.docs ?? [])]
+    .filter(
+      (match) =>
+        authorScore(book, match.author_name ?? []) > 0 ||
+        book.author === "Various",
+    )
+    .sort((first, second) => rankOpenLibraryResult(book, first, second));
 
   return matches[0] ?? null;
 }
@@ -349,7 +376,6 @@ function getTags(book, openLibraryMatch, openLibraryWork, googleMatch) {
   const tagScores = new Map();
   const googleInfo = googleMatch?.volumeInfo ?? {};
 
-  addTag(book, tagScores, book.top_category, 4);
   addTag(book, tagScores, book.sub_category, 5);
 
   for (const category of googleInfo.categories ?? []) {

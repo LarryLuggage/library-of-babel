@@ -1,14 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
+  buildTagFrequencyMap,
+  filterDisplayTags,
   getBookKey,
   getCatalogueConnection,
   getDivision,
   getNearestConnections,
   type CatalogueBook,
   type CatalogueConnection,
+  type LedgerBook,
 } from "@/lib/books/catalogue";
+import { getTagCooccurrences } from "@/lib/books/relations";
 
 type PositionedConnection = CatalogueConnection & {
   x: number;
@@ -23,7 +27,7 @@ type BookBridge = {
 
 type PositionedTag = {
   tag: string;
-  count: number; // co-occurrence count
+  count: number;
   x: number;
   y: number;
 };
@@ -31,7 +35,7 @@ type PositionedTag = {
 type TagBridge = {
   first: PositionedTag;
   second: PositionedTag;
-  count: number; // shared books
+  count: number;
 };
 
 const NEIGHBOR_COUNT = 9;
@@ -40,21 +44,22 @@ const MAP_SIZE = {
   centerY: 280,
 };
 
-function getDefaultBookKey(books: CatalogueBook[]) {
+function getDefaultBookKey(books: CatalogueBook[]): string {
+  if (books.length === 0) return "";
   const borgesAnchor = books.find(
     (book) =>
       book.author === "Jorge Luis Borges" && book.title === "Collected Fictions",
   );
-
   return getBookKey(borgesAnchor ?? books[0]);
 }
 
-function getBookLabel(book: CatalogueBook) {
+function getBookLabel(book: CatalogueBook): string {
   return `${book.author}: ${book.title}`;
 }
 
 function getPosition(index: number, count: number) {
-  const angle = -Math.PI / 2 + (index / count) * Math.PI * 2;
+  const safeCount = Math.max(count, 1);
+  const angle = -Math.PI / 2 + (index / safeCount) * Math.PI * 2;
   const radius = 228;
 
   return {
@@ -70,12 +75,19 @@ function positionConnections(connections: CatalogueConnection[]) {
   }));
 }
 
-function getBookBridges(connections: PositionedConnection[]) {
+function getBookBridges(
+  connections: PositionedConnection[],
+  tagFrequency: ReadonlyMap<string, number>,
+) {
   const bridges: BookBridge[] = [];
 
   connections.forEach((first, firstIndex) => {
     connections.slice(firstIndex + 1).forEach((second) => {
-      const bridge = getCatalogueConnection(first.book, second.book);
+      const bridge = getCatalogueConnection(
+        first.book,
+        second.book,
+        tagFrequency,
+      );
 
       if (bridge && bridge.score >= 7) {
         bridges.push({
@@ -100,74 +112,105 @@ export function CatalogueConstellation({
   onBookClick,
   mode = "similarity",
 }: {
-  books: (CatalogueBook & { number: number })[];
+  books: LedgerBook[];
   onTagClick?: (tag: string) => void;
-  onBookClick?: (book: CatalogueBook & { number: number }) => void;
+  onBookClick?: (book: LedgerBook) => void;
   mode?: "similarity" | "tag";
 }) {
+  const idPrefix = useId();
+  const titleId = `${idPrefix}-map-title`;
+  const focusVolumeId = `${idPrefix}-focus-volume`;
+  const focusListboxId = `${idPrefix}-focus-volume-results`;
+  const focusTagId = `${idPrefix}-focus-tag`;
+
+  const searchContainerRef = useRef<HTMLDivElement>(null);
+
   const booksByKey = useMemo(
     () => new Map(books.map((book) => [getBookKey(book), book])),
     [books],
   );
 
+  const tagFrequency = useMemo(() => buildTagFrequencyMap(books), [books]);
+  const tagGraph = useMemo(() => getTagCooccurrences(books), [books]);
+
+  const booksByTag = useMemo(() => {
+    const map = new Map<string, LedgerBook[]>();
+    for (const book of books) {
+      for (const tag of filterDisplayTags(book.tags)) {
+        const list = map.get(tag);
+        if (list) {
+          list.push(book);
+        } else {
+          map.set(tag, [book]);
+        }
+      }
+    }
+    return map;
+  }, [books]);
+
   // --- Similarity Constellation State ---
   const [focusKey, setFocusKey] = useState(() => getDefaultBookKey(books));
   const [connectionKey, setConnectionKey] = useState("");
 
-  const focusBook = booksByKey.get(focusKey) ?? books[0];
-  const [focusSearch, setFocusSearch] = useState(() => getBookLabel(focusBook));
+  const focusBook = booksByKey.get(focusKey) ?? books[0] ?? null;
+  const [focusSearch, setFocusSearch] = useState(() =>
+    focusBook ? getBookLabel(focusBook) : "",
+  );
   const [showFocusResults, setShowFocusResults] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
+
   const focusMatches = useMemo(() => {
     const query = focusSearch.trim().toLocaleLowerCase("en-US");
     if (!query) return books.slice(0, 10);
     return books
-      .filter((book) => getBookLabel(book).toLocaleLowerCase("en-US").includes(query))
+      .filter((book) =>
+        getBookLabel(book).toLocaleLowerCase("en-US").includes(query),
+      )
       .slice(0, 10);
   }, [books, focusSearch]);
-  const connections = useMemo(
-    () => positionConnections(getNearestConnections(focusBook, books, NEIGHBOR_COUNT)),
-    [books, focusBook],
-  );
+
+  const connections = useMemo(() => {
+    if (!focusBook) return [];
+    return positionConnections(
+      getNearestConnections(focusBook, books, NEIGHBOR_COUNT, tagFrequency),
+    );
+  }, [books, focusBook, tagFrequency]);
+
   const selectedConnection =
-    connections.find((connection) => getBookKey(connection.book) === connectionKey) ??
-    connections[0];
-  const bridges = useMemo(() => getBookBridges(connections), [connections]);
+    connections.find(
+      (connection) => getBookKey(connection.book) === connectionKey,
+    ) ?? connections[0] ?? null;
+
+  const bridges = useMemo(
+    () => getBookBridges(connections, tagFrequency),
+    [connections, tagFrequency],
+  );
 
   // --- Tag Constellation State ---
-  // 1. Get top 100 tags in the library to populate the select picker
-  const topTagsList = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const b of books) {
-      if (b.tags) {
-        for (const t of b.tags) {
-          counts.set(t, (counts.get(t) || 0) + 1);
-        }
-      }
-    }
-    return [...counts.entries()]
-      .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
-      .slice(0, 100)
-      .map(([tag]) => tag);
-  }, [books]);
+  const topTagsList = useMemo(
+    () =>
+      [...tagGraph.nodes]
+        .sort((a, b) => b.count - a.count || a.tag.localeCompare(b.tag))
+        .slice(0, 100),
+    [tagGraph.nodes],
+  );
 
-  const [focusTag, setFocusTag] = useState(() => topTagsList[0] || "literature");
+  const [focusTag, setFocusTag] = useState(
+    () => topTagsList[0]?.tag ?? "",
+  );
+  const resolvedFocusTag = tagGraph.tagCounts.has(focusTag)
+    ? focusTag
+    : topTagsList[0]?.tag ?? "";
+
   const [selectedTagKey, setSelectedTagKey] = useState("");
 
-  // Calculate co-occurrences for the focus tag
   const tagConnections = useMemo(() => {
-    const coOccurCounts = new Map<string, number>();
-    for (const b of books) {
-      if (b.tags && b.tags.includes(focusTag)) {
-        for (const t of b.tags) {
-          if (t !== focusTag) {
-            coOccurCounts.set(t, (coOccurCounts.get(t) || 0) + 1);
-          }
-        }
-      }
-    }
+    if (!resolvedFocusTag) return [];
+    const neighbors = tagGraph.cooccurrenceMap.get(resolvedFocusTag);
+    if (!neighbors) return [];
 
-    // Top 9 co-occurring tags
-    const sorted = [...coOccurCounts.entries()]
+    const sorted = [...neighbors.entries()]
+      .filter(([tag]) => tag !== resolvedFocusTag)
       .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
       .slice(0, NEIGHBOR_COUNT);
 
@@ -176,134 +219,241 @@ export function CatalogueConstellation({
       count,
       ...getPosition(index, sorted.length),
     }));
-  }, [books, focusTag]);
+  }, [resolvedFocusTag, tagGraph.cooccurrenceMap]);
 
-  const selectedTagNode = useMemo(() => {
-    return (
-      tagConnections.find((tc) => tc.tag === selectedTagKey) ||
-      tagConnections[0]
-    );
-  }, [tagConnections, selectedTagKey]);
+  const selectedTagNode = useMemo(
+    () =>
+      tagConnections.find((tc) => tc.tag === selectedTagKey) ??
+      tagConnections[0] ??
+      null,
+    [tagConnections, selectedTagKey],
+  );
 
-  // Calculate total occurrences in the library for the selected tag
-  const selectedTagTotalCount = useMemo(() => {
-    if (!selectedTagNode) return 0;
-    return books.filter((b) => b.tags?.includes(selectedTagNode.tag)).length;
-  }, [books, selectedTagNode]);
+  const selectedTagTotalCount = selectedTagNode
+    ? tagGraph.tagCounts.get(selectedTagNode.tag) ?? 0
+    : 0;
 
-  // Find books that share both the focusTag and selectedTagNode
   const sharedBooks = useMemo(() => {
-    if (!selectedTagNode) return [];
-    return books.filter(
-      (b) => b.tags?.includes(focusTag) && b.tags?.includes(selectedTagNode.tag)
+    if (!selectedTagNode || !resolvedFocusTag) return [];
+    const focusBookList = booksByTag.get(resolvedFocusTag) ?? [];
+    const focusKeys = new Set(focusBookList.map(getBookKey));
+    return (booksByTag.get(selectedTagNode.tag) ?? []).filter((book) =>
+      focusKeys.has(getBookKey(book)),
     );
-  }, [books, focusTag, selectedTagNode]);
+  }, [booksByTag, resolvedFocusTag, selectedTagNode]);
 
-  // Calculate tag bridges (co-occurrence between the surrounding 9 tags)
   const tagBridges = useMemo(() => {
     const list: TagBridge[] = [];
     tagConnections.forEach((first, firstIndex) => {
+      const firstCo = tagGraph.cooccurrenceMap.get(first.tag);
       tagConnections.slice(firstIndex + 1).forEach((second) => {
-        // Calculate shared books
-        let count = 0;
-        for (const b of books) {
-          if (b.tags && b.tags.includes(first.tag) && b.tags.includes(second.tag)) {
-            count++;
-          }
-        }
+        const count = firstCo?.get(second.tag) ?? 0;
         if (count >= 2) {
           list.push({ first, second, count });
         }
       });
     });
     return list.sort((a, b) => b.count - a.count).slice(0, 12);
-  }, [books, tagConnections]);
+  }, [tagConnections, tagGraph.cooccurrenceMap]);
 
-  // Clear selections when focus changes (handled during render to avoid cascading effects)
+  // Clear selections when focus changes
   const [prevFocusKey, setPrevFocusKey] = useState(focusKey);
   if (focusKey !== prevFocusKey) {
     setPrevFocusKey(focusKey);
     setConnectionKey("");
   }
 
-  const [prevFocusTag, setPrevFocusTag] = useState(focusTag);
-  if (focusTag !== prevFocusTag) {
-    setPrevFocusTag(focusTag);
+  const [prevFocusTag, setPrevFocusTag] = useState(resolvedFocusTag);
+  if (resolvedFocusTag !== prevFocusTag) {
+    setPrevFocusTag(resolvedFocusTag);
     setSelectedTagKey("");
   }
 
+  useEffect(() => {
+    if (!showFocusResults) return;
+    const handlePointerDown = (event: PointerEvent) => {
+      const target = event.target as Node | null;
+      if (
+        searchContainerRef.current &&
+        target &&
+        !searchContainerRef.current.contains(target)
+      ) {
+        setShowFocusResults(false);
+        setHighlightedIndex(-1);
+      }
+    };
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    return () => document.removeEventListener("pointerdown", handlePointerDown);
+  }, [showFocusResults]);
+
+  const selectFocusVolume = (book: LedgerBook) => {
+    const key = getBookKey(book);
+    setConnectionKey("");
+    setFocusKey(key);
+    setFocusSearch(getBookLabel(book));
+    setShowFocusResults(false);
+    setHighlightedIndex(-1);
+  };
+
+  const handleFocusComboboxKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (!showFocusResults) {
+        setShowFocusResults(true);
+        setHighlightedIndex(focusMatches.length > 0 ? 0 : -1);
+      } else if (focusMatches.length > 0) {
+        setHighlightedIndex((prev) =>
+          prev < focusMatches.length - 1 ? prev + 1 : 0,
+        );
+      }
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      if (!showFocusResults) {
+        setShowFocusResults(true);
+        setHighlightedIndex(focusMatches.length - 1);
+      } else if (focusMatches.length > 0) {
+        setHighlightedIndex((prev) =>
+          prev > 0 ? prev - 1 : focusMatches.length - 1,
+        );
+      }
+    } else if (
+      event.key === "Enter" &&
+      showFocusResults &&
+      highlightedIndex >= 0 &&
+      focusMatches[highlightedIndex]
+    ) {
+      event.preventDefault();
+      selectFocusVolume(focusMatches[highlightedIndex]);
+    } else if (event.key === "Escape" && showFocusResults) {
+      event.preventDefault();
+      setShowFocusResults(false);
+      setHighlightedIndex(-1);
+    }
+  };
+
+  if (books.length === 0 || !focusBook) {
+    return (
+      <section className="catalogue-constellation" aria-labelledby={titleId}>
+        <div className="catalogue-map-heading">
+          <p>
+            {mode === "similarity"
+              ? "Relational map no. 1"
+              : "Relational map no. 2"}
+          </p>
+          <h2 id={titleId}>
+            {mode === "similarity"
+              ? "Similarity constellation"
+              : "Tag co-occurrence constellation"}
+          </h2>
+        </div>
+        <div className="catalogue-empty-state">
+          <p>No volumes available to map.</p>
+          <span>Add a volume to render the constellation.</span>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="catalogue-constellation" aria-labelledby="map-title">
+    <section className="catalogue-constellation" aria-labelledby={titleId}>
       <div className="catalogue-map-heading">
-        <p>{mode === "similarity" ? "Relational map no. 1" : "Relational map no. 2"}</p>
-        <h2 id="map-title">
-          {mode === "similarity" ? "Similarity constellation" : "Tag co-occurrence constellation"}
+        <p>
+          {mode === "similarity"
+            ? "Relational map no. 1"
+            : "Relational map no. 2"}
+        </p>
+        <h2 id={titleId}>
+          {mode === "similarity"
+            ? "Similarity constellation"
+            : "Tag co-occurrence constellation"}
         </h2>
         <div className="catalogue-map-picker">
           {mode === "similarity" ? (
             <>
-              <label htmlFor="focus-volume">Focus volume</label>
-              <div className="catalogue-map-search">
-              <input
-                id="focus-volume"
-                type="search"
-                role="combobox"
-                aria-autocomplete="list"
-                aria-controls="focus-volume-results"
-                aria-expanded={showFocusResults}
-                placeholder="Search title or author"
-                onChange={(event) => {
-                  setFocusSearch(event.target.value);
-                  setShowFocusResults(true);
-                }}
-                onFocus={() => setShowFocusResults(true)}
-                onKeyDown={(event) => {
-                  if (event.key === "Escape") setShowFocusResults(false);
-                }}
-                value={focusSearch}
-              />
-              {showFocusResults && (
-                <ul id="focus-volume-results" role="listbox" className="catalogue-map-search-results">
-                  {focusMatches.map((book) => {
-                    const bookKey = getBookKey(book);
-                    return (
-                      <li key={bookKey} role="none">
-                        <button
-                          type="button"
-                          role="option"
-                          aria-selected={bookKey === focusKey}
-                          onClick={() => {
-                            setConnectionKey("");
-                            setFocusKey(bookKey);
-                            setFocusSearch(getBookLabel(book));
-                            setShowFocusResults(false);
-                          }}
-                        >
-                          <strong>{book.author}</strong>
-                          <span>{book.title}</span>
-                        </button>
+              <label htmlFor={focusVolumeId}>Focus volume</label>
+              <div className="catalogue-map-search" ref={searchContainerRef}>
+                <input
+                  id={focusVolumeId}
+                  type="search"
+                  role="combobox"
+                  aria-autocomplete="list"
+                  aria-controls={focusListboxId}
+                  aria-expanded={showFocusResults}
+                  aria-activedescendant={
+                    showFocusResults &&
+                    highlightedIndex >= 0 &&
+                    focusMatches[highlightedIndex]
+                      ? `${focusListboxId}-opt-${highlightedIndex}`
+                      : undefined
+                  }
+                  placeholder="Search title or author"
+                  onChange={(event) => {
+                    setFocusSearch(event.target.value);
+                    setShowFocusResults(true);
+                    setHighlightedIndex(-1);
+                  }}
+                  onFocus={() => setShowFocusResults(true)}
+                  onKeyDown={handleFocusComboboxKeyDown}
+                  value={focusSearch}
+                />
+                {showFocusResults && (
+                  <ul
+                    id={focusListboxId}
+                    role="listbox"
+                    className="catalogue-map-search-results"
+                  >
+                    {focusMatches.map((book, index) => {
+                      const bookKey = getBookKey(book);
+                      const isHighlighted = index === highlightedIndex;
+                      return (
+                        <li key={bookKey} role="none">
+                          <button
+                            type="button"
+                            id={`${focusListboxId}-opt-${index}`}
+                            role="option"
+                            tabIndex={-1}
+                            data-highlighted={isHighlighted}
+                            aria-selected={isHighlighted || bookKey === focusKey}
+                            onMouseEnter={() => setHighlightedIndex(index)}
+                            onClick={() => selectFocusVolume(book)}
+                          >
+                            <strong>{book.author}</strong>
+                            <span>{book.title}</span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                    {focusMatches.length === 0 && (
+                      <li
+                        className="no-matches"
+                        role="option"
+                        aria-disabled="true"
+                        aria-selected="false"
+                      >
+                        No volumes match
                       </li>
-                    );
-                  })}
-                  {focusMatches.length === 0 && <li className="no-matches" role="option" aria-disabled="true" aria-selected="false">No volumes match</li>}
-                </ul>
-              )}
+                    )}
+                  </ul>
+                )}
               </div>
             </>
           ) : (
             <>
-              <label htmlFor="focus-tag">Focus Subject/Tag</label>
+              <label htmlFor={focusTagId}>Focus Subject/Tag</label>
               <select
-                id="focus-tag"
+                id={focusTagId}
                 onChange={(event) => {
                   setSelectedTagKey("");
                   setFocusTag(event.target.value);
                 }}
-                value={focusTag}
+                value={resolvedFocusTag}
               >
-                {topTagsList.map((tag) => (
+                {topTagsList.map(({ tag, count }) => (
                   <option key={tag} value={tag}>
-                    {tag} ({books.filter(b => b.tags?.includes(tag)).length} vols)
+                    {tag} ({tagGraph.tagCounts.get(tag) ?? count} vols)
                   </option>
                 ))}
               </select>
@@ -314,7 +464,6 @@ export function CatalogueConstellation({
 
       <div className="catalogue-map-body">
         {mode === "similarity" ? (
-          // Similarity Constellation Plot
           <div
             className="catalogue-map-plot"
             aria-label={`Books nearest ${focusBook.title} by current catalogue relationships`}
@@ -352,7 +501,9 @@ export function CatalogueConstellation({
 
             {connections.map((connection) => {
               const bookKey = getBookKey(connection.book);
-              const isSelected = bookKey === getBookKey(selectedConnection.book);
+              const isSelected =
+                selectedConnection !== null &&
+                bookKey === getBookKey(selectedConnection.book);
 
               return (
                 <button
@@ -376,16 +527,15 @@ export function CatalogueConstellation({
             })}
           </div>
         ) : (
-          // Tag Co-occurrence Constellation Plot
           <div
             className="catalogue-map-plot tag-map-plot"
-            aria-label={`Tags co-occurring with ${focusTag}`}
+            aria-label={`Tags co-occurring with ${resolvedFocusTag}`}
           >
             <svg aria-hidden="true" viewBox="0 0 720 560">
               <g className="catalogue-map-bridges">
-                {tagBridges.map((bridge, idx) => (
+                {tagBridges.map((bridge) => (
                   <line
-                    key={idx}
+                    key={`${bridge.first.tag}-${bridge.second.tag}`}
                     x1={bridge.first.x}
                     x2={bridge.second.x}
                     y1={bridge.first.y}
@@ -408,12 +558,15 @@ export function CatalogueConstellation({
 
             <div className="catalogue-map-center tag-center">
               <span>focus tag</span>
-              <strong className="text-xl font-bold font-mono tracking-wider">{focusTag}</strong>
-              <span className="text-xs opacity-75">{books.filter(b => b.tags?.includes(focusTag)).length} volumes</span>
+              <strong className="tag-center-label">{resolvedFocusTag}</strong>
+              <span className="tag-center-count">
+                {tagGraph.tagCounts.get(resolvedFocusTag) ?? 0} volumes
+              </span>
             </div>
 
             {tagConnections.map((tc) => {
-              const isSelected = selectedTagNode && tc.tag === selectedTagNode.tag;
+              const isSelected =
+                selectedTagNode !== null && tc.tag === selectedTagNode.tag;
 
               return (
                 <button
@@ -428,45 +581,44 @@ export function CatalogueConstellation({
                   }}
                   title={`Co-occurs ${tc.count} times`}
                   type="button"
-                  aria-label={`${tc.tag}, shared by ${tc.count} volumes with ${focusTag}`}
+                  aria-label={`${tc.tag}, shared by ${tc.count} volumes with ${resolvedFocusTag}`}
                 >
-                  <strong className="font-mono text-center block w-full">{tc.tag}</strong>
-                  <span className="text-center block w-full text-xs">Shared: {tc.count} vols</span>
+                  <strong className="tag-node-label">{tc.tag}</strong>
+                  <span className="tag-node-count">Shared: {tc.count} vols</span>
                 </button>
               );
             })}
           </div>
         )}
 
-        {/* Notes details sidebar */}
         {mode === "similarity" ? (
-          <aside className="catalogue-map-notes" aria-live="polite">
-            <p>Nearest linked volume</p>
-            <h3>{selectedConnection.book.title}</h3>
-            <strong>{selectedConnection.book.author}</strong>
-            <dl>
-              <div>
-                <dt>Division</dt>
-                <dd>{getDivision(selectedConnection.book)}</dd>
-              </div>
-              <div>
-                <dt>Location</dt>
-                <dd>
-                  Shelf {selectedConnection.book.shelf}.{" "}
-                  {selectedConnection.book.position}.
-                </dd>
-              </div>
-            </dl>
-            {selectedConnection.book.summary && (
-              <p className="catalogue-map-summary">
-                {selectedConnection.book.summary}
-              </p>
-            )}
-            {selectedConnection.book.tags && selectedConnection.book.tags.length > 0 && (
-              <div className="catalogue-map-tags" aria-label="Book tags">
-                {selectedConnection.book.tags.map((tag) => {
-                  if (onTagClick) {
-                    return (
+          selectedConnection ? (
+            <aside className="catalogue-map-notes" aria-live="polite">
+              <p>Nearest linked volume</p>
+              <h3>{selectedConnection.book.title}</h3>
+              <strong>{selectedConnection.book.author}</strong>
+              <dl>
+                <div>
+                  <dt>Division</dt>
+                  <dd>{getDivision(selectedConnection.book)}</dd>
+                </div>
+                <div>
+                  <dt>Location</dt>
+                  <dd>
+                    Shelf {selectedConnection.book.shelf}.{" "}
+                    {selectedConnection.book.position || "Unpositioned"}.
+                  </dd>
+                </div>
+              </dl>
+              {selectedConnection.book.summary && (
+                <p className="catalogue-map-summary">
+                  {selectedConnection.book.summary}
+                </p>
+              )}
+              {filterDisplayTags(selectedConnection.book.tags).length > 0 && (
+                <div className="catalogue-map-tags" aria-label="Book tags">
+                  {filterDisplayTags(selectedConnection.book.tags).map((tag) =>
+                    onTagClick ? (
                       <button
                         key={tag}
                         className="catalogue-tag catalogue-tag-interactive"
@@ -475,85 +627,134 @@ export function CatalogueConstellation({
                       >
                         {tag}
                       </button>
-                    );
-                  }
-                  return (
-                    <span key={tag} className="catalogue-tag">
-                      {tag}
-                    </span>
-                  );
-                })}
-              </div>
-            )}
-            <h4>Why it appears</h4>
-            <ul>
-              {selectedConnection.reasons.map((reason) => (
-                <li key={reason}>{reason}</li>
-              ))}
-            </ul>
-          </aside>
-        ) : (
-          // Tag sidebar
-          selectedTagNode && (
-            <aside className="catalogue-map-notes tag-notes-sidebar" aria-live="polite">
-              <p>Linked Subject/Tag</p>
-              <h3 className="font-mono">{selectedTagNode.tag}</h3>
-              <dl>
-                <div>
-                  <dt>Co-occurrence Strength</dt>
-                  <dd>Shares <strong>{selectedTagNode.count}</strong> volumes with &ldquo;{focusTag}&rdquo;</dd>
+                    ) : (
+                      <span key={tag} className="catalogue-tag">
+                        {tag}
+                      </span>
+                    ),
+                  )}
                 </div>
-                <div>
-                  <dt>Global Catalog Occurrence</dt>
-                  <dd>Appears on <strong>{selectedTagTotalCount}</strong> volumes overall</dd>
-                </div>
-              </dl>
-
-              <h4>Shared Volumes ({sharedBooks.length})</h4>
-              <ul className="shared-books-list">
-                {sharedBooks.slice(0, 5).map((book) => (
-                  <li key={book.number} className="shared-book-item">
-                    <span
-                      className="shared-book-link cursor-pointer hover:underline text-green-900"
-                      onClick={() => onBookClick && onBookClick(book)}
-                    >
-                      <cite>{book.title}</cite>
-                    </span>{" "}
-                    by <span className="font-semibold text-xs">{book.author}</span>
-                  </li>
+              )}
+              <h4>Why it appears</h4>
+              <ul>
+                {selectedConnection.reasons.map((reason) => (
+                  <li key={reason}>{reason}</li>
                 ))}
-                {sharedBooks.length > 5 && (
-                  <li className="text-xs italic text-gray-700">
-                    And {sharedBooks.length - 5} more volumes...
-                  </li>
-                )}
               </ul>
-
-              <div className="tag-sidebar-actions mt-4">
-                <button
-                  type="button"
-                  className="catalogue-tag-interactive catalogue-tag font-mono px-3 py-1 text-sm inline-block"
-                  onClick={() => onTagClick && onTagClick(selectedTagNode.tag)}
-                >
-                  Inspect tag matches ↗
-                </button>
-              </div>
+              {onBookClick && (
+                <div className="tag-sidebar-actions">
+                  <button
+                    type="button"
+                    className="catalogue-tag-interactive catalogue-tag sidebar-inspect-btn"
+                    onClick={() => {
+                      const matched = booksByKey.get(
+                        getBookKey(selectedConnection.book),
+                      );
+                      if (matched) onBookClick(matched);
+                    }}
+                  >
+                    Open volume card ↗
+                  </button>
+                </div>
+              )}
+            </aside>
+          ) : (
+            <aside className="catalogue-map-notes" aria-live="polite">
+              <p>Nearest linked volume</p>
+              <h3>No linked volumes</h3>
+              <p className="catalogue-map-summary">
+                This volume shares no division, shelf, or subject tags with other
+                books yet.
+              </p>
             </aside>
           )
+        ) : selectedTagNode ? (
+          <aside
+            className="catalogue-map-notes tag-notes-sidebar"
+            aria-live="polite"
+          >
+            <p>Linked Subject/Tag</p>
+            <h3 className="font-mono">{selectedTagNode.tag}</h3>
+            <dl>
+              <div>
+                <dt>Co-occurrence Strength</dt>
+                <dd>
+                  Shares <strong>{selectedTagNode.count}</strong> volumes with
+                  &ldquo;{resolvedFocusTag}&rdquo;
+                </dd>
+              </div>
+              <div>
+                <dt>Global Catalog Occurrence</dt>
+                <dd>
+                  Appears on <strong>{selectedTagTotalCount}</strong> volumes
+                  overall
+                </dd>
+              </div>
+            </dl>
+
+            <h4>Shared Volumes ({sharedBooks.length})</h4>
+            <ul className="shared-books-list">
+              {sharedBooks.slice(0, 5).map((book) => (
+                <li key={getBookKey(book)} className="shared-book-item">
+                  <button
+                    type="button"
+                    className="shared-book-link"
+                    onClick={() => onBookClick?.(book)}
+                  >
+                    <cite>{book.title}</cite>
+                  </button>{" "}
+                  by <span className="shared-book-author">{book.author}</span>
+                </li>
+              ))}
+              {sharedBooks.length > 5 && (
+                <li className="shared-books-more">
+                  And {sharedBooks.length - 5} more volumes...
+                </li>
+              )}
+            </ul>
+
+            <div className="tag-sidebar-actions">
+              <button
+                type="button"
+                className="catalogue-tag-interactive catalogue-tag sidebar-inspect-btn"
+                onClick={() => onTagClick?.(selectedTagNode.tag)}
+              >
+                Inspect tag matches ↗
+              </button>
+            </div>
+          </aside>
+        ) : (
+          <aside
+            className="catalogue-map-notes tag-notes-sidebar"
+            aria-live="polite"
+          >
+            <p>Linked Subject/Tag</p>
+            <h3>No co-occurring subjects</h3>
+            <p className="catalogue-map-summary">
+              Select another subject tag to inspect co-occurrence relationships.
+            </p>
+          </aside>
         )}
       </div>
 
       <details className="catalogue-map-list">
         <summary>
-          {mode === "similarity" ? "View these book relationships as a list" : "View these tag relationships as a list"}
+          {mode === "similarity"
+            ? "View these book relationships as a list"
+            : "View these tag relationships as a list"}
         </summary>
         {mode === "similarity" ? (
           <ol>
             {connections.map((connection) => (
               <li key={getBookKey(connection.book)}>
-                <button type="button" onClick={() => setConnectionKey(getBookKey(connection.book))}>
+                <button
+                  type="button"
+                  onClick={() => setConnectionKey(getBookKey(connection.book))}
+                >
                   <strong>{connection.book.title}</strong>
-                  <span>{connection.book.author} — {getReasonLabel(connection.reasons)}</span>
+                  <span>
+                    {connection.book.author} — {getReasonLabel(connection.reasons)}
+                  </span>
                 </button>
               </li>
             ))}
@@ -562,9 +763,14 @@ export function CatalogueConstellation({
           <ol>
             {tagConnections.map((connection) => (
               <li key={connection.tag}>
-                <button type="button" onClick={() => setSelectedTagKey(connection.tag)}>
+                <button
+                  type="button"
+                  onClick={() => setSelectedTagKey(connection.tag)}
+                >
                   <strong>{connection.tag}</strong>
-                  <span>Shared by {connection.count} volumes with {focusTag}</span>
+                  <span>
+                    Shared by {connection.count} volumes with {resolvedFocusTag}
+                  </span>
                 </button>
               </li>
             ))}

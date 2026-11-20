@@ -1,17 +1,13 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { getDivision, type CatalogueBook } from "@/lib/books/catalogue";
-
-function getInitial(author: string) {
-  const searchableAuthor = author
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-  return searchableAuthor.match(/[a-z]/i)?.[0].toLocaleUpperCase("en-US") ?? "#";
-}
-
-type LedgerBook = CatalogueBook & { number: number };
+import {
+  getAuthorInitial,
+  getBookKey,
+  getDivision,
+  READING_STATUS_LABELS,
+  type LedgerBook,
+} from "@/lib/books/catalogue";
 
 export function CatalogueLedger({
   entries,
@@ -28,11 +24,13 @@ export function CatalogueLedger({
   const entriesByInitial = useMemo(() => {
     const groups = new Map<string, LedgerBook[]>();
     for (const entry of visibleEntries) {
-      const initial = getInitial(entry.author);
-      if (!groups.has(initial)) {
-        groups.set(initial, []);
+      const initial = getAuthorInitial(entry.author);
+      const group = groups.get(initial);
+      if (group) {
+        group.push(entry);
+      } else {
+        groups.set(initial, [entry]);
       }
-      groups.get(initial)!.push(entry);
     }
     return groups;
   }, [visibleEntries]);
@@ -43,7 +41,8 @@ export function CatalogueLedger({
         <p>Complete shelf ledger</p>
         <h2 id="ledger-title">Entries by author</h2>
         <span className="catalogue-ledger-count">
-          Showing {Math.min(visibleCount, entries.length)} of {entries.length} matching {entries.length === 1 ? "volume" : "volumes"}
+          Showing {Math.min(visibleCount, entries.length)} of {entries.length}{" "}
+          matching {entries.length === 1 ? "volume" : "volumes"}
         </span>
       </div>
 
@@ -62,47 +61,81 @@ export function CatalogueLedger({
         >
           <h3>{initial}</h3>
           <ol>
-            {groupEntries.map((book) => (
-              <li
-                className="catalogue-entry catalogue-entry-interactive"
-                key={book.number}
-                onClick={() => onBookClick(book)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(event) => {
-                  if (event.key === "Enter" || event.key === " ") {
-                    event.preventDefault();
-                    onBookClick(book);
-                  }
-                }}
-                aria-haspopup="dialog"
-              >
-                <span className="catalogue-entry-number">{book.number}</span>
-                <p>
-                  <span className="catalogue-author">{book.author}.</span>{" "}
-                  <cite>{book.title}.</cite>{" "}
-                  <span className="catalogue-edition">{book.edition}.</span>
-                  <span className="catalogue-division">
-                    {getDivision(book)}.
-                  </span>
-                </p>
-                <span className="catalogue-location">
-                  Shelf {book.shelf}. {book.position}.
-                </span>
-              </li>
-            ))}
+            {groupEntries.map((book) => {
+              const hasTrackerBadges =
+                book.reading_status !== "unread" ||
+                book.rating !== null ||
+                Boolean(book.loaned_to);
+
+              return (
+                <li key={getBookKey(book)} className="catalogue-entry-row">
+                  <button
+                    type="button"
+                    className="catalogue-entry catalogue-entry-interactive"
+                    onClick={() => onBookClick(book)}
+                    aria-haspopup="dialog"
+                  >
+                    <span className="catalogue-entry-number">
+                      {book.number}
+                    </span>
+                    <span className="catalogue-entry-body">
+                      <span className="catalogue-author">{book.author}.</span>{" "}
+                      <cite>{book.title}.</cite>{" "}
+                      {book.edition && (
+                        <span className="catalogue-edition">
+                          {book.edition}.{" "}
+                        </span>
+                      )}
+                      <span className="catalogue-division">
+                        {getDivision(book)}.
+                      </span>
+                    </span>
+                    <span className="catalogue-entry-footer">
+                      <span className="catalogue-location">
+                        Shelf {book.shelf}
+                        {book.position ? `. ${book.position}.` : "."}
+                      </span>
+                      {hasTrackerBadges && (
+                        <span className="catalogue-entry-badges">
+                          {book.reading_status !== "unread" && (
+                            <span
+                              className={`ledger-badge ledger-badge--status ledger-badge--${book.reading_status}`}
+                            >
+                              {READING_STATUS_LABELS[book.reading_status]}
+                            </span>
+                          )}
+                          {book.rating !== null && (
+                            <span className="ledger-badge ledger-badge--rating">
+                              ★ {book.rating}
+                            </span>
+                          )}
+                          {book.loaned_to && (
+                            <span className="ledger-badge ledger-badge--loaned">
+                              Loaned
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
           </ol>
         </section>
       ))}
 
       {visibleCount < entries.length && (
         <div className="catalogue-load-more">
-          <p>{entries.length - visibleCount} more volumes remain in this result.</p>
+          <p>
+            {entries.length - visibleCount} more volumes remain in this result.
+          </p>
           <button
             type="button"
             onClick={() => setVisibleCount((count) => count + pageSize)}
           >
-            Show the next {Math.min(pageSize, entries.length - visibleCount)} volumes
+            Show the next {Math.min(pageSize, entries.length - visibleCount)}{" "}
+            volumes
           </button>
         </div>
       )}
