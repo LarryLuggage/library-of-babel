@@ -21,13 +21,25 @@ import {
   type ReadingStatus,
   type StorageMode,
 } from "@/lib/books/catalogue";
+import type { CuratorAuthState } from "@/lib/auth/curator";
+import {
+  normalizeConnectionPairKey,
+  type EditorialConnection,
+} from "@/lib/books/connections";
 import { CatalogueConstellation } from "./catalogue-constellation";
 import { CatalogueLedger } from "./catalogue-ledger";
-import { BookDetailCard, type BookUpdatePatch } from "./book-detail-card";
+import {
+  BookDetailCard,
+  type BookUpdatePatch,
+  type CreateEditorialConnectionInput,
+} from "./book-detail-card";
 import { BookEditorModal } from "./book-editor-modal";
+import { CuratorAuthModal } from "./curator-auth-modal";
 import { TagMatchesOverlay } from "./tag-matches-overlay";
 import { ChronologicalScroll } from "./chronological-scroll";
+import { PhysicalShelfView } from "./physical-shelf-view";
 import { PathfinderModal } from "./pathfinder-modal";
+import { ReadingStatsModal } from "./reading-stats-modal";
 import { ModalDialog, useDialogClose } from "./modal-dialog";
 
 type StatusFilterValue = "" | ReadingStatus | "loaned";
@@ -162,12 +174,19 @@ function getSearchText(book: CatalogueBook): string {
     .toLocaleLowerCase("en-US");
 }
 
+const RESULTS_TABS = ["ledger", "shelves", "timeline"] as const;
+type ResultsTab = (typeof RESULTS_TABS)[number];
+
 export function CatalogueApp({
   initialBooks,
+  initialConnections,
   storageMode,
+  initialAuth,
 }: {
   initialBooks: CatalogueBook[];
+  initialConnections: EditorialConnection[];
   storageMode: StorageMode;
+  initialAuth: CuratorAuthState;
 }) {
   const [books, setBooks] = useState<CatalogueBook[]>(initialBooks);
   const [prevInitialBooks, setPrevInitialBooks] = useState(initialBooks);
@@ -175,6 +194,27 @@ export function CatalogueApp({
     setPrevInitialBooks(initialBooks);
     setBooks(initialBooks);
   }
+
+  const [connections, setConnections] =
+    useState<EditorialConnection[]>(initialConnections);
+  const [prevInitialConnections, setPrevInitialConnections] =
+    useState(initialConnections);
+  if (initialConnections !== prevInitialConnections) {
+    setPrevInitialConnections(initialConnections);
+    setConnections(initialConnections);
+  }
+
+  const [authState, setAuthState] = useState<CuratorAuthState>(initialAuth);
+  const [prevInitialAuth, setPrevInitialAuth] = useState(initialAuth);
+  if (
+    initialAuth.authRequired !== prevInitialAuth.authRequired ||
+    initialAuth.isCurator !== prevInitialAuth.isCurator
+  ) {
+    setPrevInitialAuth(initialAuth);
+    setAuthState(initialAuth);
+  }
+
+  const canEdit = !authState.authRequired || authState.isCurator;
 
   // Filters
   const [catalogueQuery, setCatalogueQuery] = useState("");
@@ -186,11 +226,12 @@ export function CatalogueApp({
 
   // Tabs
   const [mapMode, setMapMode] = useState<"similarity" | "tag">("similarity");
-  const [bottomView, setBottomView] = useState<"ledger" | "timeline">("ledger");
+  const [bottomView, setBottomView] = useState<ResultsTab>("ledger");
 
   const similarityTabRef = useRef<HTMLButtonElement>(null);
   const tagTabRef = useRef<HTMLButtonElement>(null);
   const ledgerTabRef = useRef<HTMLButtonElement>(null);
+  const shelvesTabRef = useRef<HTMLButtonElement>(null);
   const timelineTabRef = useRef<HTMLButtonElement>(null);
 
   // Modals / Overlays
@@ -204,6 +245,12 @@ export function CatalogueApp({
     mode: "create" | "edit";
     book?: CatalogueBook;
   } | null>(null);
+  const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authPromptReason, setAuthPromptReason] = useState<string | null>(null);
+  const pendingAuthActionRef = useRef<(() => void) | null>(null);
+  const justAuthenticatedRef = useRef(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const [isAlephOpen, setIsAlephOpen] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(0);
 
@@ -489,6 +536,45 @@ export function CatalogueApp({
     showToast("success", `Updated "${savedBook.title}".`);
   };
 
+  const requireCuratorAuth = (reason?: string, afterAuth?: () => void) => {
+    justAuthenticatedRef.current = false;
+    pendingAuthActionRef.current = afterAuth ?? null;
+    setAuthPromptReason(reason ?? null);
+    setIsAuthModalOpen(true);
+  };
+
+  const handleUnauthorized = (reason?: string) => {
+    setAuthState({ authRequired: true, isCurator: false });
+    requireCuratorAuth(
+      reason ?? "Your curator session has expired. Please sign in to continue.",
+    );
+  };
+
+  const handleSignOut = async () => {
+    setIsSigningOut(true);
+    try {
+      const response = await fetch("/api/auth/session", { method: "DELETE" });
+      const data = (await response.json().catch(() => ({}))) as {
+        authRequired?: boolean;
+        isCurator?: boolean;
+        error?: string;
+      };
+      if (!response.ok) {
+        showToast("error", data.error || "Could not sign out.");
+        return;
+      }
+      setAuthState({
+        authRequired: data.authRequired ?? authState.authRequired,
+        isCurator: Boolean(data.isCurator),
+      });
+      showToast("success", "Signed out of curator mode.");
+    } catch {
+      showToast("error", "Network error while signing out.");
+    } finally {
+      setIsSigningOut(false);
+    }
+  };
+
   const handleUpdateBook = async (
     bookId: string,
     patch: BookUpdatePatch,
@@ -506,6 +592,12 @@ export function CatalogueApp({
       book?: CatalogueBook;
       error?: string;
     };
+
+    if (response.status === 401) {
+      const msg = data.error || "Curator sign-in required to update volumes.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
 
     if (!response.ok || !data.book) {
       const msg = data.error || "Could not update volume.";
@@ -537,6 +629,12 @@ export function CatalogueApp({
       error?: string;
     };
 
+    if (response.status === 401) {
+      const msg = data.error || "Curator sign-in required to remove volumes.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
     if (!response.ok || !data.deleted) {
       const msg = data.error || "Could not remove volume.";
       showToast("error", msg);
@@ -544,9 +642,99 @@ export function CatalogueApp({
     }
 
     setBooks((prev) => prev.filter((candidate) => candidate.id !== bookId));
+    setConnections((prev) =>
+      prev.filter(
+        (conn) =>
+          conn.source_book_id !== bookId && conn.target_book_id !== bookId,
+      ),
+    );
     setActiveBookId((prev) => (prev === bookId ? null : prev));
     setPathfinderSourceId((prev) => (prev === bookId ? null : prev));
     showToast("success", `Removed "${bookTitle}" from the catalogue.`);
+  };
+
+  const handleCreateConnection = async (
+    input: CreateEditorialConnectionInput,
+  ): Promise<EditorialConnection> => {
+    const response = await fetch("/api/connections", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        source_book_id: input.source_book_id,
+        target_book_id: input.target_book_id,
+        connection_type: input.connection_type,
+        description: input.description,
+        weight: input.weight ?? 2,
+      }),
+    });
+
+    const data = (await response.json().catch(() => ({}))) as {
+      connection?: EditorialConnection;
+      error?: string;
+    };
+
+    if (response.status === 401) {
+      const msg =
+        data.error || "Curator sign-in required to create editorial links.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
+    if (!response.ok || !data.connection) {
+      const msg = data.error || "Could not save editorial link.";
+      showToast("error", msg);
+      throw new Error(msg);
+    }
+
+    const saved = data.connection;
+    const savedPair = normalizeConnectionPairKey(
+      saved.source_book_id,
+      saved.target_book_id,
+    );
+    setConnections((prev) => [
+      saved,
+      ...prev.filter(
+        (item) =>
+          item.id !== saved.id &&
+          normalizeConnectionPairKey(
+            item.source_book_id,
+            item.target_book_id,
+          ) !== savedPair,
+      ),
+    ]);
+    showToast("success", "Editorial connection saved.");
+    return saved;
+  };
+
+  const handleDeleteConnection = async (connectionId: string) => {
+    const response = await fetch(
+      `/api/connections/${encodeURIComponent(connectionId)}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    const data = (await response.json().catch(() => ({}))) as {
+      deleted?: boolean;
+      id?: string;
+      error?: string;
+    };
+
+    if (response.status === 401) {
+      const msg =
+        data.error || "Curator sign-in required to remove editorial links.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
+    if (!response.ok || !data.deleted) {
+      const msg = data.error || "Could not remove editorial link.";
+      showToast("error", msg);
+      throw new Error(msg);
+    }
+
+    setConnections((prev) => prev.filter((conn) => conn.id !== connectionId));
+    showToast("success", "Editorial connection removed.");
   };
 
   const handleMapTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
@@ -568,25 +756,38 @@ export function CatalogueApp({
     }
   };
 
+  const selectResultsTab = (nextView: ResultsTab, moveFocus = false) => {
+    setBottomView(nextView);
+    const targetRef =
+      nextView === "ledger"
+        ? ledgerTabRef.current
+        : nextView === "shelves"
+          ? shelvesTabRef.current
+          : timelineTabRef.current;
+    if (moveFocus) {
+      targetRef?.focus();
+    }
+    targetRef?.scrollIntoView({ block: "nearest", inline: "nearest" });
+  };
+
   const handleResultsTabKeyDown = (
     event: React.KeyboardEvent<HTMLButtonElement>,
   ) => {
-    let nextView: "ledger" | "timeline" | null = null;
-    if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
-      nextView = bottomView === "ledger" ? "timeline" : "ledger";
+    const currentIndex = RESULTS_TABS.indexOf(bottomView);
+    let nextIndex = -1;
+    if (event.key === "ArrowRight") {
+      nextIndex = (currentIndex + 1) % RESULTS_TABS.length;
+    } else if (event.key === "ArrowLeft") {
+      nextIndex =
+        (currentIndex - 1 + RESULTS_TABS.length) % RESULTS_TABS.length;
     } else if (event.key === "Home") {
-      nextView = "ledger";
+      nextIndex = 0;
     } else if (event.key === "End") {
-      nextView = "timeline";
+      nextIndex = RESULTS_TABS.length - 1;
     }
-    if (!nextView) return;
+    if (nextIndex < 0) return;
     event.preventDefault();
-    setBottomView(nextView);
-    if (nextView === "ledger") {
-      ledgerTabRef.current?.focus();
-    } else {
-      timelineTabRef.current?.focus();
-    }
+    selectResultsTab(RESULTS_TABS[nextIndex], true);
   };
 
   const resultsSection = (
@@ -609,10 +810,23 @@ export function CatalogueApp({
             aria-selected={bottomView === "ledger"}
             tabIndex={bottomView === "ledger" ? 0 : -1}
             className="view-tab font-mono"
-            onClick={() => setBottomView("ledger")}
+            onClick={() => selectResultsTab("ledger")}
             onKeyDown={handleResultsTabKeyDown}
           >
             SHELF LEDGER
+          </button>
+          <button
+            ref={shelvesTabRef}
+            id="results-tab-shelves"
+            type="button"
+            role="tab"
+            aria-selected={bottomView === "shelves"}
+            tabIndex={bottomView === "shelves" ? 0 : -1}
+            className="view-tab font-mono"
+            onClick={() => selectResultsTab("shelves")}
+            onKeyDown={handleResultsTabKeyDown}
+          >
+            PHYSICAL SHELVES
           </button>
           <button
             ref={timelineTabRef}
@@ -622,7 +836,7 @@ export function CatalogueApp({
             aria-selected={bottomView === "timeline"}
             tabIndex={bottomView === "timeline" ? 0 : -1}
             className="view-tab font-mono"
-            onClick={() => setBottomView("timeline")}
+            onClick={() => selectResultsTab("timeline")}
             onKeyDown={handleResultsTabKeyDown}
           >
             DECADAL TIMELINE
@@ -647,6 +861,20 @@ export function CatalogueApp({
               authorInitial,
             ].join("|")}
             entries={filteredCatalogueEntries}
+            onBookClick={(book) => setActiveBookId(getBookKey(book))}
+          />
+        )}
+      </div>
+
+      <div
+        role="tabpanel"
+        id="results-panel-shelves"
+        aria-labelledby="results-tab-shelves"
+        hidden={bottomView !== "shelves"}
+      >
+        {bottomView === "shelves" && (
+          <PhysicalShelfView
+            books={filteredCatalogueEntries}
             onBookClick={(book) => setActiveBookId(getBookKey(book))}
           />
         )}
@@ -691,12 +919,36 @@ export function CatalogueApp({
       </div>
 
       <header className="catalogue-masthead">
-        <p className="catalogue-kicker">
-          Printed for private circulation ·{" "}
-          <span className="catalogue-storage-note">
-            {storageMode === "supabase" ? "Supabase synced" : "Local catalogue"}
-          </span>
-        </p>
+        <div className="catalogue-kicker-row">
+          <p className="catalogue-kicker">
+            Printed for private circulation ·{" "}
+            <span className="catalogue-storage-note">
+              {storageMode === "supabase" ? "Supabase synced" : "Local catalogue"}
+            </span>
+          </p>
+          {authState.authRequired && (
+            <button
+              type="button"
+              className={`curator-status-btn font-mono ${authState.isCurator ? "is-curator" : ""}`}
+              disabled={isSigningOut}
+              onClick={() => {
+                if (authState.isCurator) {
+                  void handleSignOut();
+                } else {
+                  requireCuratorAuth(
+                    "Sign in with the curator passphrase to add volumes, edit reading logs, or manage editorial links.",
+                  );
+                }
+              }}
+            >
+              {authState.isCurator
+                ? isSigningOut
+                  ? "Signing out..."
+                  : "Curator Mode · Sign Out"
+                : "Curator Sign In"}
+            </button>
+          )}
+        </div>
         <h1>Catalogue</h1>
         <p className="catalogue-dek">
           A descriptive register of the volumes presently entered in the Library
@@ -745,12 +997,33 @@ export function CatalogueApp({
           <button
             type="button"
             className="toolbar-btn font-mono"
-            onClick={() => setEditorState({ mode: "create" })}
+            onClick={() => {
+              if (!canEdit) {
+                requireCuratorAuth(
+                  "Curator sign-in is required before adding a new volume to the catalogue.",
+                  () => setEditorState({ mode: "create" }),
+                );
+                return;
+              }
+              setEditorState({ mode: "create" });
+            }}
           >
             <span aria-hidden="true">＋</span>
             <span className="toolbar-btn-copy">
               <strong>Add volume</strong>
               <small>Enter a new shelf accession</small>
+            </span>
+          </button>
+
+          <button
+            type="button"
+            className="toolbar-btn font-mono"
+            onClick={() => setIsStatsOpen(true)}
+          >
+            <span aria-hidden="true">▤</span>
+            <span className="toolbar-btn-copy">
+              <strong>Stats &amp; Export</strong>
+              <small>Reading progress, loans &amp; data</small>
             </span>
           </button>
 
@@ -1013,6 +1286,7 @@ export function CatalogueApp({
       >
         <CatalogueConstellation
           books={catalogueEntries}
+          editorialConnections={connections}
           onTagClick={setActiveTag}
           onBookClick={(book) => setActiveBookId(getBookKey(book))}
           mode="similarity"
@@ -1027,6 +1301,7 @@ export function CatalogueApp({
       >
         <CatalogueConstellation
           books={catalogueEntries}
+          editorialConnections={connections}
           onTagClick={setActiveTag}
           onBookClick={(book) => setActiveBookId(getBookKey(book))}
           mode="tag"
@@ -1039,8 +1314,17 @@ export function CatalogueApp({
         <PathfinderModal
           key={pathfinderSourceId ?? "blank-pathfinder"}
           books={catalogueEntries}
+          editorialConnections={connections}
           initialSource={pathfinderSourceBook}
           onClose={() => setIsPathfinderOpen(false)}
+          onBookClick={(book) => setActiveBookId(getBookKey(book))}
+        />
+      )}
+
+      {isStatsOpen && (
+        <ReadingStatsModal
+          books={catalogueEntries}
+          onClose={() => setIsStatsOpen(false)}
           onBookClick={(book) => setActiveBookId(getBookKey(book))}
         />
       )}
@@ -1050,6 +1334,16 @@ export function CatalogueApp({
           key={getBookKey(activeBook)}
           book={activeBook}
           books={catalogueEntries}
+          canEdit={canEdit}
+          authRequired={authState.authRequired}
+          onRequireAuth={() =>
+            requireCuratorAuth(
+              "Sign in as curator to edit the reading ledger or manage editorial connections.",
+            )
+          }
+          connections={connections}
+          onCreateConnection={handleCreateConnection}
+          onDeleteConnection={handleDeleteConnection}
           onBookClick={(book) => setActiveBookId(getBookKey(book))}
           onClose={() => setActiveBookId(null)}
           onStartPath={() => {
@@ -1058,9 +1352,17 @@ export function CatalogueApp({
             openPathfinder(sourceBook);
           }}
           onTagClick={setActiveTag}
-          onEditBook={() =>
-            setEditorState({ mode: "edit", book: activeBook })
-          }
+          onEditBook={() => {
+            if (!canEdit) {
+              const bookToEdit = activeBook;
+              requireCuratorAuth(
+                "Sign in as curator to amend volume records.",
+                () => setEditorState({ mode: "edit", book: bookToEdit }),
+              );
+              return;
+            }
+            setEditorState({ mode: "edit", book: activeBook });
+          }}
           onUpdateBook={handleUpdateBook}
           onDeleteBook={handleDeleteBook}
         />
@@ -1088,6 +1390,11 @@ export function CatalogueApp({
           divisions={divisions.map((division) => division.name)}
           onClose={() => setEditorState(null)}
           onSaved={handleBookSaved}
+          onUnauthorized={() =>
+            handleUnauthorized(
+              "Curator sign-in is required before saving volume changes.",
+            )
+          }
         />
       )}
 
@@ -1106,6 +1413,30 @@ export function CatalogueApp({
             onClose={() => setIsAlephOpen(false)}
           />
         </ModalDialog>
+      )}
+
+      {isAuthModalOpen && (
+        <CuratorAuthModal
+          promptReason={authPromptReason}
+          onClose={() => {
+            if (!justAuthenticatedRef.current) {
+              pendingAuthActionRef.current = null;
+            }
+            justAuthenticatedRef.current = false;
+            setIsAuthModalOpen(false);
+            setAuthPromptReason(null);
+          }}
+          onAuthenticated={(nextState) => {
+            justAuthenticatedRef.current = true;
+            const deferredAction = pendingAuthActionRef.current;
+            pendingAuthActionRef.current = null;
+            setIsAuthModalOpen(false);
+            setAuthState(nextState);
+            setAuthPromptReason(null);
+            showToast("success", "Curator mode unlocked.");
+            deferredAction?.();
+          }}
+        />
       )}
     </main>
   );

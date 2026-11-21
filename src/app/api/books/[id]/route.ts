@@ -1,3 +1,4 @@
+import { requireCuratorAuth } from "@/lib/auth/curator";
 import { deleteBook, updateBook } from "@/lib/books/repository";
 import { validateUpdateBookInput } from "@/lib/books/validation";
 
@@ -16,6 +17,11 @@ export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const authError = requireCuratorAuth(request);
+  if (authError) {
+    return authError;
+  }
+
   const { id: rawId } = await context.params;
   const id = rawId.trim();
 
@@ -66,9 +72,14 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   context: { params: Promise<{ id: string }> },
 ) {
+  const authError = requireCuratorAuth(request);
+  if (authError) {
+    return authError;
+  }
+
   const { id: rawId } = await context.params;
   const id = rawId.trim();
 

@@ -1,3 +1,10 @@
+import {
+  buildEditorialConnectionMap,
+  CONNECTION_TYPE_LABELS,
+  type EditorialConnection,
+  normalizeConnectionPairKey,
+} from "./connections";
+
 export type ReadingStatus = "unread" | "reading" | "finished" | "dnf";
 
 export type StorageMode = "supabase" | "local";
@@ -445,12 +452,37 @@ function addTagConnection(
   return Math.min(points, 14);
 }
 
+export type EditorialConnectionSource =
+  | ReadonlyMap<string, EditorialConnection>
+  | readonly EditorialConnection[];
+
+export function resolveEditorialConnectionMap(
+  editorialConnections?: EditorialConnectionSource,
+): ReadonlyMap<string, EditorialConnection> | undefined {
+  if (!editorialConnections) {
+    return undefined;
+  }
+
+  if (Array.isArray(editorialConnections)) {
+    return editorialConnections.length > 0
+      ? buildEditorialConnectionMap(editorialConnections)
+      : undefined;
+  }
+
+  const map = editorialConnections as ReadonlyMap<string, EditorialConnection>;
+  return map.size > 0 ? map : undefined;
+}
+
 export function getCatalogueConnection(
   focus: CatalogueBook,
   candidate: CatalogueBook,
   tagFrequency?: ReadonlyMap<string, number>,
+  editorialConnections?: EditorialConnectionSource,
 ): CatalogueConnection | null {
-  if (getBookKey(focus) === getBookKey(candidate)) {
+  const focusKey = getBookKey(focus);
+  const candidateKey = getBookKey(candidate);
+
+  if (focusKey === candidateKey) {
     return null;
   }
 
@@ -466,6 +498,21 @@ export function getCatalogueConnection(
 
   score += addShelfConnection(focus, candidate, reasons);
 
+  const editorialMap = resolveEditorialConnectionMap(editorialConnections);
+  const editorial = editorialMap?.get(
+    normalizeConnectionPairKey(focusKey, candidateKey),
+  );
+  if (editorial) {
+    const clampedWeight = Math.min(3, Math.max(1, Math.trunc(editorial.weight)));
+    score += 18 + (clampedWeight - 1) * 3;
+    const label = CONNECTION_TYPE_LABELS[editorial.connection_type];
+    reasons.unshift(
+      editorial.description
+        ? `Curator link (${label}): ${editorial.description}`
+        : `Curator link (${label}).`,
+    );
+  }
+
   return score > 0
     ? {
         book: candidate,
@@ -480,11 +527,20 @@ export function getNearestConnections(
   books: readonly CatalogueBook[],
   limit: number,
   tagFrequency?: ReadonlyMap<string, number>,
+  editorialConnections?: EditorialConnectionSource,
 ): CatalogueConnection[] {
   const resolvedFrequency = tagFrequency ?? buildTagFrequencyMap(books);
+  const resolvedEditorialMap = resolveEditorialConnectionMap(editorialConnections);
 
   return books
-    .map((book) => getCatalogueConnection(focus, book, resolvedFrequency))
+    .map((book) =>
+      getCatalogueConnection(
+        focus,
+        book,
+        resolvedFrequency,
+        resolvedEditorialMap,
+      ),
+    )
     .filter((connection): connection is CatalogueConnection =>
       Boolean(connection),
     )

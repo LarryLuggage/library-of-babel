@@ -1,3 +1,4 @@
+import { requireCuratorAuth } from "@/lib/auth/curator";
 import { createBook, listBooks } from "@/lib/books/repository";
 import { validateCreateBookInput } from "@/lib/books/validation";
 
@@ -27,6 +28,11 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
+  const authError = requireCuratorAuth(request);
+  if (authError) {
+    return authError;
+  }
+
   let payload: unknown;
 
   try {

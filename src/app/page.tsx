@@ -1,10 +1,22 @@
-import { listBooks } from "@/lib/books/repository";
+import { getServerCuratorSession } from "@/lib/auth/curator";
+import { listBooks, listConnections } from "@/lib/books/repository";
 import { CatalogueApp } from "./catalogue-app";
 
 export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  const { books, storageMode } = await listBooks();
+  const [{ books, storageMode }, connections, initialAuth] = await Promise.all([
+    listBooks(),
+    listConnections(),
+    getServerCuratorSession(),
+  ]);
 
-  return <CatalogueApp initialBooks={books} storageMode={storageMode} />;
+  return (
+    <CatalogueApp
+      initialBooks={books}
+      initialConnections={connections}
+      storageMode={storageMode}
+      initialAuth={initialAuth}
+    />
+  );
 }

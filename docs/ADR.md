@@ -115,3 +115,32 @@ While the application worked well as a read-only visual catalog, a personal book
 ### Consequences
 * Reading progress and catalog edits persist immediately out-of-the-box in local mode and seamlessly promote to Supabase once `.env.local` credentials are configured and migrations are applied.
 * Core bibliographic logic, graph algorithms, and API mutations are guarded by automated Vitest checks alongside ESLint, TypeScript, and Next.js production builds.
+
+---
+
+## ADR 7: Passphrase Curator Authentication, Bibliographic Lookup, Physical Shelf Modeling, Analytics Export, and Curated Editorial Connections
+
+### Date
+2026-11-21
+
+### Context
+With the core CRUD tracker established (ADR 6), public deployment needed lightweight write protection without heavy user-account infrastructure, alongside richer curation workflows: external bibliographic lookup when accessioning books, visual spatial representation of the library's 41 shelves, reading analytics and portable backups, and first-class curator-defined conceptual links in the graph.
+
+### Decision
+1. **Single-Owner Passphrase Curator Auth (`src/lib/auth/curator.ts`, `src/app/api/auth/session/route.ts`, `src/app/curator-auth-modal.tsx`)**:
+   - Introduced `BOOK_OWNER_PASSPHRASE` (plus optional `BOOK_SESSION_SECRET`) with HMAC-SHA256 signed HTTP-only `babel_curator_session` cookies (30-day TTL), constant-time SHA-256 verification, and 10-failure / 15-minute IP rate limiting (`429`).
+   - Kept local development (`NODE_ENV !== "production"`) open when `BOOK_OWNER_PASSPHRASE` is unset, while failing closed (`503`) in production if unconfigured.
+   - Guarded all mutating book and connection routes (`POST`, `PATCH`, `DELETE`) via `requireCuratorAuth(request)` and updated `CatalogueApp` with deferred post-auth action replay for gated creation/edit flows plus z-index isolation on `.catalogue-kicker-row`.
+2. **Quick-Add Bibliographic Lookup (`src/lib/books/lookup.ts`, `src/app/api/books/lookup/route.ts`, `src/app/book-editor-modal.tsx`)**:
+   - Implemented timeout-bounded Open Library Search + top-3 `/works/...json` lookup with ISBN detection and optional `GOOGLE_BOOKS_API_KEY` fallback, normalizing up to 6 deduplicated candidates for one-click form prefill inside `BookEditorModal`.
+3. **Physical Shelf Elevation View (`src/lib/books/shelves.ts`, `src/app/physical-shelf-view.tsx`)**:
+   - Built deterministic position parsing (`parseBookPosition`) and shelf layout synthesis (`buildPhysicalShelves`) covering all 26 position formats across Shelves `1–41`, separating top horizontal stacks from standing archival spines on an inner-scrollable `.shelf-ledge`.
+4. **Reading Stats Dashboard & Safe Export (`src/lib/books/stats.ts`, `src/app/reading-stats-modal.tsx`)**:
+   - Added pure catalogue metrics (`computeCatalogueStats`) and RFC-4180 CSV / JSON serializers (`serializeBooksToCsv`, `serializeBooksToJson`) with formula-injection neutralization for leading spreadsheet trigger characters.
+5. **Curated Editorial Connections (`src/lib/books/connections.ts`, `src/lib/books/repository.ts`, `src/lib/books/relations.ts`, `src/app/api/connections/`)**:
+   - Upgraded local persistence to `LocalTrackerState` `version: 2` and added Supabase `book_connections` CRUD with duplicate undirected pair rejection (`409`) and book-deletion cascade cleanup.
+   - Boosted relational scoring by `18 + (weight - 1) * 3` and prepended `"Curator link (...)"` bridge reasons into Constellation and Pathfinder explanations.
+
+### Consequences
+* Public visitors can browse, filter, inspect shelves/statistics, and trace paths freely while mutations remain gated behind the curator passphrase when configured.
+* All 56 Vitest unit/integration tests across 11 suites, ESLint, TypeScript, Next.js production builds, and live Chromium Pass A/Pass B QA verifications pass cleanly before proceeding to Milestone 2 (Wikipedia/Wikidata enrichment, Playwright E2E, CI, and README documentation).

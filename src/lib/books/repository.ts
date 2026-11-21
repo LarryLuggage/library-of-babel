@@ -8,6 +8,12 @@ import {
   normalizeCatalogueBook,
   type StorageMode,
 } from "@/lib/books/catalogue";
+import {
+  type CreateConnectionInput,
+  type EditorialConnection,
+  isConnectionType,
+  normalizeConnectionPairKey,
+} from "@/lib/books/connections";
 import type {
   CreateBookInput,
   UpdateBookInput,
@@ -18,13 +24,33 @@ import { createSupabaseAdminClient } from "@/lib/supabase/admin";
 type BookRow = Database["public"]["Tables"]["books"]["Row"];
 type BookInsert = Database["public"]["Tables"]["books"]["Insert"];
 type BookUpdate = Database["public"]["Tables"]["books"]["Update"];
+type BookConnectionRow = Database["public"]["Tables"]["book_connections"]["Row"];
 
 type LocalTrackerState = {
-  version: 1;
+  version: 1 | 2;
   overrides: Record<string, Partial<CatalogueBook>>;
   created: CatalogueBook[];
   deleted: string[];
+  connections: EditorialConnection[];
 };
+
+export class DuplicateConnectionError extends Error {
+  constructor(
+    message = "A curated connection between these two volumes already exists.",
+  ) {
+    super(message);
+    this.name = "DuplicateConnectionError";
+  }
+}
+
+export class MissingBookReferenceError extends Error {
+  constructor(
+    message = "One or both referenced volumes were not found.",
+  ) {
+    super(message);
+    this.name = "MissingBookReferenceError";
+  }
+}
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -80,10 +106,58 @@ async function loadBaseCatalogue(): Promise<CatalogueBook[]> {
 
 function emptyLocalState(): LocalTrackerState {
   return {
-    version: 1,
+    version: 2,
     overrides: {},
     created: [],
     deleted: [],
+    connections: [],
+  };
+}
+
+function normalizeLocalConnection(raw: unknown): EditorialConnection | null {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const id = typeof record.id === "string" ? record.id.trim() : "";
+  const sourceId =
+    typeof record.source_book_id === "string"
+      ? record.source_book_id.trim()
+      : "";
+  const targetId =
+    typeof record.target_book_id === "string"
+      ? record.target_book_id.trim()
+      : "";
+
+  if (!id || !sourceId || !targetId || sourceId === targetId) {
+    return null;
+  }
+
+  const weight =
+    typeof record.weight === "number" &&
+    Number.isInteger(record.weight) &&
+    record.weight >= 1 &&
+    record.weight <= 3
+      ? record.weight
+      : 2;
+
+  return {
+    id,
+    source_book_id: sourceId,
+    target_book_id: targetId,
+    connection_type: isConnectionType(record.connection_type)
+      ? record.connection_type
+      : "custom",
+    description:
+      typeof record.description === "string" && record.description.trim()
+        ? record.description.trim()
+        : null,
+    weight,
+    created_at:
+      typeof record.created_at === "string" && record.created_at.trim()
+        ? record.created_at.trim()
+        : new Date(0).toISOString(),
   };
 }
 
@@ -92,8 +166,14 @@ async function loadLocalState(statePath: string): Promise<LocalTrackerState> {
     const rawJson = await readFile(statePath, "utf8");
     const parsed = JSON.parse(rawJson) as Partial<LocalTrackerState>;
 
+    const connections = Array.isArray(parsed.connections)
+      ? parsed.connections
+          .map(normalizeLocalConnection)
+          .filter((item): item is EditorialConnection => item !== null)
+      : [];
+
     return {
-      version: 1,
+      version: parsed.version === 1 ? 1 : 2,
       overrides:
         parsed.overrides &&
         typeof parsed.overrides === "object" &&
@@ -104,6 +184,7 @@ async function loadLocalState(statePath: string): Promise<LocalTrackerState> {
       deleted: Array.isArray(parsed.deleted)
         ? parsed.deleted.filter((item): item is string => typeof item === "string")
         : [],
+      connections,
     };
   } catch (error) {
     if (
@@ -125,11 +206,20 @@ async function saveLocalState(
   const directory = path.dirname(statePath);
   await mkdir(directory, { recursive: true });
 
+  const persistedState: LocalTrackerState = {
+    ...state,
+    version: 2,
+  };
+
   const tmpPath = path.join(
     directory,
     `.${path.basename(statePath)}.${process.pid}.${randomUUID()}.tmp`,
   );
-  await writeFile(tmpPath, `${JSON.stringify(state, null, 2)}\n`, "utf8");
+  await writeFile(
+    tmpPath,
+    `${JSON.stringify(persistedState, null, 2)}\n`,
+    "utf8",
+  );
   await rename(tmpPath, statePath);
 }
 
@@ -503,6 +593,9 @@ export async function deleteBook(id: string): Promise<boolean> {
     state.created = state.created.filter((book) => book.id !== id);
 
     if (state.created.length !== createdLengthBefore) {
+      state.connections = state.connections.filter(
+        (conn) => conn.source_book_id !== id && conn.target_book_id !== id,
+      );
       await saveLocalState(statePath, state);
       return true;
     }
@@ -520,6 +613,244 @@ export async function deleteBook(id: string): Promise<boolean> {
 
     state.deleted.push(id);
     delete state.overrides[id];
+    state.connections = state.connections.filter(
+      (conn) => conn.source_book_id !== id && conn.target_book_id !== id,
+    );
+    await saveLocalState(statePath, state);
+    return true;
+  });
+}
+
+function mapSupabaseRowToConnection(
+  row: BookConnectionRow,
+  uuidToBookId: ReadonlyMap<string, string>,
+): EditorialConnection {
+  const weight =
+    typeof row.weight === "number" &&
+    Number.isInteger(row.weight) &&
+    row.weight >= 1 &&
+    row.weight <= 3
+      ? row.weight
+      : 2;
+
+  return {
+    id: row.id,
+    source_book_id: uuidToBookId.get(row.source_book_id) ?? row.source_book_id,
+    target_book_id: uuidToBookId.get(row.target_book_id) ?? row.target_book_id,
+    connection_type: isConnectionType(row.connection_type)
+      ? row.connection_type
+      : "custom",
+    description: row.description,
+    weight,
+    created_at: row.created_at,
+  };
+}
+
+export async function listConnections(): Promise<EditorialConnection[]> {
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseAdminClient();
+    const rows: BookConnectionRow[] = [];
+    let offset = 0;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("book_connections")
+        .select("*")
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(offset, offset + SUPABASE_PAGE_SIZE - 1);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        break;
+      }
+
+      rows.push(...data);
+
+      if (data.length < SUPABASE_PAGE_SIZE) {
+        break;
+      }
+
+      offset += SUPABASE_PAGE_SIZE;
+    }
+
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const bookUuids = [
+      ...new Set(
+        rows.flatMap((row) => [row.source_book_id, row.target_book_id]),
+      ),
+    ];
+
+    const uuidToBookId = new Map<string, string>();
+    const ID_BATCH_SIZE = 500;
+    for (let i = 0; i < bookUuids.length; i += ID_BATCH_SIZE) {
+      const batch = bookUuids.slice(i, i + ID_BATCH_SIZE);
+      const { data: bookRows, error: bookLookupError } = await supabase
+        .from("books")
+        .select("id, book_key")
+        .in("id", batch);
+
+      if (bookLookupError) {
+        throw bookLookupError;
+      }
+
+      for (const bookRow of bookRows ?? []) {
+        uuidToBookId.set(bookRow.id, bookRow.book_key ?? bookRow.id);
+      }
+    }
+
+    return rows.map((row) => mapSupabaseRowToConnection(row, uuidToBookId));
+  }
+
+  const statePath = getStateFilePath();
+  const state = await loadLocalState(statePath);
+  const deletedSet = new Set(state.deleted);
+
+  return state.connections.filter(
+    (conn) =>
+      !deletedSet.has(conn.source_book_id) &&
+      !deletedSet.has(conn.target_book_id),
+  );
+}
+
+export async function createConnection(
+  input: CreateConnectionInput,
+): Promise<EditorialConnection> {
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseAdminClient();
+    const [sourceRow, targetRow] = await Promise.all([
+      findSupabaseRowByKeyOrId(supabase, input.source_book_id),
+      findSupabaseRowByKeyOrId(supabase, input.target_book_id),
+    ]);
+
+    if (!sourceRow || !targetRow) {
+      throw new MissingBookReferenceError();
+    }
+
+    if (sourceRow.id === targetRow.id) {
+      throw new DuplicateConnectionError("Cannot link a volume to itself.");
+    }
+
+    const { data, error } = await supabase
+      .from("book_connections")
+      .insert({
+        source_book_id: sourceRow.id,
+        target_book_id: targetRow.id,
+        connection_type: input.connection_type,
+        description: input.description,
+        weight: input.weight,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      if (error.code === "23505") {
+        throw new DuplicateConnectionError();
+      }
+      throw error;
+    }
+
+    const uuidToBookId = new Map<string, string>([
+      [sourceRow.id, sourceRow.book_key ?? sourceRow.id],
+      [targetRow.id, targetRow.book_key ?? targetRow.id],
+    ]);
+
+    return mapSupabaseRowToConnection(data, uuidToBookId);
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const [baseBooks, state] = await Promise.all([
+      loadBaseCatalogue(),
+      loadLocalState(statePath),
+    ]);
+
+    const deletedSet = new Set(state.deleted);
+    const activeBookIds = new Set<string>();
+    for (const book of baseBooks) {
+      if (!deletedSet.has(book.id)) {
+        activeBookIds.add(book.id);
+      }
+    }
+    for (const book of state.created) {
+      if (!deletedSet.has(book.id)) {
+        activeBookIds.add(book.id);
+      }
+    }
+
+    if (
+      !activeBookIds.has(input.source_book_id) ||
+      !activeBookIds.has(input.target_book_id)
+    ) {
+      throw new MissingBookReferenceError();
+    }
+
+    const pairKey = normalizeConnectionPairKey(
+      input.source_book_id,
+      input.target_book_id,
+    );
+    const duplicateExists = state.connections.some(
+      (conn) =>
+        normalizeConnectionPairKey(conn.source_book_id, conn.target_book_id) ===
+        pairKey,
+    );
+
+    if (duplicateExists) {
+      throw new DuplicateConnectionError();
+    }
+
+    const connection: EditorialConnection = {
+      id: `conn_${randomUUID()}`,
+      source_book_id: input.source_book_id,
+      target_book_id: input.target_book_id,
+      connection_type: input.connection_type,
+      description: input.description,
+      weight: input.weight,
+      created_at: new Date().toISOString(),
+    };
+
+    state.connections.push(connection);
+    await saveLocalState(statePath, state);
+    return connection;
+  });
+}
+
+export async function deleteConnection(id: string): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    if (!UUID_PATTERN.test(id)) {
+      return false;
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("book_connections")
+      .delete()
+      .eq("id", id)
+      .select("id");
+
+    if (error) {
+      throw error;
+    }
+
+    return (data?.length ?? 0) > 0;
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    const countBefore = state.connections.length;
+    state.connections = state.connections.filter((conn) => conn.id !== id);
+
+    if (state.connections.length === countBefore) {
+      return false;
+    }
+
     await saveLocalState(statePath, state);
     return true;
   });

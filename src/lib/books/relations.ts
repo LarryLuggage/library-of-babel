@@ -2,9 +2,11 @@ import {
   buildTagFrequencyMap,
   type CatalogueBook,
   compareCatalogueBooks,
+  type EditorialConnectionSource,
   filterDisplayTags,
   getBookKey,
   getCatalogueConnection,
+  resolveEditorialConnectionMap,
 } from "./catalogue";
 
 export type PathfinderPathStep = {
@@ -60,8 +62,10 @@ function compareEdges(first: CatalogueEdge, second: CatalogueEdge): number {
  */
 export function buildCatalogueGraph(
   books: readonly CatalogueBook[],
+  editorialConnections?: EditorialConnectionSource,
 ): CatalogueGraph {
   const tagFrequency = buildTagFrequencyMap(books);
+  const activeEditorialMap = resolveEditorialConnectionMap(editorialConnections);
   const booksByKey = new Map<string, CatalogueBook>();
   const highSignalEdges = new Map<string, CatalogueEdge[]>();
   const allEdges = new Map<string, CatalogueEdge[]>();
@@ -83,14 +87,24 @@ export function buildCatalogueGraph(
 
     for (let j = i + 1; j < uniqueBooks.length; j += 1) {
       const second = uniqueBooks[j];
-      const connectionAB = getCatalogueConnection(first, second, tagFrequency);
+      const connectionAB = getCatalogueConnection(
+        first,
+        second,
+        tagFrequency,
+        activeEditorialMap,
+      );
 
       if (!connectionAB || connectionAB.score < ALL_EDGES_MIN_SCORE) {
         continue;
       }
 
       const secondKey = getBookKey(second);
-      const connectionBA = getCatalogueConnection(second, first, tagFrequency);
+      const connectionBA = getCatalogueConnection(
+        second,
+        first,
+        tagFrequency,
+        activeEditorialMap,
+      );
 
       const edgeAB: CatalogueEdge = {
         book: second,
@@ -243,6 +257,7 @@ export function getPathfinderConnection(
   target: CatalogueBook,
   books: readonly CatalogueBook[],
   graph?: CatalogueGraph,
+  editorialConnections?: EditorialConnectionSource,
 ): PathfinderPathStep[] | null {
   const sourceKey = getBookKey(source);
   const targetKey = getBookKey(target);
@@ -257,7 +272,8 @@ export function getPathfinderConnection(
     ];
   }
 
-  const resolvedGraph = graph ?? buildCatalogueGraph(books);
+  const resolvedGraph =
+    graph ?? buildCatalogueGraph(books, editorialConnections);
 
   return (
     findShortestHighestScorePath(

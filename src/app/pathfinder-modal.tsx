@@ -7,6 +7,7 @@ import {
   getDivision,
   type CatalogueBook,
 } from "@/lib/books/catalogue";
+import type { EditorialConnection } from "@/lib/books/connections";
 import {
   buildCatalogueGraph,
   getPathfinderConnection,
@@ -15,6 +16,7 @@ import { ModalDialog, useDialogClose } from "./modal-dialog";
 
 interface PathfinderModalProps<T extends CatalogueBook = CatalogueBook> {
   books: T[];
+  editorialConnections?: EditorialConnection[];
   initialSource?: T | null;
   onClose: () => void;
   onBookClick: (book: T) => void;
@@ -28,6 +30,7 @@ type ResolvedPathStep<T extends CatalogueBook> = {
 
 function PathfinderContent<T extends CatalogueBook>({
   books,
+  editorialConnections,
   initialSource = null,
   titleId,
   onClose,
@@ -67,7 +70,10 @@ function PathfinderContent<T extends CatalogueBook>({
     [books],
   );
 
-  const catalogueGraph = useMemo(() => buildCatalogueGraph(books), [books]);
+  const catalogueGraph = useMemo(
+    () => buildCatalogueGraph(books, editorialConnections),
+    [books, editorialConnections],
+  );
 
   const sortedBooks = useMemo(
     () => [...books].sort(compareCatalogueBooks),
@@ -228,6 +234,7 @@ function PathfinderContent<T extends CatalogueBook>({
       targetBook,
       books,
       catalogueGraph,
+      editorialConnections,
     );
 
     if (rawPath && rawPath.length > 0) {
@@ -576,6 +583,7 @@ function PathfinderContent<T extends CatalogueBook>({
 
 export function PathfinderModal<T extends CatalogueBook>({
   books,
+  editorialConnections,
   initialSource = null,
   onClose,
   onBookClick,
@@ -591,6 +599,7 @@ export function PathfinderModal<T extends CatalogueBook>({
     >
       <PathfinderContent
         books={books}
+        editorialConnections={editorialConnections}
         initialSource={initialSource}
         titleId={titleId}
         onClose={onClose}

@@ -12,6 +12,10 @@ import {
   type CatalogueConnection,
   type LedgerBook,
 } from "@/lib/books/catalogue";
+import {
+  buildEditorialConnectionMap,
+  type EditorialConnection,
+} from "@/lib/books/connections";
 import { getTagCooccurrences } from "@/lib/books/relations";
 
 type PositionedConnection = CatalogueConnection & {
@@ -78,6 +82,7 @@ function positionConnections(connections: CatalogueConnection[]) {
 function getBookBridges(
   connections: PositionedConnection[],
   tagFrequency: ReadonlyMap<string, number>,
+  editorialConnectionMap: ReadonlyMap<string, EditorialConnection>,
 ) {
   const bridges: BookBridge[] = [];
 
@@ -87,6 +92,7 @@ function getBookBridges(
         first.book,
         second.book,
         tagFrequency,
+        editorialConnectionMap,
       );
 
       if (bridge && bridge.score >= 7) {
@@ -108,11 +114,13 @@ function getReasonLabel(reasons: string[]) {
 
 export function CatalogueConstellation({
   books,
+  editorialConnections,
   onTagClick,
   onBookClick,
   mode = "similarity",
 }: {
   books: LedgerBook[];
+  editorialConnections?: EditorialConnection[];
   onTagClick?: (tag: string) => void;
   onBookClick?: (book: LedgerBook) => void;
   mode?: "similarity" | "tag";
@@ -132,6 +140,10 @@ export function CatalogueConstellation({
 
   const tagFrequency = useMemo(() => buildTagFrequencyMap(books), [books]);
   const tagGraph = useMemo(() => getTagCooccurrences(books), [books]);
+  const editorialConnectionMap = useMemo(
+    () => buildEditorialConnectionMap(editorialConnections),
+    [editorialConnections],
+  );
 
   const booksByTag = useMemo(() => {
     const map = new Map<string, LedgerBook[]>();
@@ -172,9 +184,15 @@ export function CatalogueConstellation({
   const connections = useMemo(() => {
     if (!focusBook) return [];
     return positionConnections(
-      getNearestConnections(focusBook, books, NEIGHBOR_COUNT, tagFrequency),
+      getNearestConnections(
+        focusBook,
+        books,
+        NEIGHBOR_COUNT,
+        tagFrequency,
+        editorialConnectionMap,
+      ),
     );
-  }, [books, focusBook, tagFrequency]);
+  }, [books, editorialConnectionMap, focusBook, tagFrequency]);
 
   const selectedConnection =
     connections.find(
@@ -182,8 +200,8 @@ export function CatalogueConstellation({
     ) ?? connections[0] ?? null;
 
   const bridges = useMemo(
-    () => getBookBridges(connections, tagFrequency),
-    [connections, tagFrequency],
+    () => getBookBridges(connections, tagFrequency, editorialConnectionMap),
+    [connections, editorialConnectionMap, tagFrequency],
   );
 
   // --- Tag Constellation State ---
