@@ -1385,6 +1385,8 @@ body {
 
 .catalogue-timeline-section {
   max-width: 92rem;
+  width: 100%;
+  min-width: 0;
   margin-inline: auto;
   padding-block: 2rem;
 }
@@ -1415,6 +1417,7 @@ body {
 
 .catalogue-timeline-scroll {
   overflow-x: auto;
+  max-width: 100%;
   padding-block: 1rem 2rem;
   scroll-behavior: smooth;
   scrollbar-width: thin;
@@ -1443,7 +1446,7 @@ body {
 }
 
 .timeline-decade-column {
-  width: 20rem;
+  width: min(20rem, calc(100vw - 3.5rem));
   flex-shrink: 0;
   background: rgba(246, 239, 217, 0.38);
   border: 1px solid rgba(118, 88, 71, 0.45);
@@ -1457,23 +1460,30 @@ body {
 .timeline-decade-header {
   background: rgba(33, 27, 24, 0.03);
   border-bottom: 1px solid rgba(118, 88, 71, 0.45);
-  padding: 1rem;
+  padding: 0.9rem 1rem;
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
   align-items: baseline;
+  gap: 0.25rem 0.65rem;
   position: sticky;
   top: 0;
 }
 
 .timeline-decade-header h3 {
   margin: 0;
-  font-size: 1.5rem;
+  min-width: 0;
+  overflow-wrap: break-word;
+  font-size: 1.35rem;
+  line-height: 1.15;
   color: var(--catalogue-rubric);
   font-weight: 700;
   font-family: "Iowan Old Style", Georgia, serif;
 }
 
 .timeline-decade-count {
+  flex-shrink: 0;
+  white-space: nowrap;
   font-size: 0.75rem;
   font-variant: small-caps;
   color: var(--catalogue-faded-ink);

@@ -4,6 +4,7 @@ import { useEffect, useId, useMemo, useRef, useState } from "react";
 import {
   compareCatalogueBooks,
   filterDisplayTags,
+  formatPublishYear,
   getBookKey,
   getNearestConnections,
   READING_STATUS_LABELS,
@@ -428,6 +429,8 @@ function BookDetailContent({
     }
   };
 
+  const formattedPublishYear = formatPublishYear(book.publish_year);
+
   return (
     <div className="catalogue-catalog-card catalogue-catalog-card--structured">
       <div className="card-header-bar">
@@ -457,9 +460,9 @@ function BookDetailContent({
               <strong>Sub-Category:</strong> {book.sub_category}
             </div>
           )}
-          {book.publish_year !== null && (
+          {formattedPublishYear && (
             <div>
-              <strong>Published:</strong> {book.publish_year}
+              <strong>Published:</strong> {formattedPublishYear}
             </div>
           )}
           <div>

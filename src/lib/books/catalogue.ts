@@ -51,6 +51,15 @@ export type CatalogueConnection = {
   score: number;
 };
 
+export interface TimelineBucket {
+  key: string;
+  label: string;
+  sortOrder: number;
+}
+
+export const MIN_PUBLISH_YEAR = -3000;
+export const MAX_PUBLISH_YEAR = 2100;
+
 export const NOISE_TAGS: ReadonlySet<string> = new Set([
   "literature",
   "philosophy theory",
@@ -359,6 +368,63 @@ export function compareCatalogueBooks(
 
 export function getDivision(book: CatalogueBook): string {
   return book.sub_category ?? book.top_category ?? "Unclassified";
+}
+
+/**
+ * Formats an integer publication year for display, converting negative years
+ * to BCE notation (e.g., `-375` -> `"375 BCE"`).
+ */
+export function formatPublishYear(year: number | null | undefined): string {
+  if (year === null || year === undefined || !Number.isFinite(year)) {
+    return "";
+  }
+
+  const whole = Math.trunc(year);
+  if (whole < 0) {
+    return `${Math.abs(whole)} BCE`;
+  }
+
+  return `${whole}`;
+}
+
+/**
+ * Maps a publication year to an ordered timeline column/decade bucket so
+ * Antiquity (BCE), Medieval & Early CE, modern decades, and Undated sort cleanly.
+ */
+export function getTimelineBucket(
+  year: number | null | undefined,
+): TimelineBucket {
+  if (year === null || year === undefined || !Number.isFinite(year)) {
+    return {
+      key: "Undated",
+      label: "Undated",
+      sortOrder: Number.MAX_SAFE_INTEGER,
+    };
+  }
+
+  const whole = Math.trunc(year);
+  if (whole < 0) {
+    return {
+      key: "Antiquity (BCE)",
+      label: "Antiquity (BCE)",
+      sortOrder: -10000,
+    };
+  }
+
+  if (whole < 1500) {
+    return {
+      key: "Medieval & Early CE",
+      label: "Medieval & Early CE",
+      sortOrder: 0,
+    };
+  }
+
+  const decadeStart = Math.floor(whole / 10) * 10;
+  return {
+    key: `${decadeStart}s`,
+    label: `${decadeStart}s`,
+    sortOrder: decadeStart,
+  };
 }
 
 export function buildTagFrequencyMap(

@@ -194,6 +194,32 @@ describe("computeCatalogueStats", () => {
     });
   });
 
+  it("groups and sorts Antiquity (BCE), Medieval & Early CE, modern decades, and Undated chronologically", () => {
+    const books: CatalogueBook[] = [
+      makeBook({ title: "Undated Volume", publish_year: null }),
+      makeBook({ title: "Infinite Jest", publish_year: 1996 }),
+      makeBook({ title: "Don Quixote", publish_year: 1605 }),
+      makeBook({ title: "Inferno", publish_year: 1320 }),
+      makeBook({ title: "Confessions", publish_year: 397 }),
+      makeBook({ title: "The Republic", publish_year: -375 }),
+      makeBook({ title: "The Odyssey", publish_year: -750 }),
+    ];
+
+    const stats = computeCatalogueStats(books);
+
+    expect(stats.totalBooks).toBe(7);
+    expect(stats.decadeBreakdown).toEqual([
+      { decade: "Antiquity (BCE)", count: 2 },
+      { decade: "Medieval & Early CE", count: 2 },
+      { decade: "1600s", count: 1 },
+      { decade: "1990s", count: 1 },
+      { decade: "Undated", count: 1 },
+    ]);
+    expect(
+      stats.decadeBreakdown.reduce((sum, entry) => sum + entry.count, 0),
+    ).toBe(stats.totalBooks);
+  });
+
   it("summarizes the full 880-book catalogue cleanly", () => {
     const raw = readFileSync(
       path.join(process.cwd(), "shelf_catalog_full.json"),

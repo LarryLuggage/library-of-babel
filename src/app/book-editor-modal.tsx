@@ -2,6 +2,9 @@
 
 import { useId, useRef, useState } from "react";
 import {
+  formatPublishYear,
+  MAX_PUBLISH_YEAR,
+  MIN_PUBLISH_YEAR,
   READING_STATUS_LABELS,
   READING_STATUS_VALUES,
   type CatalogueBook,
@@ -71,6 +74,9 @@ function BookEditorForm({
   const [loanedTo, setLoanedTo] = useState(book?.loaned_to ?? "");
   const [personalNotes, setPersonalNotes] = useState(book?.personal_notes ?? "");
   const [errorMsg, setErrorMsg] = useState("");
+  const [invalidField, setInvalidField] = useState<
+    "title" | "author" | "shelf" | "publish_year" | null
+  >(null);
 
   // Quick bibliographic lookup state (create mode only)
   const [lookupQuery, setLookupQuery] = useState("");
@@ -153,6 +159,7 @@ function BookEditorForm({
     setSummary(candidate.summary ?? "");
     setSelectedCandidateIndex(index);
     setErrorMsg("");
+    setInvalidField(null);
     setLookupNotice(
       "Filled bibliographic details — verify shelf and position before saving.",
     );
@@ -161,10 +168,12 @@ function BookEditorForm({
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     setErrorMsg("");
+    setInvalidField(null);
 
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
       setErrorMsg("Title is required.");
+      setInvalidField("title");
       titleRef.current?.focus();
       return;
     }
@@ -172,6 +181,7 @@ function BookEditorForm({
     const trimmedAuthor = author.trim();
     if (!trimmedAuthor) {
       setErrorMsg("Author is required.");
+      setInvalidField("author");
       authorRef.current?.focus();
       return;
     }
@@ -179,6 +189,7 @@ function BookEditorForm({
     const parsedShelf = Number.parseInt(shelf.trim(), 10);
     if (!Number.isInteger(parsedShelf) || parsedShelf < 0) {
       setErrorMsg("Shelf must be a whole number (0 or greater).");
+      setInvalidField("shelf");
       shelfRef.current?.focus();
       return;
     }
@@ -186,8 +197,15 @@ function BookEditorForm({
     let parsedYear: number | null = null;
     if (publishYear.trim()) {
       const yearNum = Number(publishYear.trim());
-      if (!Number.isInteger(yearNum) || yearNum < -3000 || yearNum > 2100) {
-        setErrorMsg("Publish year must be a valid integer year.");
+      if (
+        !Number.isInteger(yearNum) ||
+        yearNum < MIN_PUBLISH_YEAR ||
+        yearNum > MAX_PUBLISH_YEAR
+      ) {
+        setErrorMsg(
+          `Publish year must be a whole year between ${MIN_PUBLISH_YEAR} (BCE) and ${MAX_PUBLISH_YEAR}.`,
+        );
+        setInvalidField("publish_year");
         publishYearRef.current?.focus();
         return;
       }
@@ -372,6 +390,9 @@ function BookEditorForm({
               >
                 {lookupCandidates.map((candidate, index) => {
                   const isApplied = selectedCandidateIndex === index;
+                  const candidateYear = formatPublishYear(
+                    candidate.publish_year,
+                  );
                   return (
                     <li
                       key={`${candidate.source}-${candidate.isbn ?? index}-${candidate.title}`}
@@ -388,8 +409,7 @@ function BookEditorForm({
                           </cite>
                           <span className="editor-lookup-candidate-meta">
                             {candidate.author}
-                            {candidate.publish_year !== null &&
-                              ` · ${candidate.publish_year}`}
+                            {candidateYear && ` · ${candidateYear}`}
                             {candidate.edition && ` · ${candidate.edition}`}
                             {candidate.isbn && ` · ISBN ${candidate.isbn}`}
                           </span>
@@ -419,8 +439,12 @@ function BookEditorForm({
               name="title"
               type="text"
               required
+              aria-invalid={invalidField === "title" ? true : undefined}
               value={title}
-              onChange={(event) => setTitle(event.target.value)}
+              onChange={(event) => {
+                setTitle(event.target.value);
+                if (invalidField === "title") setInvalidField(null);
+              }}
               placeholder="e.g., Collected Fictions"
             />
           </div>
@@ -435,8 +459,12 @@ function BookEditorForm({
               name="author"
               type="text"
               required
+              aria-invalid={invalidField === "author" ? true : undefined}
               value={author}
-              onChange={(event) => setAuthor(event.target.value)}
+              onChange={(event) => {
+                setAuthor(event.target.value);
+                if (invalidField === "author") setInvalidField(null);
+              }}
               placeholder="e.g., Jorge Luis Borges"
             />
           </div>
@@ -460,13 +488,24 @@ function BookEditorForm({
               id={`${formPrefix}-year`}
               name="publish_year"
               type="number"
-              min={-3000}
-              max={2100}
+              min={MIN_PUBLISH_YEAR}
+              max={MAX_PUBLISH_YEAR}
               step={1}
+              aria-describedby={`${formPrefix}-year-hint`}
+              aria-invalid={invalidField === "publish_year" ? true : undefined}
               value={publishYear}
-              onChange={(event) => setPublishYear(event.target.value)}
-              placeholder="e.g., 1962"
+              onChange={(event) => {
+                setPublishYear(event.target.value);
+                if (invalidField === "publish_year") setInvalidField(null);
+              }}
+              placeholder="e.g., 1962 or -375"
             />
+            <span
+              id={`${formPrefix}-year-hint`}
+              className="text-xs italic text-[var(--catalogue-faded-ink)]"
+            >
+              Negative integers denote BCE (e.g., -375 for 375 BCE).
+            </span>
           </div>
 
           <div className="editor-field">
@@ -481,8 +520,12 @@ function BookEditorForm({
               min={0}
               step={1}
               required
+              aria-invalid={invalidField === "shelf" ? true : undefined}
               value={shelf}
-              onChange={(event) => setShelf(event.target.value)}
+              onChange={(event) => {
+                setShelf(event.target.value);
+                if (invalidField === "shelf") setInvalidField(null);
+              }}
             />
           </div>
 

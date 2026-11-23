@@ -1,6 +1,7 @@
 import {
   type CatalogueBook,
   compareCatalogueBooks,
+  getTimelineBucket,
   type ReadingStatus,
 } from "@/lib/books/catalogue";
 
@@ -102,7 +103,10 @@ export function computeCatalogueStats<T extends CatalogueBook>(
 
   const finishedYearCounts = new Map<number, number>();
   const divisionBuckets = new Map<string, DivisionBreakdownEntry>();
-  const decadeCounts = new Map<string, number>();
+  const decadeBuckets = new Map<
+    string,
+    { label: string; sortOrder: number; count: number }
+  >();
   const authorBuckets = new Map<string, TopAuthorEntry>();
 
   for (const book of books) {
@@ -148,11 +152,17 @@ export function computeCatalogueStats<T extends CatalogueBook>(
     divisionEntry.total += 1;
     divisionEntry[book.reading_status] += 1;
 
-    const decade =
-      typeof book.publish_year === "number" && Number.isFinite(book.publish_year)
-        ? `${Math.floor(book.publish_year / 10) * 10}s`
-        : "Undated";
-    decadeCounts.set(decade, (decadeCounts.get(decade) ?? 0) + 1);
+    const bucket = getTimelineBucket(book.publish_year);
+    const decadeEntry = decadeBuckets.get(bucket.key);
+    if (decadeEntry) {
+      decadeEntry.count += 1;
+    } else {
+      decadeBuckets.set(bucket.key, {
+        label: bucket.label,
+        sortOrder: bucket.sortOrder,
+        count: 1,
+      });
+    }
 
     const authorName = book.author.trim();
     if (authorName && authorName.toLocaleLowerCase("en-US") !== "various") {
@@ -188,15 +198,9 @@ export function computeCatalogueStats<T extends CatalogueBook>(
       first.name.localeCompare(second.name),
   );
 
-  const decadeBreakdown: DecadeBreakdownEntry[] = [...decadeCounts.entries()]
-    .map(([decade, count]) => ({ decade, count }))
-    .sort((first, second) => {
-      if (first.decade === "Undated") return 1;
-      if (second.decade === "Undated") return -1;
-      return (
-        Number.parseInt(first.decade, 10) - Number.parseInt(second.decade, 10)
-      );
-    });
+  const decadeBreakdown: DecadeBreakdownEntry[] = [...decadeBuckets.values()]
+    .sort((first, second) => first.sortOrder - second.sortOrder)
+    .map(({ label, count }) => ({ decade: label, count }));
 
   const topAuthors: TopAuthorEntry[] = [...authorBuckets.values()]
     .sort(

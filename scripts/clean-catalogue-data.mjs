@@ -1,168 +1,143 @@
 import { readFile, writeFile } from "node:fs/promises";
+import { pathToFileURL } from "node:url";
+import {
+  cleanSummary,
+  getBookIdentity,
+  getPairKey,
+  isBrokenSummary,
+  mergeTags,
+  resolvePublishYear,
+} from "./lib/enrichment-helpers.mjs";
+import { VERIFIED_CLASSIC_YEARS } from "./lib/classic-years.mjs";
 
 const CATALOGUE_PATH = new URL("../shelf_catalog_full.json", import.meta.url);
 
-const SHELF_26_DUPLICATES = new Set([
-  "All Will Have Vengeance\u0000Various",
-  "The Return of the King\u0000J.R.R. Tolkien",
-  "Society of the Spectacle\u0000Guy Debord",
-  "The Norton Anthology of English Literature (Vol. B)\u0000Greenblatt (Editor)",
-  "American Democratic Socialism\u0000Gary Dorrien",
-  "Aesthetic Theory\u0000Theodor W. Adorno",
-  "The Rise and Fall of Communism\u0000Archie Brown",
-]);
-
-const TITLE_CORRECTIONS = new Map([
-  ["El Señor Presidente (title to confirm)", "El Señor Presidente"],
-]);
-
-const VERIFIED_PUBLISH_YEARS = new Map([
-  ["Song of Solomon\u0000Toni Morrison", 1977],
-  ["The Possessed\u0000Fyodor Dostoevsky", 1872],
-  ["Tess of the d'Urbervilles\u0000Thomas Hardy", 1891],
-  ["An American Tragedy\u0000Theodore Dreiser", 1925],
-  ["A Plan for Escape\u0000Adolfo Bioy Casares", 1945],
-  ["My Brilliant Friend\u0000Elena Ferrante", 2011],
-  ["The Man of Feeling\u0000Javier Marías", 1986],
-]);
-
-const NOISE_TAGS = new Set([
-  "literature",
-  "philosophy theory",
-  "history reference",
-  "large type books",
-  "translations into english",
-  "english translations",
-  "in english",
-  "new york times reviewed",
-  "new york times bestseller",
-  "nyt",
-  "amerikanisches englisch",
-  "roman",
-  "romans nouvelles",
-  "spanish language books",
-  "protected daisy",
-  "in library",
-  "accessible book",
-  "borrowable books",
-  "open library staff picks",
-  "classic",
-  "classics",
-  "classic fiction",
-  "classic literature",
-  "short stories single author",
-  "fictional works",
-  "fiction general",
-]);
-
-function getPairKey(title, author) {
-  return `${title}\u0000${author}`;
+function arraysEqual(first, second) {
+  if (!Array.isArray(first) || !Array.isArray(second)) {
+    return first === second;
+  }
+  return (
+    first.length === second.length &&
+    first.every((value, index) => value === second[index])
+  );
 }
 
-function cleanTags(tags) {
-  if (!Array.isArray(tags)) {
-    return { tags: [], removedOrDeduped: 0 };
-  }
+/**
+ * Idempotently cleans summaries, strips broken summary garbage, applies verified classic
+ * publication years, and normalizes tags without mutating `title`, `author`, `shelf`, or `position`.
+ */
+export function cleanCatalogueBooks(books) {
+  const stats = {
+    cleanedSummaries: 0,
+    fixedPublishYears: 0,
+    strippedBrokenSummaries: 0,
+    tagsRemovedOrNormalized: 0,
+    totalBooks: books.length,
+    totalChanges: 0,
+    updatedTagArrays: 0,
+  };
 
-  const seen = new Set();
-  const cleaned = [];
-  let removedOrDeduped = 0;
+  const cleanedBooks = books.map((book) => {
+    let nextBook = book;
+    let bookChanged = false;
 
-  for (const rawTag of tags) {
-    const tag = String(rawTag ?? "").trim();
-    const normalized = tag.toLocaleLowerCase("en-US");
+    const classicYear =
+      VERIFIED_CLASSIC_YEARS.get(getPairKey(book.title, book.author)) ?? null;
+    const resolvedYear = resolvePublishYear({
+      classicYear,
+      existingYear: book.publish_year ?? null,
+    });
 
-    if (!tag || NOISE_TAGS.has(normalized) || seen.has(normalized)) {
-      removedOrDeduped += 1;
-      continue;
+    if (resolvedYear !== (book.publish_year ?? null)) {
+      nextBook = { ...nextBook, publish_year: resolvedYear };
+      stats.fixedPublishYears += 1;
+      bookChanged = true;
     }
 
-    seen.add(normalized);
-    cleaned.push(tag);
-  }
+    if (book.summary !== null && book.summary !== undefined) {
+      const cleaned = cleanSummary(book.summary);
+      const nextSummary =
+        cleaned && !isBrokenSummary(cleaned, book) ? cleaned : null;
 
-  if (
-    removedOrDeduped === 0 &&
-    cleaned.length === tags.length &&
-    cleaned.every((tag, index) => tag === tags[index])
-  ) {
-    return { tags, removedOrDeduped: 0 };
-  }
+      if (nextSummary !== book.summary) {
+        nextBook = { ...nextBook, summary: nextSummary };
+        if (nextSummary === null) {
+          stats.strippedBrokenSummaries += 1;
+        } else {
+          stats.cleanedSummaries += 1;
+        }
+        bookChanged = true;
+      }
+    }
 
-  return { tags: cleaned, removedOrDeduped };
+    const currentTags = Array.isArray(book.tags) ? book.tags : [];
+    const nextTags = mergeTags(currentTags, [], book);
+    if (!arraysEqual(currentTags, nextTags)) {
+      nextBook = { ...nextBook, tags: nextTags };
+      stats.updatedTagArrays += 1;
+      stats.tagsRemovedOrNormalized += Math.max(
+        0,
+        currentTags.length - nextTags.length,
+      );
+      bookChanged = true;
+    }
+
+    // Guarantee book_key / identifying-field invariance
+    if (
+      nextBook.title !== book.title ||
+      nextBook.author !== book.author ||
+      nextBook.shelf !== book.shelf ||
+      nextBook.position !== book.position ||
+      getBookIdentity(nextBook) !== getBookIdentity(book)
+    ) {
+      throw new Error(
+        `Identifying field mutation detected during clean for ${book.title}`,
+      );
+    }
+
+    if (bookChanged) {
+      stats.totalChanges += 1;
+    }
+
+    return nextBook;
+  });
+
+  return { cleanedBooks, stats };
 }
 
 async function main() {
+  const dryRun = process.argv.includes("--dry-run");
   const rawJson = await readFile(CATALOGUE_PATH, "utf8");
   const books = JSON.parse(rawJson);
 
-  let removedDuplicates = 0;
-  let cleanedTitles = 0;
-  let fixedPublishYears = 0;
-  let removedTags = 0;
-  let booksWithUpdatedTags = 0;
+  const { cleanedBooks, stats } = cleanCatalogueBooks(books);
 
-  const cleanedBooks = [];
-
-  for (const book of books) {
-    if (
-      book.shelf === 26 &&
-      SHELF_26_DUPLICATES.has(getPairKey(book.title, book.author))
-    ) {
-      removedDuplicates += 1;
-      continue;
-    }
-
-    let nextBook = book;
-
-    const correctedTitle = TITLE_CORRECTIONS.get(book.title);
-    if (correctedTitle && correctedTitle !== book.title) {
-      nextBook = { ...nextBook, title: correctedTitle };
-      cleanedTitles += 1;
-    }
-
-    const verifiedYear = VERIFIED_PUBLISH_YEARS.get(
-      getPairKey(nextBook.title, nextBook.author),
-    );
-    if (
-      verifiedYear !== undefined &&
-      nextBook.publish_year !== verifiedYear
-    ) {
-      nextBook = { ...nextBook, publish_year: verifiedYear };
-      fixedPublishYears += 1;
-    }
-
-    const { tags: nextTags, removedOrDeduped } = cleanTags(nextBook.tags);
-    if (nextTags !== nextBook.tags) {
-      nextBook = { ...nextBook, tags: nextTags };
-      booksWithUpdatedTags += 1;
-      removedTags += removedOrDeduped;
-    }
-
-    cleanedBooks.push(nextBook);
-  }
-
-  const totalChanges =
-    removedDuplicates + cleanedTitles + fixedPublishYears + booksWithUpdatedTags;
-
-  if (totalChanges > 0) {
+  if (!dryRun && stats.totalChanges > 0) {
     const serialized = `${JSON.stringify(cleanedBooks, null, 2)}\n`;
     await writeFile(CATALOGUE_PATH, serialized, "utf8");
   }
 
   process.stdout.write(
     [
-      `Catalogue total: ${cleanedBooks.length}`,
-      `Removed Shelf 26 duplicates: ${removedDuplicates}`,
-      `Cleaned titles: ${cleanedTitles}`,
-      `Fixed publish years: ${fixedPublishYears}`,
-      `Updated tag arrays: ${booksWithUpdatedTags} (${removedTags} tags removed/deduped)`,
-      `Total changes: ${totalChanges}`,
-    ].join("\n") + "\n",
+      `Catalogue total: ${stats.totalBooks}`,
+      `Fixed publish years: ${stats.fixedPublishYears}`,
+      `Cleaned summaries: ${stats.cleanedSummaries}`,
+      `Stripped broken summaries: ${stats.strippedBrokenSummaries}`,
+      `Updated tag arrays: ${stats.updatedTagArrays} (${stats.tagsRemovedOrNormalized} tags removed/deduped)`,
+      `Total books modified: ${stats.totalChanges}`,
+      dryRun ? "(dry-run: no file written)" : "",
+    ]
+      .filter(Boolean)
+      .join("\n") + "\n",
   );
 }
 
-main().catch((error) => {
-  console.error("Failed to clean catalogue data:", error);
-  process.exitCode = 1;
-});
+if (
+  process.argv[1] &&
+  import.meta.url === pathToFileURL(process.argv[1]).href
+) {
+  main().catch((error) => {
+    console.error("Failed to clean catalogue data:", error);
+    process.exitCode = 1;
+  });
+}

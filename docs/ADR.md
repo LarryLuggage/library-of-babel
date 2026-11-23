@@ -144,3 +144,21 @@ With the core CRUD tracker established (ADR 6), public deployment needed lightwe
 ### Consequences
 * Public visitors can browse, filter, inspect shelves/statistics, and trace paths freely while mutations remain gated behind the curator passphrase when configured.
 * All 56 Vitest unit/integration tests across 11 suites, ESLint, TypeScript, Next.js production builds, and live Chromium Pass A/Pass B QA verifications pass cleanly before proceeding to Milestone 2 (Wikipedia/Wikidata enrichment, Playwright E2E, CI, and README documentation).
+
+## ADR 8: Multi-Source Bibliographic Enrichment, Classical Chronology & Non-Destructive Live Sync
+
+### Date
+2026-11-23
+
+### Context
+Prior to Track 2, the static catalogue (`shelf_catalog_full.json`) had significant gaps and legacy artifacts: `537` of `880` volumes lacked summaries, `191` lacked publication years, `175` lacked subject tags, dozens of entries contained Open Library link fragments, author biographies, non-English prose, or `1800`/`1900` edition placeholders, and zero antiquity (`< 0`) or medieval/early CE (`0..1499`) works were represented accurately because the timeline grouped strictly by modern decades and rendered raw signed integers. Meanwhile, live production Supabase (`public.books`) held `877` active rows (`226` with reading progress, `108` rated, and `3` intentional duplicate/split deletions compared to the 880-row seed).
+
+### Decision
+* **Classical Chronology Domain Model & UI (`-3000..2100`)**: Added `MIN_PUBLISH_YEAR`, `MAX_PUBLISH_YEAR`, `formatPublishYear()`, and `getTimelineBucket()` in `src/lib/books/catalogue.ts` to format negative years as `<abs> BCE` and group timeline/statistics eras into `Antiquity (BCE)`, `Medieval & Early CE`, `YYYYs`, and `Undated`, paired with matching timeline wrapping CSS and editor validation (`-3000`..`2100`).
+* **Multi-Source Enrichment & Strict Quality Filtering**: Upgraded `scripts/enrich-catalogue-books.mjs`, `scripts/apply-catalogue-enrichment.mjs`, `scripts/clean-catalogue-data.mjs`, `scripts/lib/enrichment-helpers.mjs`, and `scripts/lib/classic-years.mjs` to combine curated verified classic chronology (`222` entries) with English Wikipedia + Wikidata (`P577`, `P571`, `P136`) and Open Library fallbacks. Enforced candidate scoring (`MIN_WIKIPEDIA_SCORE = 48`), non-lossy abbreviation-aware sentence splitting, person-biography/foreign-prose/author-mismatch rejection (`isBrokenSummary`), and idempotent non-destructive merging (`title`, `author`, `shelf`, `position`, and `book_key` preserved verbatim).
+* **Non-Destructive Live Supabase Synchronization**: Synced enriched `summary`, `tags`, `publish_year`, and `updated_at` onto `public.books` keyed strictly by `book_key` across batched SQL `UPDATE` statements—updating all `877` existing live rows without re-inserting the `3` removed volumes or touching reading statuses, ratings, notes, loans, or `book_connections`.
+
+### Consequences
+* Canonical catalogue coverage rose from `343 -> 569` summaries (`0` broken/bio/dot-split/key-drift findings), `689 -> 766` publication years (`26` BCE, `16` Early CE), and `705 -> 765` tagged volumes, while `npm run clean:catalogue` confirmed `0` further changes on re-run.
+* Live Supabase `public.books` now reflects `568` summaries, `764` years (`26` BCE, `16` Early CE), and `762` tagged rows across `877` active records with `0` untouched rows and zero loss of curator state.
+* All `81` Vitest tests across `12` suites, `eslint`, `tsc --noEmit`, `next build`, and desktop (`1280x800`) + mobile (`390x844`) Chromium visual inspections pass; Track 4 (Playwright E2E, CI, and `README.md`) remains deferred until approved.

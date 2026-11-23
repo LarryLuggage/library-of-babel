@@ -6,10 +6,12 @@ import {
   compareCatalogueBooks,
   createBookId,
   filterDisplayTags,
+  formatPublishYear,
   getAuthorInitial,
   getAuthorSortKey,
   getCatalogueConnection,
   getNearestConnections,
+  getTimelineBucket,
   NOISE_TAGS,
   normalizeCatalogueBook,
 } from "./catalogue";
@@ -218,5 +220,57 @@ describe("IDF tag scoring and edge isolation", () => {
 
     // 4 rare tags * 5 pts = 20, capped at 14
     expect(connection?.score).toBe(14);
+  });
+});
+
+describe("publish year formatting and timeline buckets", () => {
+  it("formats BCE, zero, CE, and missing publish years", () => {
+    expect(formatPublishYear(-375)).toBe("375 BCE");
+    expect(formatPublishYear(0)).toBe("0");
+    expect(formatPublishYear(1851)).toBe("1851");
+    expect(formatPublishYear(null)).toBe("");
+    expect(formatPublishYear(undefined)).toBe("");
+    expect(formatPublishYear(Number.NaN)).toBe("");
+  });
+
+  it("maps years into ordered timeline buckets", () => {
+    expect(getTimelineBucket(-750)).toEqual({
+      key: "Antiquity (BCE)",
+      label: "Antiquity (BCE)",
+      sortOrder: -10000,
+    });
+    expect(getTimelineBucket(1320)).toEqual({
+      key: "Medieval & Early CE",
+      label: "Medieval & Early CE",
+      sortOrder: 0,
+    });
+    expect(getTimelineBucket(1605)).toEqual({
+      key: "1600s",
+      label: "1600s",
+      sortOrder: 1600,
+    });
+    expect(getTimelineBucket(1998)).toEqual({
+      key: "1990s",
+      label: "1990s",
+      sortOrder: 1990,
+    });
+    expect(getTimelineBucket(null)).toEqual({
+      key: "Undated",
+      label: "Undated",
+      sortOrder: Number.MAX_SAFE_INTEGER,
+    });
+  });
+
+  it("preserves negative BCE publish years during normalization", () => {
+    const republic = normalizeCatalogueBook({
+      author: "Plato",
+      title: "The Republic",
+      edition: "Penguin Classics",
+      shelf: 1,
+      position: "Upper (1)",
+      publish_year: -375,
+    });
+
+    expect(republic.publish_year).toBe(-375);
   });
 });
