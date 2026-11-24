@@ -5453,6 +5453,723 @@ dialog.catalogue-dialog--aleph::backdrop {
   gap: 0.55rem;
 }
 
+.librarian-pick-card {
+  background: var(--catalogue-cardstock);
+  border: 1px solid rgba(118, 88, 71, 0.45);
+  border-radius: 3px;
+  display: grid;
+  overflow: hidden;
+}
+
+.librarian-pick-card .librarian-pick-btn {
+  border: 0;
+  border-radius: 0;
+}
+
+.librarian-pick-footer {
+  border-top: 1px dotted rgba(118, 88, 71, 0.4);
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.45rem 0.75rem;
+  background: rgba(246, 239, 217, 0.45);
+}
+
+/* ==========================================================================
+   Aleph Source Attribution & Secondary Action
+   ========================================================================== */
+
+.aleph-source {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.74rem;
+  letter-spacing: 0.02em;
+  margin: 0.75rem 0 0;
+  padding-top: 0.6rem;
+  border-top: 1px dotted rgba(118, 88, 71, 0.45);
+  overflow-wrap: break-word;
+}
+
+.aleph-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+}
+
+.aleph-btn--secondary {
+  background: var(--catalogue-cardstock);
+  border: 1px solid var(--catalogue-green);
+  color: var(--catalogue-green);
+}
+
+.aleph-btn--secondary:hover,
+.aleph-btn--secondary:focus-visible {
+  background: var(--catalogue-green);
+  border-color: var(--catalogue-green);
+  color: var(--catalogue-paper-light);
+}
+
+/* ==========================================================================
+   Phase 4A: Commonplace Book View
+   ========================================================================== */
+
+.commonplace-view,
+.reading-lists-view {
+  background: rgba(246, 239, 217, 0.58);
+  border-block: 3px double var(--catalogue-rule);
+  display: grid;
+  gap: 1.4rem;
+  margin-block: 1rem 2rem;
+  min-width: 0;
+  padding: clamp(1.2rem, 2.5vw, 2.2rem);
+}
+
+.commonplace-header,
+.reading-lists-header {
+  align-items: end;
+  border-bottom: 1px solid rgba(118, 88, 71, 0.5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.9rem 1.25rem;
+  justify-content: space-between;
+  padding-bottom: 1rem;
+}
+
+.commonplace-heading-copy,
+.reading-lists-heading-copy {
+  display: grid;
+  gap: 0.28rem;
+  min-width: 0;
+}
+
+.commonplace-kicker {
+  color: var(--catalogue-rubric);
+  font-size: 0.78rem;
+  font-variant: small-caps;
+  font-weight: 700;
+  margin: 0;
+}
+
+.commonplace-heading-copy h2,
+.reading-lists-heading-copy h2 {
+  color: var(--catalogue-ink);
+  font-size: clamp(1.75rem, 3vw, 2.6rem);
+  font-weight: 500;
+  line-height: 1.05;
+  margin: 0;
+}
+
+.commonplace-count {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.78rem;
+  margin: 0;
+}
+
+.commonplace-controls {
+  align-items: end;
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: minmax(14rem, 1.8fr) minmax(11rem, 1fr) auto;
+  min-width: 0;
+}
+
+.commonplace-filter-field,
+.commonplace-form-field {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.commonplace-filter-field label,
+.commonplace-form-field label {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.76rem;
+  font-variant: small-caps;
+  font-weight: 700;
+}
+
+.commonplace-filter-field input,
+.commonplace-filter-field select,
+.commonplace-form-field input,
+.commonplace-form-field select,
+.commonplace-form-field textarea,
+.detail-list-add-form select {
+  background: rgba(253, 250, 242, 0.95);
+  border: 1px solid rgba(118, 88, 71, 0.82);
+  border-radius: 3px;
+  color: var(--catalogue-ink);
+  font: inherit;
+  font-size: max(1rem, 1em);
+  min-height: 2.85rem;
+  min-width: 0;
+  padding: 0.55rem 0.75rem;
+  width: 100%;
+}
+
+.commonplace-form-field textarea {
+  line-height: 1.45;
+  min-height: 4.5rem;
+  resize: vertical;
+}
+
+.commonplace-filter-field input:focus-visible,
+.commonplace-filter-field select:focus-visible,
+.commonplace-form-field input:focus-visible,
+.commonplace-form-field select:focus-visible,
+.commonplace-form-field textarea:focus-visible,
+.detail-list-add-form select:focus-visible {
+  outline: 3px solid rgba(40, 77, 67, 0.44);
+  outline-offset: 2px;
+}
+
+.commonplace-form,
+.reading-list-form {
+  background: var(--catalogue-cardstock);
+  border: 1px solid var(--catalogue-rule);
+  border-radius: 3px;
+  box-shadow: 0 4px 12px rgba(33, 27, 24, 0.08);
+  display: grid;
+  gap: 0.9rem;
+  padding: clamp(1rem, 2vw, 1.4rem);
+}
+
+.commonplace-form-title {
+  color: var(--catalogue-green);
+  font-size: 1.15rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.commonplace-form-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.commonplace-form-field--wide {
+  grid-column: 1 / -1;
+}
+
+.commonplace-form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.commonplace-empty {
+  background: var(--catalogue-cardstock);
+  border: 1px dashed rgba(118, 88, 71, 0.65);
+  border-radius: 3px;
+  display: grid;
+  gap: 0.9rem;
+  justify-items: start;
+  padding: 1.4rem 1.25rem;
+}
+
+.commonplace-empty p {
+  color: var(--catalogue-faded-ink);
+  line-height: 1.5;
+  margin: 0;
+  max-width: 44rem;
+}
+
+.commonplace-list {
+  display: grid;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.commonplace-card {
+  background: var(--catalogue-cardstock);
+  border: 1px solid rgba(118, 88, 71, 0.55);
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(33, 27, 24, 0.06);
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 1.35rem);
+}
+
+.commonplace-figure {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+
+.commonplace-blockquote {
+  border-left: 3px solid var(--catalogue-green);
+  color: var(--catalogue-ink);
+  font-size: 1.08rem;
+  font-style: italic;
+  line-height: 1.55;
+  margin: 0;
+  padding: 0.15rem 0 0.15rem 1rem;
+  overflow-wrap: break-word;
+}
+
+.commonplace-blockquote p {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.commonplace-citation {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.76rem;
+  line-height: 1.4;
+  overflow-wrap: break-word;
+}
+
+.commonplace-citation cite {
+  color: var(--catalogue-ink);
+  font-style: italic;
+  font-weight: 700;
+}
+
+.commonplace-note {
+  background: rgba(246, 239, 217, 0.55);
+  border-left: 2px dotted rgba(118, 88, 71, 0.65);
+  color: var(--catalogue-faded-ink);
+  font-size: 0.92rem;
+  line-height: 1.45;
+  margin: 0;
+  padding: 0.45rem 0.75rem;
+  overflow-wrap: break-word;
+}
+
+.commonplace-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.commonplace-tag-pill {
+  background: var(--catalogue-paper-light);
+  border: 1px solid rgba(118, 88, 71, 0.55);
+  border-radius: 999px;
+  color: var(--catalogue-green);
+  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 0.22rem 0.65rem;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.commonplace-tag-pill:hover,
+.commonplace-tag-pill:focus-visible,
+.commonplace-tag-pill[aria-pressed="true"] {
+  background: var(--catalogue-green);
+  border-color: var(--catalogue-green);
+  color: var(--catalogue-paper-light);
+}
+
+.commonplace-tag-pill:focus-visible {
+  outline: 3px solid rgba(40, 77, 67, 0.44);
+  outline-offset: 2px;
+}
+
+.commonplace-actions {
+  align-items: center;
+  border-top: 1px dotted rgba(118, 88, 71, 0.45);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: space-between;
+  padding-top: 0.65rem;
+}
+
+.commonplace-delete-confirm {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+/* ==========================================================================
+   Phase 4A: Reading Lists & Ranked Queues View
+   ========================================================================== */
+
+.reading-lists-header-actions,
+.reading-lists-empty-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.reading-list-checkbox-row {
+  align-items: center;
+  display: inline-flex;
+  gap: 0.55rem;
+}
+
+.reading-list-checkbox-row input[type="checkbox"] {
+  accent-color: var(--catalogue-green);
+  height: 1.15rem;
+  width: 1.15rem;
+  flex: none;
+}
+
+.reading-list-checkbox-row label {
+  color: var(--catalogue-ink);
+  cursor: pointer;
+  font-size: 0.94rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+}
+
+.reading-lists-body {
+  display: grid;
+  gap: 1.1rem;
+  min-width: 0;
+}
+
+.reading-list-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.reading-list-pill {
+  align-items: center;
+  background: var(--catalogue-cardstock);
+  border: 1px solid rgba(118, 88, 71, 0.65);
+  border-radius: 3px;
+  color: var(--catalogue-ink);
+  cursor: pointer;
+  display: inline-flex;
+  gap: 0.5rem;
+  font: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  max-width: 100%;
+  padding: 0.5rem 0.85rem;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.reading-list-pill:hover {
+  border-color: var(--catalogue-green);
+  background: rgba(40, 77, 67, 0.08);
+}
+
+.reading-list-pill:focus-visible {
+  outline: 3px solid rgba(40, 77, 67, 0.44);
+  outline-offset: 2px;
+}
+
+.reading-list-pill[aria-selected="true"] {
+  background: var(--catalogue-green);
+  border-color: var(--catalogue-green);
+  color: var(--catalogue-paper-light);
+}
+
+.reading-list-pill-name {
+  overflow-wrap: break-word;
+  text-align: left;
+}
+
+.reading-list-queue-badge {
+  background: var(--catalogue-rubric);
+  border-radius: 999px;
+  color: var(--catalogue-paper-light);
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 0.12rem 0.48rem;
+  text-transform: uppercase;
+}
+
+.reading-list-pill[aria-selected="true"] .reading-list-queue-badge {
+  background: rgba(253, 250, 242, 0.22);
+  border: 1px solid rgba(253, 250, 242, 0.55);
+}
+
+.reading-list-pill-count {
+  background: rgba(33, 27, 24, 0.08);
+  border-radius: 999px;
+  font-size: 0.74rem;
+  font-variant-numeric: tabular-nums;
+  padding: 0.1rem 0.45rem;
+}
+
+.reading-list-pill[aria-selected="true"] .reading-list-pill-count {
+  background: rgba(253, 250, 242, 0.22);
+}
+
+.reading-list-panel {
+  background: var(--catalogue-cardstock);
+  border: 1px solid rgba(118, 88, 71, 0.6);
+  border-radius: 3px;
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+  padding: clamp(1rem, 2vw, 1.5rem);
+}
+
+.reading-list-panel-head {
+  align-items: start;
+  border-bottom: 1px dotted rgba(118, 88, 71, 0.5);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1rem;
+  justify-content: space-between;
+  padding-bottom: 0.85rem;
+}
+
+.reading-list-panel-title-wrap {
+  display: grid;
+  gap: 0.3rem;
+  min-width: 0;
+}
+
+.reading-list-panel-title-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.reading-list-panel-title-row h3 {
+  font-size: 1.35rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.reading-list-panel-desc {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.94rem;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.reading-list-add-form {
+  align-items: end;
+  background: rgba(246, 239, 217, 0.55);
+  border: 1px solid rgba(118, 88, 71, 0.4);
+  border-radius: 3px;
+  display: grid;
+  gap: 0.65rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.8rem 0.9rem;
+}
+
+.reading-list-add-error {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.reading-list-items {
+  display: grid;
+  gap: 0.75rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.reading-list-item-row {
+  align-items: start;
+  background: rgba(246, 239, 217, 0.42);
+  border: 1px solid rgba(118, 88, 71, 0.45);
+  border-radius: 3px;
+  display: grid;
+  gap: 0.75rem 1rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  padding: 0.85rem 1rem;
+}
+
+.reading-list-rank {
+  background: var(--catalogue-cardstock);
+  border: 1px solid rgba(118, 88, 71, 0.55);
+  border-radius: 3px;
+  color: var(--catalogue-faded-ink);
+  font-size: 0.82rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-width: 2.35rem;
+  padding: 0.25rem 0.45rem;
+  text-align: center;
+}
+
+.reading-list-rank--queue {
+  background: var(--catalogue-green);
+  border-color: var(--catalogue-green);
+  color: var(--catalogue-paper-light);
+}
+
+.reading-list-item-main {
+  display: grid;
+  gap: 0.22rem;
+  min-width: 0;
+}
+
+.reading-list-item-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1.3;
+  margin: 0;
+}
+
+.reading-list-item-title cite {
+  font-style: italic;
+}
+
+.reading-list-item-author {
+  color: var(--catalogue-green);
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin: 0;
+}
+
+.reading-list-item-meta {
+  align-items: center;
+  color: var(--catalogue-faded-ink);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.74rem;
+  gap: 0.35rem 0.65rem;
+  margin-top: 0.15rem;
+}
+
+.reading-list-item-note {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.86rem;
+  font-style: italic;
+  margin: 0.25rem 0 0;
+}
+
+.reading-list-item-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+/* ==========================================================================
+   Phase 4A: BookDetailCard Lists Strip & Commonplace Quotes Section
+   ========================================================================== */
+
+.detail-lists-strip,
+.detail-quotes-section {
+  border-top: 1px dotted rgba(118, 88, 71, 0.55);
+  display: grid;
+  gap: 0.65rem;
+  padding-top: 0.95rem;
+}
+
+.detail-list-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.detail-list-pill {
+  align-items: center;
+  background: rgba(40, 77, 67, 0.1);
+  border: 1px solid rgba(40, 77, 67, 0.45);
+  border-radius: 999px;
+  color: var(--catalogue-green);
+  display: inline-flex;
+  font-size: 0.74rem;
+  font-weight: 700;
+  gap: 0.35rem;
+  padding: 0.2rem 0.55rem 0.2rem 0.7rem;
+}
+
+.detail-list-pill-remove {
+  background: transparent;
+  border: 0;
+  border-radius: 999px;
+  color: inherit;
+  cursor: pointer;
+  display: inline-grid;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  min-height: 1.35rem;
+  min-width: 1.35rem;
+  place-items: center;
+}
+
+.detail-list-pill-remove:hover,
+.detail-list-pill-remove:focus-visible {
+  background: var(--catalogue-rubric);
+  color: var(--catalogue-paper-light);
+  outline: 2px solid var(--catalogue-rubric);
+  outline-offset: 1px;
+}
+
+.detail-list-add-form {
+  align-items: center;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.detail-quote-list {
+  display: grid;
+  gap: 0.65rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.detail-quote-card {
+  background: rgba(246, 239, 217, 0.52);
+  border: 1px solid rgba(118, 88, 71, 0.42);
+  border-radius: 3px;
+  display: grid;
+  gap: 0.4rem;
+  padding: 0.75rem 0.85rem;
+}
+
+.detail-quote-blockquote {
+  font-size: 0.96rem;
+  line-height: 1.48;
+  padding-left: 0.75rem;
+}
+
+.detail-quote-meta-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 0.75rem;
+  justify-content: space-between;
+}
+
+.detail-quote-meta {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.72rem;
+}
+
+.detail-quote-note {
+  color: var(--catalogue-faded-ink);
+  font-size: 0.86rem;
+  margin: 0;
+}
+
+.detail-quote-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.detail-quote-tag {
+  background: var(--catalogue-cardstock);
+  border: 1px solid rgba(118, 88, 71, 0.4);
+  border-radius: 999px;
+  color: var(--catalogue-green);
+  font-size: 0.68rem;
+  padding: 0.1rem 0.45rem;
+}
+
+.detail-quote-form {
+  background: rgba(246, 239, 217, 0.55);
+  border: 1px solid rgba(118, 88, 71, 0.45);
+  border-radius: 3px;
+  display: grid;
+  gap: 0.65rem;
+  padding: 0.85rem;
+}
+
 /* ==========================================================================
    Responsive Breakpoints
    ========================================================================== */
@@ -5539,6 +6256,39 @@ dialog.catalogue-dialog--aleph::backdrop {
 
   .read-next-checkbox-row {
     grid-column: 1 / -1;
+  }
+
+  .view-tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+    overflow-x: visible;
+    width: 100%;
+  }
+
+  .view-tab {
+    font-size: 0.78rem;
+    padding: 0.5rem 0.85rem 0.6rem;
+  }
+
+  .commonplace-controls {
+    grid-template-columns: 1fr;
+  }
+
+  .commonplace-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .reading-list-add-form {
+    grid-template-columns: 1fr;
+  }
+
+  .reading-list-item-row {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .reading-list-item-actions {
+    grid-column: 1 / -1;
+    justify-content: flex-start;
   }
 }
 
@@ -5715,14 +6465,29 @@ dialog.catalogue-dialog--aleph::backdrop {
   .read-next-anchor-clear,
   .read-next-action-btn,
   .librarian-starter-chip,
-  .librarian-pick-btn {
+  .librarian-pick-btn,
+  .commonplace-add-toggle,
+  .commonplace-action-btn,
+  .commonplace-tag-pill,
+  .commonplace-filter-field input,
+  .commonplace-filter-field select,
+  .commonplace-form-field input,
+  .commonplace-form-field select,
+  .reading-lists-header-btn,
+  .reading-list-pill,
+  .reading-list-move-btn,
+  .reading-list-add-submit,
+  .reading-list-checkbox-row label,
+  .detail-list-add-form select {
     min-height: 48px;
   }
 
   .ledger-select-control,
   .rating-star-btn,
-  .catalogue-toast-dismiss {
+  .catalogue-toast-dismiss,
+  .detail-list-pill-remove {
     min-width: 48px;
+    min-height: 48px;
   }
 }
 
@@ -5749,7 +6514,11 @@ dialog.catalogue-dialog--aleph::backdrop {
   .read-next-reason-pill,
   .read-next-profile-pill,
   .librarian-starter-chip,
-  .librarian-pick-btn {
+  .librarian-pick-btn,
+  .commonplace-tag-pill,
+  .reading-list-pill,
+  .reading-list-rank,
+  .detail-list-pill {
     forced-color-adjust: auto;
     border: 1px solid ButtonText;
   }
@@ -5794,7 +6563,9 @@ dialog.catalogue-dialog--aleph::backdrop {
   .ledger-bulk-row,
   .read-next-anchor-clear,
   .librarian-starter-chip,
-  .librarian-pick-btn {
+  .librarian-pick-btn,
+  .commonplace-tag-pill,
+  .reading-list-pill {
     transition: none;
   }
 }

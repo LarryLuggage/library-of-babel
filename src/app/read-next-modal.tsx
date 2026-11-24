@@ -78,6 +78,8 @@ export interface ReadNextModalProps {
   onRequireAuth: (reason: string) => void;
   onInspectBook: (book: CatalogueBook) => void;
   onStartReading: (book: CatalogueBook) => Promise<void>;
+  onQueueUpNext?: (book: CatalogueBook) => Promise<void>;
+  queuedBookIds?: ReadonlySet<string>;
 }
 
 function ReadNextContent({
@@ -92,6 +94,8 @@ function ReadNextContent({
   onRequireAuth,
   onInspectBook,
   onStartReading,
+  onQueueUpNext,
+  queuedBookIds,
 }: Omit<ReadNextModalProps, "isOpen"> & { titleId: string }) {
   const closeDialog = useDialogClose() ?? onClose;
   const idPrefix = useId();
@@ -132,6 +136,7 @@ function ReadNextContent({
   }
 
   const [startingBookId, setStartingBookId] = useState<string | null>(null);
+  const [queueingBookId, setQueueingBookId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
   // Librarian state
@@ -217,6 +222,27 @@ function ReadNextContent({
       );
     } finally {
       setStartingBookId(null);
+    }
+  };
+
+  const handleQueueUpNextClick = async (book: CatalogueBook) => {
+    if (!onQueueUpNext) return;
+    setActionError(null);
+    if (!canEdit) {
+      onRequireAuth("Sign in as curator to add volumes to your Up Next queue.");
+      return;
+    }
+    setQueueingBookId(book.id);
+    try {
+      await onQueueUpNext(book);
+    } catch (error) {
+      setActionError(
+        error instanceof Error
+          ? error.message
+          : "Could not add this volume to Up Next.",
+      );
+    } finally {
+      setQueueingBookId(null);
     }
   };
 
@@ -576,6 +602,8 @@ function ReadNextContent({
               const { book, reasons } = rec;
               const yearLabel = formatPublishYear(book.publish_year);
               const isStarting = startingBookId === book.id;
+              const isQueueing = queueingBookId === book.id;
+              const isQueued = Boolean(queuedBookIds?.has(book.id));
               return (
                 <li key={getBookKey(book)} className="read-next-card">
                   <div className="read-next-card-head">
@@ -636,6 +664,25 @@ function ReadNextContent({
                     >
                       Inspect
                     </button>
+                    {onQueueUpNext && (
+                      <button
+                        type="button"
+                        className="btn-action-secondary read-next-action-btn font-mono"
+                        disabled={isQueued || isQueueing}
+                        onClick={() => void handleQueueUpNextClick(book)}
+                        aria-label={
+                          isQueued
+                            ? `${book.title} is already in Up Next`
+                            : `Add ${book.title} to Up Next queue`
+                        }
+                      >
+                        {isQueueing
+                          ? "Queueing..."
+                          : isQueued
+                            ? "In Up Next ✓"
+                            : "Queue Up Next"}
+                      </button>
+                    )}
                     <button
                       type="button"
                       className="pathfinder-btn btn-primary read-next-action-btn font-mono"
@@ -763,37 +810,69 @@ function ReadNextContent({
 
                   {entry.response.recommendations.length > 0 && (
                     <ul className="librarian-picks">
-                      {entry.response.recommendations.map((pick) => (
-                        <li key={getBookKey(pick.book)}>
-                          <button
-                            type="button"
-                            className="librarian-pick-btn"
-                            onClick={() => onInspectBook(pick.book)}
-                            aria-label={`Inspect ${pick.book.title} by ${pick.book.author}`}
+                      {entry.response.recommendations.map((pick) => {
+                        const isQueued = Boolean(
+                          queuedBookIds?.has(pick.book.id),
+                        );
+                        const isQueueing = queueingBookId === pick.book.id;
+                        return (
+                          <li
+                            key={getBookKey(pick.book)}
+                            className="librarian-pick-card"
                           >
-                            <span className="librarian-pick-top">
-                              <cite>{pick.book.title}</cite>
-                              <span className="librarian-pick-shelf font-mono">
-                                Shelf {pick.book.shelf}
-                                {pick.book.position
-                                  ? ` · Pos. ${pick.book.position}`
-                                  : ""}
+                            <button
+                              type="button"
+                              className="librarian-pick-btn"
+                              onClick={() => onInspectBook(pick.book)}
+                              aria-label={`Inspect ${pick.book.title} by ${pick.book.author}`}
+                            >
+                              <span className="librarian-pick-top">
+                                <cite>{pick.book.title}</cite>
+                                <span className="librarian-pick-shelf font-mono">
+                                  Shelf {pick.book.shelf}
+                                  {pick.book.position
+                                    ? ` · Pos. ${pick.book.position}`
+                                    : ""}
+                                </span>
                               </span>
-                            </span>
-                            <span className="librarian-pick-author">
-                              {pick.book.author}
-                            </span>
-                            <span className="librarian-pick-pitch">
-                              {pick.pitch}
-                            </span>
-                            {pick.shelfNote && (
-                              <span className="librarian-pick-note font-mono">
-                                {pick.shelfNote}
+                              <span className="librarian-pick-author">
+                                {pick.book.author}
                               </span>
+                              <span className="librarian-pick-pitch">
+                                {pick.pitch}
+                              </span>
+                              {pick.shelfNote && (
+                                <span className="librarian-pick-note font-mono">
+                                  {pick.shelfNote}
+                                </span>
+                              )}
+                            </button>
+                            {onQueueUpNext && (
+                              <div className="librarian-pick-footer">
+                                <button
+                                  type="button"
+                                  className="btn-action-secondary read-next-action-btn font-mono"
+                                  disabled={isQueued || isQueueing}
+                                  onClick={() =>
+                                    void handleQueueUpNextClick(pick.book)
+                                  }
+                                  aria-label={
+                                    isQueued
+                                      ? `${pick.book.title} is already in Up Next`
+                                      : `Add ${pick.book.title} to Up Next queue`
+                                  }
+                                >
+                                  {isQueueing
+                                    ? "Queueing..."
+                                    : isQueued
+                                      ? "In Up Next ✓"
+                                      : "Queue Up Next"}
+                                </button>
+                              </div>
                             )}
-                          </button>
-                        </li>
-                      ))}
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>
@@ -880,6 +959,8 @@ export function ReadNextModal({
   onRequireAuth,
   onInspectBook,
   onStartReading,
+  onQueueUpNext,
+  queuedBookIds,
 }: ReadNextModalProps) {
   const titleId = useId();
 
@@ -902,6 +983,8 @@ export function ReadNextModal({
         onRequireAuth={onRequireAuth}
         onInspectBook={onInspectBook}
         onStartReading={onStartReading}
+        onQueueUpNext={onQueueUpNext}
+        queuedBookIds={queuedBookIds}
       />
     </ModalDialog>
   );

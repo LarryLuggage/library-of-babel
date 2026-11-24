@@ -199,3 +199,21 @@ With `877` live volumes, `226` reading statuses, `108` ratings, and curated `boo
 ### Consequences
 * Readers get instant, explainable unread shelf recommendations offline or online with zero external dependencies or schema migrations, and curators can optionally enable Gemini AI synthesis by setting `GEMINI_API_KEY` in `.env.local` or Vercel without exposing API quota to public traffic.
 * All `120` Vitest tests across `17` suites, `eslint`, `tsc --noEmit`, `next build`, and desktop (`1280x800`) + mobile (`390x844`) Chromium visual inspections pass cleanly (`0` console errors, `0` failed requests, `0px` page horizontal overflow).
+
+## ADR 11: Commonplace Book (`book_quotes`) and Custom Reading Lists & Ranked Queues (`reading_lists`, `reading_list_items`)
+
+### Date
+2026-11-24
+
+### Context
+While `books.personal_notes` stored a single unstructured note per volume and `reading_status` tracked four coarse states (`unread`, `reading`, `finished`, `dnf`), curators had no structured way to record multiple quotable passages with page/chapter citations or organize books into virtual reading lists and a ranked *"Up Next"* queue independent of physical shelf coordinates.
+
+### Decision
+* **Normalized Supabase Schema (`supabase/migrations/20261124000000_add_commonplace_and_lists.sql`)**: Created `public.book_quotes` (indexed on `book_id` and `created_at desc`), `public.reading_lists` (unique `slug`, `is_queue` flag), and `public.reading_list_items` (unique `(list_id, book_id)`, indexed on `(list_id, position, added_at)` and `book_id`), all with `on delete cascade` foreign keys and Row Level Security enabled matching `books` and `book_connections`. Applied directly to live Supabase (`mbzgalmtmrwaaqkeafon`) and mirrored in `src/lib/database.types.ts`.
+* **Local Mode v3 & Dual-Mode Repository (`src/lib/books/repository.ts`, `src/lib/books/commonplace.ts`, `src/lib/books/lists.ts`)**: Upgraded `LocalTrackerState` to `version: 3` (backwards-compatible with `v1`/`v2`) with local book-delete cascades and full dual-mode CRUD for quotes, lists, and ranked list items, mapping canonical `book_key` IDs cleanly to/from Supabase UUIDs.
+* **Curator-Gated APIs & 5-Tab UI (`/api/quotes`, `/api/lists`, `src/app/commonplace-view.tsx`, `src/app/reading-lists-view.tsx`)**: Added public `GET` + `requireCuratorAuth`-gated `POST`/`PATCH`/`DELETE` handlers, expanded the main catalogue `role="tablist"` to 5 tabs (`SHELF LEDGER`, `PHYSICAL SHELVES`, `DECADAL TIMELINE`, `READING LISTS`, `COMMONPLACE`), integrated quotes and list membership into `BookDetailCard`, added 1-click `"Queue Up Next"` into `ReadNextModal`, and blended saved Commonplace passages into **The Aleph**.
+
+### Consequences
+* Curators can save and search passages across the entire library, surface their own saved passages inside *The Aleph*, build custom syllabi or ranked *"Up Next"* queues, and reorder items via accessible keyboard/touch `Move up`/`Move down` controls across both desktop and mobile.
+* All `133` Vitest tests across `21` suites, `eslint`, `tsc --noEmit`, `next build`, and desktop (`1280x800`) + mobile (`390x844`) Chromium visual inspections pass cleanly (`0` console errors, `0` failed requests, `0px` horizontal overflow).
+* Phase 4B (Deep-Linkable URLs & Installable Mobile PWA) is ready to draft next so deep links cover all 5 views (`ledger`, `shelves`, `timeline`, `lists`, `commonplace`) and `?list=<slug>` out of the box.

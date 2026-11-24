@@ -15,6 +15,8 @@ Interactive bibliographic knowledge graph, physical shelf atlas, and personal re
 - **Duplicate Clustering & Bulk Editing**: Prioritized union-find duplicate detection that keeps numbered multi-volume works (`Vol. 1` vs `Vol. 2`, `Part I` vs `Part II`, `#1` vs `#2`) separate, paired with `POST /api/books/bulk` batch updates for status, shelf, division, and tag additions/removals (capped at 20 tags).
 - **Reading Analytics & Safe Exports**: Summary metrics, completion rate, rating histogram, yearly finished totals, division/era breakdowns, loaned-out tracker, and RFC-4180 CSV (with spreadsheet formula-injection neutralization) and JSON downloads.
 - **Read Next Shelf Recommender**: Deterministic taste-profile recommendation engine (`src/lib/books/recommender.ts`) scoring unread volumes by ratings, curated `book_connections`, IDF-weighted subject tags, author/division affinity, and era proximity—supporting `best_match`, `stretch` (under-explored divisions/eras), `same_authors`, seed-book anchoring, and cold-start fallbacks.
+- **Commonplace Book & Aleph Meditations**: Dedicated quote & passage archive (`book_quotes`) with page/chapter citations, personal margin notes, tag filtering, and integration into **The Aleph** meditation pool alongside the three classic Borges epigraphs.
+- **Custom Reading Lists & Ranked Up Next Queue**: Curator-authored reading lists (`reading_lists`, `reading_list_items`) with a pinned ranked **Up Next** queue (`is_queue`), item reordering, inline book-card membership chips, and automatic cascade cleanup on volume deletion.
 - **Grounded AI Reference Librarian**: Conversational shelf discovery (`POST /api/librarian`) that shortlists the catalogue by natural-language cues (era/century, shelf range, unread intent, keywords, and taste profile). Runs in zero-key deterministic **Local Shelf Search** mode by default, or upgrades to structured JSON Gemini responses (with strict `book_id` grounding validation, curator authentication, and per-IP rate limiting) when `GEMINI_API_KEY` is configured.
 - **Passphrase Curator Authentication**: HMAC-SHA256 signed HTTP-only `babel_curator_session` cookie (30-day TTL), constant-time SHA-256 verification, and 10-failure / 15-minute IP rate limiting (`429`).
 
@@ -27,11 +29,11 @@ Interactive bibliographic knowledge graph, physical shelf atlas, and personal re
 1. **Local JSON Overlay Mode (default when Supabase env vars are absent)**
    - Loads the baseline 880 volumes from `shelf_catalog_full.json`.
    - Serializes concurrent writes with an in-process per-path lock (`withStateLock`) and writes atomically via temp file + `rename` to `data/book-tracker-state.json` (overridable via `BOOK_TRACKER_STATE_PATH`).
-   - Stores created volumes, per-book overrides, deleted IDs, and curated `connections` (`LocalTrackerState` `version: 2`).
+   - Stores created volumes, per-book overrides, deleted IDs, curated `connections`, commonplace `quotes`, and `lists` (`LocalTrackerState` `version: 3`).
 
 2. **Supabase Postgres Mode (active when `NEXT_PUBLIC_SUPABASE_URL` and `SUPABASE_SECRET_KEY` or `SUPABASE_SERVICE_ROLE_KEY` are set)**
-   - Server Components (`src/app/page.tsx`) and Node.js Route Handlers query `public.books` and `public.book_connections` through `createSupabaseAdminClient()` (`src/lib/supabase/admin.ts`).
-   - Row-level security (RLS) is enabled on both tables with no public browser policies; all reads and mutations flow through Next.js server routes.
+   - Server Components (`src/app/page.tsx`) and Node.js Route Handlers query `public.books`, `public.book_connections`, `public.book_quotes`, `public.reading_lists`, and `public.reading_list_items` through `createSupabaseAdminClient()` (`src/lib/supabase/admin.ts`).
+   - Row-level security (RLS) is enabled on all tables with no public browser policies; all reads and mutations flow through Next.js server routes.
    - Copy identity uses `books_book_key_idx` (`book_key`) and `books_copy_identity_idx` (`(title, author, coalesce(shelf_row, -1), coalesce(position, ''))`) so multiple physical copies on different shelves or positions do not collide.
 
 ---
@@ -76,15 +78,17 @@ Variables defined in `.env.example` (plus optional local state path override):
 
 ## Supabase Database Setup & Seeding
 
-### 1. Apply Both Migrations
+### 1. Apply All Migrations
 
-Run both SQL migrations in order via the Supabase CLI (`supabase db push`) or the Supabase SQL Editor:
+Run all SQL migrations in order via the Supabase CLI (`supabase db push`) or the Supabase SQL Editor:
 
 1. `supabase/migrations/20260522000000_create_bibliographic_graph.sql`
    - Creates `public.books` and `public.book_connections`, GIN full-text search index `books_search_idx`, undirected pair index `book_connections_undirected_pair_idx`, and enables RLS.
 2. `supabase/migrations/20261120000000_extend_books_tracker.sql`
    - Adds `book_key`, `position`, `top_category`, `sub_category`, `summary`, `tags`, `publish_year`, `reading_status`, `rating`, `date_started`, `date_finished`, `personal_notes`, `loaned_to`, and `updated_at` to `public.books`.
    - Drops legacy `unique_book_identity` and `unique_connection_pair`, and creates `books_book_key_idx` and `books_copy_identity_idx`.
+3. `supabase/migrations/20261124000000_add_commonplace_and_lists.sql`
+   - Creates `public.book_quotes`, `public.reading_lists`, and `public.reading_list_items` (with unique `(list_id, book_id)` constraint, ordering indexes, cascade deletes, and RLS enabled).
 
 ### 2. Seed the Catalogue (`POST /api/books/seed`)
 
@@ -111,13 +115,18 @@ curl -X POST http://localhost:3000/api/books/seed \
 | `/api/books/seed` | `POST` | `BOOK_SEED_TOKEN` Bearer | Privileged bulk seed upsert into Supabase `public.books`. |
 | `/api/connections` | `GET`, `POST` | `GET`: Public, `POST`: Curator | List or create curated editorial links between two volumes (`409` on duplicate undirected pair). |
 | `/api/connections/[id]` | `DELETE` | Curator | Delete a curated editorial connection. |
+| `/api/quotes` | `GET`, `POST` | `GET`: Public, `POST`: Curator | List saved commonplace book passages (newest first) or record a new quote for a volume (`404` if volume missing). |
+| `/api/quotes/[id]` | `PATCH`, `DELETE` | Curator | Update or remove a saved commonplace book quote. |
+| `/api/lists` | `GET`, `POST` | `GET`: Public, `POST`: Curator | List custom reading lists & pinned queues (`is_queue`), or create a new list (`409` on duplicate slug). |
+| `/api/lists/[id]` | `PATCH`, `DELETE` | Curator | Rename/update metadata (`409` on slug collision) or delete a reading list. |
+| `/api/lists/[id]/items` | `POST`, `PATCH`, `DELETE` | Curator | Add a volume to a list (`409` if already present), reorder items by `book_ids`, or remove a volume (`?book_id=` or JSON body). |
 | `/api/librarian` | `POST` | Curator when `GEMINI_API_KEY` is set (rate-limited); Public in Local Shelf Search mode | Conversational catalogue discovery returning grounded recommendations from your shelves (strictly post-validated against real catalogue `book_id`s in Gemini mode). |
 
 ---
 
 ## Deploying to Vercel
 
-1. **Apply Supabase migrations** (`20260522000000_create_bibliographic_graph.sql` and `20261120000000_extend_books_tracker.sql`) to your production Supabase project.
+1. **Apply Supabase migrations** (`20260522000000_create_bibliographic_graph.sql`, `20261120000000_extend_books_tracker.sql`, and `20261124000000_add_commonplace_and_lists.sql`) to your production Supabase project.
 2. **Import the repository in Vercel** using the default Next.js build settings (`npm run build`).
 3. **Configure Production Environment Variables** in Vercel Project Settings:
    - `NEXT_PUBLIC_SUPABASE_URL`

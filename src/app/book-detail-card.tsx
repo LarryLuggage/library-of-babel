@@ -19,6 +19,12 @@ import {
   type ConnectionType,
   type EditorialConnection,
 } from "@/lib/books/connections";
+import type { BookQuote, CreateQuoteInput } from "@/lib/books/commonplace";
+import {
+  getListsForBook,
+  sortReadingLists,
+  type ReadingList,
+} from "@/lib/books/lists";
 import type { LookupCandidate } from "@/lib/books/lookup";
 import { ModalDialog, useDialogClose } from "./modal-dialog";
 
@@ -117,6 +123,13 @@ function BookDetailContent({
   connections,
   onCreateConnection,
   onDeleteConnection,
+  quotes = [],
+  lists = [],
+  onCreateQuote,
+  onDeleteQuote,
+  onAddBookToList,
+  onRemoveBookFromList,
+  onQueueUpNext,
   titleId,
   onBookClick,
   onClose,
@@ -136,6 +149,13 @@ function BookDetailContent({
     input: CreateEditorialConnectionInput,
   ) => Promise<EditorialConnection>;
   onDeleteConnection: (connectionId: string) => Promise<void>;
+  quotes?: BookQuote[];
+  lists?: ReadingList[];
+  onCreateQuote?: (input: CreateQuoteInput) => Promise<BookQuote>;
+  onDeleteQuote?: (quoteId: string) => Promise<void>;
+  onAddBookToList?: (listId: string, bookId: string) => Promise<ReadingList>;
+  onRemoveBookFromList?: (listId: string, bookId: string) => Promise<ReadingList>;
+  onQueueUpNext?: (book: CatalogueBook) => Promise<void>;
   titleId: string;
   onBookClick: (book: LedgerBook) => void;
   onClose: () => void;
@@ -161,6 +181,12 @@ function BookDetailContent({
   const enrichYearCheckId = `${idPrefix}-enrich-year`;
   const enrichTagsCheckId = `${idPrefix}-enrich-tags`;
   const enrichEditionCheckId = `${idPrefix}-enrich-edition`;
+  const addToListSelectId = `${idPrefix}-add-to-list`;
+  const addQuoteFormId = `${idPrefix}-add-quote-form`;
+  const quoteTextId = `${idPrefix}-quote-text`;
+  const quotePageId = `${idPrefix}-quote-page`;
+  const quoteTagsId = `${idPrefix}-quote-tags`;
+  const quoteNoteId = `${idPrefix}-quote-note`;
 
   const cancelDeleteRef = useRef<HTMLButtonElement>(null);
   const targetPickerRef = useRef<HTMLDivElement>(null);
@@ -225,6 +251,27 @@ function BookDetailContent({
     string | null
   >(null);
   const [linkStatus, setLinkStatus] = useState<{
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  // Reading lists & Commonplace quotes state
+  const [selectedListToAdd, setSelectedListToAdd] = useState("");
+  const [isUpdatingList, setIsUpdatingList] = useState(false);
+  const [isQueueingUpNext, setIsQueueingUpNext] = useState(false);
+  const [listFeedback, setListFeedback] = useState<{
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
+
+  const [showAddQuoteForm, setShowAddQuoteForm] = useState(false);
+  const [quoteText, setQuoteText] = useState("");
+  const [quotePage, setQuotePage] = useState("");
+  const [quoteTagsRaw, setQuoteTagsRaw] = useState("");
+  const [quoteNote, setQuoteNote] = useState("");
+  const [isSavingQuote, setIsSavingQuote] = useState(false);
+  const [deletingQuoteId, setDeletingQuoteId] = useState<string | null>(null);
+  const [quoteFeedback, setQuoteFeedback] = useState<{
     kind: "success" | "error";
     message: string;
   } | null>(null);
@@ -726,6 +773,165 @@ function BookDetailContent({
   };
 
   const formattedPublishYear = formatPublishYear(book.publish_year);
+
+  const sortedAllLists = useMemo(() => sortReadingLists(lists), [lists]);
+  const bookLists = useMemo(
+    () => getListsForBook(sortedAllLists, book.id),
+    [book.id, sortedAllLists],
+  );
+  const availableListsToAdd = useMemo(() => {
+    const memberIds = new Set(bookLists.map((list) => list.id));
+    return sortedAllLists.filter((list) => !memberIds.has(list.id));
+  }, [bookLists, sortedAllLists]);
+  const isInQueueList = useMemo(
+    () => bookLists.some((list) => list.is_queue),
+    [bookLists],
+  );
+  const bookQuotes = useMemo(
+    () =>
+      quotes.filter(
+        (quote) =>
+          quote.book_id === book.id || quote.book_id === currentBookKey,
+      ),
+    [book.id, currentBookKey, quotes],
+  );
+
+  const handleQueueUpNextClick = async () => {
+    if (!onQueueUpNext) return;
+    setListFeedback(null);
+    setIsQueueingUpNext(true);
+    try {
+      await onQueueUpNext(book);
+      setListFeedback({ kind: "success", message: "Added to Up Next queue." });
+    } catch (error) {
+      setListFeedback({
+        kind: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not add volume to Up Next.",
+      });
+    } finally {
+      setIsQueueingUpNext(false);
+    }
+  };
+
+  const handleAddToListSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    if (!onAddBookToList || !selectedListToAdd) return;
+    setListFeedback(null);
+    setIsUpdatingList(true);
+    try {
+      await onAddBookToList(selectedListToAdd, book.id);
+      setSelectedListToAdd("");
+      setListFeedback({ kind: "success", message: "Added to reading list." });
+    } catch (error) {
+      setListFeedback({
+        kind: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not add volume to list.",
+      });
+    } finally {
+      setIsUpdatingList(false);
+    }
+  };
+
+  const handleRemoveFromListClick = async (listId: string) => {
+    if (!onRemoveBookFromList) return;
+    setListFeedback(null);
+    setIsUpdatingList(true);
+    try {
+      await onRemoveBookFromList(listId, book.id);
+      setListFeedback({
+        kind: "success",
+        message: "Removed from reading list.",
+      });
+    } catch (error) {
+      setListFeedback({
+        kind: "error",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Could not remove volume from list.",
+      });
+    } finally {
+      setIsUpdatingList(false);
+    }
+  };
+
+  const handleSaveQuoteSubmit = async (
+    event: React.FormEvent<HTMLFormElement>,
+  ) => {
+    event.preventDefault();
+    if (!onCreateQuote) return;
+    setQuoteFeedback(null);
+
+    if (!quoteText.trim()) {
+      setQuoteFeedback({
+        kind: "error",
+        message: "Please enter a passage to save.",
+      });
+      return;
+    }
+
+    const parsedTags = quoteTagsRaw
+      .split(",")
+      .map((tag) => tag.trim().replace(/\s+/g, " "))
+      .filter(Boolean);
+
+    setIsSavingQuote(true);
+    try {
+      await onCreateQuote({
+        book_id: book.id,
+        quote_text: quoteText.trim(),
+        page_number: quotePage.trim() || null,
+        note: quoteNote.trim() || null,
+        tags: parsedTags,
+      });
+      setQuoteText("");
+      setQuotePage("");
+      setQuoteTagsRaw("");
+      setQuoteNote("");
+      setShowAddQuoteForm(false);
+      setQuoteFeedback({
+        kind: "success",
+        message: "Passage saved to Commonplace Book.",
+      });
+    } catch (error) {
+      setQuoteFeedback({
+        kind: "error",
+        message:
+          error instanceof Error ? error.message : "Could not save passage.",
+      });
+    } finally {
+      setIsSavingQuote(false);
+    }
+  };
+
+  const handleDeleteQuoteClick = async (quoteId: string) => {
+    if (!onDeleteQuote) return;
+    setQuoteFeedback(null);
+    setDeletingQuoteId(quoteId);
+    try {
+      await onDeleteQuote(quoteId);
+      setQuoteFeedback({
+        kind: "success",
+        message: "Passage removed.",
+      });
+    } catch (error) {
+      setQuoteFeedback({
+        kind: "error",
+        message:
+          error instanceof Error ? error.message : "Could not remove passage.",
+      });
+    } finally {
+      setDeletingQuoteId(null);
+    }
+  };
 
   return (
     <div className="catalogue-catalog-card catalogue-catalog-card--structured">
@@ -1277,6 +1483,259 @@ function BookDetailContent({
         </section>
 
         <section
+          className="detail-lists-strip"
+          aria-label="Reading Lists"
+        >
+          <div className="editorial-links-header">
+            <h4>Reading Lists</h4>
+            {canEdit && onQueueUpNext && (
+              <button
+                type="button"
+                className="btn-link-toggle font-mono"
+                disabled={isInQueueList || isQueueingUpNext || isDeleting}
+                onClick={() => void handleQueueUpNextClick()}
+              >
+                {isQueueingUpNext
+                  ? "Queueing..."
+                  : isInQueueList
+                    ? "In Up Next ✓"
+                    : "Add to Up Next"}
+              </button>
+            )}
+          </div>
+
+          {bookLists.length === 0 ? (
+            <p className="card-empty-note">
+              Not assigned to any reading list yet.
+            </p>
+          ) : (
+            <div className="detail-list-pills">
+              {bookLists.map((list) => (
+                <span key={list.id} className="detail-list-pill font-mono">
+                  <span>
+                    {list.name}
+                    {list.is_queue ? " · Queue" : ""}
+                  </span>
+                  {canEdit && onRemoveBookFromList && (
+                    <button
+                      type="button"
+                      className="detail-list-pill-remove"
+                      disabled={isUpdatingList || isDeleting}
+                      onClick={() => void handleRemoveFromListClick(list.id)}
+                      aria-label={`Remove ${book.title} from ${list.name}`}
+                    >
+                      ×
+                    </button>
+                  )}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {canEdit && onAddBookToList && availableListsToAdd.length > 0 && (
+            <form
+              className="detail-list-add-form"
+              onSubmit={handleAddToListSubmit}
+            >
+              <label htmlFor={addToListSelectId} className="sr-only">
+                Add to reading list
+              </label>
+              <select
+                id={addToListSelectId}
+                value={selectedListToAdd}
+                onChange={(event) => setSelectedListToAdd(event.target.value)}
+                disabled={isUpdatingList || isDeleting}
+              >
+                <option value="">Add to a reading list...</option>
+                {availableListsToAdd.map((list) => (
+                  <option key={list.id} value={list.id}>
+                    {list.name}
+                    {list.is_queue ? " (Queue)" : ""}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="submit"
+                className="btn-link-toggle font-mono"
+                disabled={!selectedListToAdd || isUpdatingList || isDeleting}
+              >
+                {isUpdatingList ? "Adding..." : "Add"}
+              </button>
+            </form>
+          )}
+
+          {listFeedback && (
+            <p
+              className={`tracker-feedback tracker-feedback--${listFeedback.kind}`}
+              role={listFeedback.kind === "error" ? "alert" : "status"}
+            >
+              {listFeedback.message}
+            </p>
+          )}
+        </section>
+
+        <section
+          className="detail-quotes-section"
+          aria-label="Commonplace Quotes"
+        >
+          <div className="editorial-links-header">
+            <h4>
+              Commonplace Quotes
+              {bookQuotes.length > 0 ? ` (${bookQuotes.length})` : ""}
+            </h4>
+            {canEdit && onCreateQuote && (
+              <button
+                type="button"
+                className="btn-link-toggle font-mono"
+                aria-expanded={showAddQuoteForm}
+                aria-controls={addQuoteFormId}
+                onClick={() => {
+                  setShowAddQuoteForm((prev) => !prev);
+                  setQuoteFeedback(null);
+                }}
+              >
+                {showAddQuoteForm ? "Cancel" : "+ Save a passage"}
+              </button>
+            )}
+          </div>
+
+          {bookQuotes.length === 0 ? (
+            <p className="card-empty-note">
+              No passages saved from this volume yet.
+            </p>
+          ) : (
+            <ul className="detail-quote-list">
+              {bookQuotes.map((quote) => (
+                <li key={quote.id} className="detail-quote-card">
+                  <blockquote className="commonplace-blockquote detail-quote-blockquote">
+                    <p>{quote.quote_text}</p>
+                  </blockquote>
+                  <div className="detail-quote-meta-row">
+                    <span className="detail-quote-meta font-mono">
+                      {[
+                        quote.page_number ? `p. ${quote.page_number}` : null,
+                        quote.chapter,
+                      ]
+                        .filter(Boolean)
+                        .join(" · ") || "Saved passage"}
+                    </span>
+                    {canEdit && onDeleteQuote && (
+                      <button
+                        type="button"
+                        className="btn-editorial-remove font-mono"
+                        disabled={deletingQuoteId === quote.id}
+                        onClick={() => void handleDeleteQuoteClick(quote.id)}
+                        aria-label={`Delete quote from ${book.title}`}
+                      >
+                        {deletingQuoteId === quote.id
+                          ? "Removing..."
+                          : "Delete"}
+                      </button>
+                    )}
+                  </div>
+                  {quote.note && (
+                    <p className="detail-quote-note">{quote.note}</p>
+                  )}
+                  {quote.tags.length > 0 && (
+                    <div className="detail-quote-tags">
+                      {quote.tags.map((tag) => (
+                        <span key={tag} className="detail-quote-tag font-mono">
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {quoteFeedback && !showAddQuoteForm && (
+            <p
+              className={`tracker-feedback tracker-feedback--${quoteFeedback.kind}`}
+              role={quoteFeedback.kind === "error" ? "alert" : "status"}
+            >
+              {quoteFeedback.message}
+            </p>
+          )}
+
+          {canEdit && onCreateQuote && showAddQuoteForm && (
+            <form
+              id={addQuoteFormId}
+              className="detail-quote-form"
+              onSubmit={handleSaveQuoteSubmit}
+              noValidate
+            >
+              <div className="reading-field">
+                <label htmlFor={quoteTextId}>
+                  Quote <span aria-hidden="true">*</span>
+                </label>
+                <textarea
+                  id={quoteTextId}
+                  rows={3}
+                  value={quoteText}
+                  onChange={(event) => setQuoteText(event.target.value)}
+                  placeholder="Transcribe a passage from this volume..."
+                  required
+                />
+              </div>
+
+              <div className="reading-notes-grid">
+                <div className="reading-field">
+                  <label htmlFor={quotePageId}>Page</label>
+                  <input
+                    id={quotePageId}
+                    type="text"
+                    value={quotePage}
+                    onChange={(event) => setQuotePage(event.target.value)}
+                    placeholder="e.g. 42"
+                  />
+                </div>
+                <div className="reading-field">
+                  <label htmlFor={quoteTagsId}>Tags</label>
+                  <input
+                    id={quoteTagsId}
+                    type="text"
+                    value={quoteTagsRaw}
+                    onChange={(event) => setQuoteTagsRaw(event.target.value)}
+                    placeholder="memory, fate"
+                  />
+                </div>
+              </div>
+
+              <div className="reading-field">
+                <label htmlFor={quoteNoteId}>Note</label>
+                <textarea
+                  id={quoteNoteId}
+                  rows={2}
+                  value={quoteNote}
+                  onChange={(event) => setQuoteNote(event.target.value)}
+                  placeholder="Optional reflection or marginalia..."
+                />
+              </div>
+
+              <div className="reading-notes-actions">
+                <button
+                  type="submit"
+                  className="btn-tracker-save"
+                  disabled={isSavingQuote}
+                >
+                  {isSavingQuote ? "Saving..." : "Save passage"}
+                </button>
+                {quoteFeedback && (
+                  <p
+                    className={`tracker-feedback tracker-feedback--${quoteFeedback.kind}`}
+                    role={quoteFeedback.kind === "error" ? "alert" : "status"}
+                  >
+                    {quoteFeedback.message}
+                  </p>
+                )}
+              </div>
+            </form>
+          )}
+        </section>
+
+        <section
           className="card-editorial-links"
           aria-label="Curated Editorial Links"
         >
@@ -1611,6 +2070,13 @@ export function BookDetailCard({
   connections,
   onCreateConnection,
   onDeleteConnection,
+  quotes,
+  lists,
+  onCreateQuote,
+  onDeleteQuote,
+  onAddBookToList,
+  onRemoveBookFromList,
+  onQueueUpNext,
   onBookClick,
   onClose,
   onStartPath,
@@ -1630,6 +2096,13 @@ export function BookDetailCard({
     input: CreateEditorialConnectionInput,
   ) => Promise<EditorialConnection>;
   onDeleteConnection: (connectionId: string) => Promise<void>;
+  quotes?: BookQuote[];
+  lists?: ReadingList[];
+  onCreateQuote?: (input: CreateQuoteInput) => Promise<BookQuote>;
+  onDeleteQuote?: (quoteId: string) => Promise<void>;
+  onAddBookToList?: (listId: string, bookId: string) => Promise<ReadingList>;
+  onRemoveBookFromList?: (listId: string, bookId: string) => Promise<ReadingList>;
+  onQueueUpNext?: (book: CatalogueBook) => Promise<void>;
   onBookClick: (book: LedgerBook) => void;
   onClose: () => void;
   onStartPath: () => void;
@@ -1656,6 +2129,13 @@ export function BookDetailCard({
         connections={connections}
         onCreateConnection={onCreateConnection}
         onDeleteConnection={onDeleteConnection}
+        quotes={quotes}
+        lists={lists}
+        onCreateQuote={onCreateQuote}
+        onDeleteQuote={onDeleteQuote}
+        onAddBookToList={onAddBookToList}
+        onRemoveBookFromList={onRemoveBookFromList}
+        onQueueUpNext={onQueueUpNext}
         titleId={titleId}
         onBookClick={onBookClick}
         onClose={onClose}

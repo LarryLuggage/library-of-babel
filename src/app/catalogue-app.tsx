@@ -27,6 +27,13 @@ import {
   type EditorialConnection,
 } from "@/lib/books/connections";
 import {
+  buildAlephMeditationPool,
+  type AlephMeditation,
+  type BookQuote,
+  type CreateQuoteInput,
+} from "@/lib/books/commonplace";
+import type { CreateReadingListInput, ReadingList } from "@/lib/books/lists";
+import {
   computeTriageCounts,
   getDuplicateBookIdSet,
   getMissingMetadataReasons,
@@ -35,6 +42,7 @@ import {
 } from "@/lib/books/triage";
 import { CatalogueConstellation } from "./catalogue-constellation";
 import { CatalogueLedger } from "./catalogue-ledger";
+import { CommonplaceView } from "./commonplace-view";
 import { CuratorTriagePanel } from "./curator-triage-panel";
 import {
   BookDetailCard,
@@ -47,17 +55,12 @@ import { TagMatchesOverlay } from "./tag-matches-overlay";
 import { ChronologicalScroll } from "./chronological-scroll";
 import { PhysicalShelfView } from "./physical-shelf-view";
 import { PathfinderModal } from "./pathfinder-modal";
+import { ReadingListsView } from "./reading-lists-view";
 import { ReadingStatsModal } from "./reading-stats-modal";
 import { ReadNextModal } from "./read-next-modal";
 import { ModalDialog, useDialogClose } from "./modal-dialog";
 
 type StatusFilterValue = "" | ReadingStatus | "loaned";
-
-const ALEPH_QUOTES = [
-  "I saw the populous sea, saw dawn and sunset, saw the multitudes of the Americas, saw a silvery cobweb in the center of a black pyramid, saw a splintered labyrinth (it was London), saw close-up endless eyes looking at me as though in a mirror, saw all the mirrors on earth and none of them reflected me...",
-  "I saw the Aleph from all points, I saw in the Aleph the earth and in the earth the Aleph once more and in the Aleph the earth, I saw my own face and my own entrails, saw your face, and I felt dizzy and wept, because my eyes had seen that conjectural and secret object whose name men usurp, but which no man has looked upon: the inconceivable universe.",
-  "The Library of Babel is infinite, periodic, and eternal. In its galleries, shelves, and volumes, all combinations of the orthographic symbols are registered. To consult the Aleph is to peer into the center of this vast library, where every volume is simultaneously present.",
-];
 
 function subscribeReducedMotion(callback: () => void) {
   const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -108,12 +111,16 @@ function TypewriterText({ text, speed = 25 }: { text: string; speed?: number }) 
 }
 
 function AlephModalContent({
+  meditation,
   quoteIndex,
   onNextQuote,
+  onInspectBook,
   onClose,
 }: {
+  meditation: AlephMeditation;
   quoteIndex: number;
   onNextQuote: () => void;
+  onInspectBook?: (bookId: string) => void;
   onClose: () => void;
 }) {
   const closeDialog = useDialogClose() ?? onClose;
@@ -139,14 +146,18 @@ function AlephModalContent({
 
       <div className="aleph-cardstock">
         <span className="card-rubric-tag font-mono aleph-kicker">
-          speculum mundi
+          {meditation.isUserQuote ? "commonplace resonance" : "speculum mundi"}
         </span>
         <h2 id="aleph-title" className="aleph-heading">
           The Aleph of Babel
         </h2>
 
         <div className="aleph-typewriter-box">
-          <TypewriterText key={quoteIndex} text={ALEPH_QUOTES[quoteIndex]} />
+          <TypewriterText
+            key={`${quoteIndex}-${meditation.text.slice(0, 24)}`}
+            text={meditation.text}
+          />
+          <p className="aleph-source font-mono">{meditation.sourceLabel}</p>
         </div>
 
         <div className="aleph-actions">
@@ -157,6 +168,15 @@ function AlephModalContent({
           >
             PEER AGAIN
           </button>
+          {meditation.isUserQuote && meditation.bookId && onInspectBook && (
+            <button
+              type="button"
+              className="aleph-btn aleph-btn--secondary font-mono"
+              onClick={() => onInspectBook(meditation.bookId!)}
+            >
+              INSPECT VOLUME
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -183,7 +203,13 @@ function getSearchText(book: CatalogueBook): string {
     .toLocaleLowerCase("en-US");
 }
 
-const RESULTS_TABS = ["ledger", "shelves", "timeline"] as const;
+const RESULTS_TABS = [
+  "ledger",
+  "shelves",
+  "timeline",
+  "lists",
+  "commonplace",
+] as const;
 type ResultsTab = (typeof RESULTS_TABS)[number];
 
 const TRIAGE_FILTER_CHIP_LABELS: Record<Exclude<TriageFilter, "">, string> = {
@@ -197,12 +223,16 @@ const TRIAGE_FILTER_CHIP_LABELS: Record<Exclude<TriageFilter, "">, string> = {
 export function CatalogueApp({
   initialBooks,
   initialConnections,
+  initialQuotes = [],
+  initialLists = [],
   storageMode,
   initialAuth,
   librarianEnabled = false,
 }: {
   initialBooks: CatalogueBook[];
   initialConnections: EditorialConnection[];
+  initialQuotes?: BookQuote[];
+  initialLists?: ReadingList[];
   storageMode: StorageMode;
   initialAuth: CuratorAuthState;
   librarianEnabled?: boolean;
@@ -221,6 +251,20 @@ export function CatalogueApp({
   if (initialConnections !== prevInitialConnections) {
     setPrevInitialConnections(initialConnections);
     setConnections(initialConnections);
+  }
+
+  const [quotes, setQuotes] = useState<BookQuote[]>(initialQuotes);
+  const [prevInitialQuotes, setPrevInitialQuotes] = useState(initialQuotes);
+  if (initialQuotes !== prevInitialQuotes) {
+    setPrevInitialQuotes(initialQuotes);
+    setQuotes(initialQuotes);
+  }
+
+  const [lists, setLists] = useState<ReadingList[]>(initialLists);
+  const [prevInitialLists, setPrevInitialLists] = useState(initialLists);
+  if (initialLists !== prevInitialLists) {
+    setPrevInitialLists(initialLists);
+    setLists(initialLists);
   }
 
   const [authState, setAuthState] = useState<CuratorAuthState>(initialAuth);
@@ -260,6 +304,8 @@ export function CatalogueApp({
   const ledgerTabRef = useRef<HTMLButtonElement>(null);
   const shelvesTabRef = useRef<HTMLButtonElement>(null);
   const timelineTabRef = useRef<HTMLButtonElement>(null);
+  const listsTabRef = useRef<HTMLButtonElement>(null);
+  const commonplaceTabRef = useRef<HTMLButtonElement>(null);
 
   // Modals / Overlays
   const [activeBookId, setActiveBookId] = useState<string | null>(null);
@@ -329,6 +375,32 @@ export function CatalogueApp({
       })),
     [books],
   );
+
+  const booksById = useMemo(() => {
+    const map = new Map<string, LedgerBook>();
+    for (const book of catalogueEntries) {
+      map.set(book.id, book);
+      map.set(getBookKey(book), book);
+    }
+    return map;
+  }, [catalogueEntries]);
+
+  const alephPool = useMemo(
+    () => buildAlephMeditationPool(quotes, booksById),
+    [booksById, quotes],
+  );
+
+  const queuedBookIds = useMemo<ReadonlySet<string>>(() => {
+    const ids = new Set<string>();
+    for (const list of lists) {
+      if (list.is_queue) {
+        for (const item of list.items) {
+          ids.add(item.book_id);
+        }
+      }
+    }
+    return ids;
+  }, [lists]);
 
   const catalogueByInitial = useMemo(() => {
     const groups = new Map<string, LedgerBook[]>();
@@ -851,6 +923,13 @@ export function CatalogueApp({
           conn.source_book_id !== bookId && conn.target_book_id !== bookId,
       ),
     );
+    setQuotes((prev) => prev.filter((quote) => quote.book_id !== bookId));
+    setLists((prev) =>
+      prev.map((list) => ({
+        ...list,
+        items: list.items.filter((item) => item.book_id !== bookId),
+      })),
+    );
     setActiveBookId((prev) => (prev === bookId ? null : prev));
     setPathfinderSourceId((prev) => (prev === bookId ? null : prev));
     setReadNextSeedBookId((prev) => (prev === bookId ? null : prev));
@@ -941,6 +1020,277 @@ export function CatalogueApp({
     showToast("success", "Editorial connection removed.");
   };
 
+  const handleCreateQuote = async (
+    input: CreateQuoteInput,
+  ): Promise<BookQuote> => {
+    const response = await fetch("/api/quotes", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+
+    const data = (await response.json().catch(() => ({}))) as {
+      quote?: BookQuote;
+      error?: string;
+    };
+
+    if (response.status === 401) {
+      const msg =
+        data.error ||
+        "Curator sign-in required to save passages to the Commonplace Book.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
+    if (!response.ok || !data.quote) {
+      const msg = data.error || "Could not save passage.";
+      showToast("error", msg);
+      throw new Error(msg);
+    }
+
+    const savedQuote = data.quote;
+    setQuotes((prev) => [savedQuote, ...prev]);
+    showToast("success", "Saved passage to Commonplace Book.");
+    return savedQuote;
+  };
+
+  const handleDeleteQuote = async (quoteId: string) => {
+    const response = await fetch(
+      `/api/quotes/${encodeURIComponent(quoteId)}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    const data = (await response.json().catch(() => ({}))) as {
+      deleted?: boolean;
+      id?: string;
+      error?: string;
+    };
+
+    if (response.status === 401) {
+      const msg = data.error || "Curator sign-in required to delete passages.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
+    if (!response.ok || !data.deleted) {
+      const msg = data.error || "Could not delete passage.";
+      showToast("error", msg);
+      throw new Error(msg);
+    }
+
+    setQuotes((prev) => prev.filter((quote) => quote.id !== quoteId));
+    showToast("success", "Removed passage from Commonplace Book.");
+  };
+
+  const handleCreateList = async (
+    input: CreateReadingListInput,
+  ): Promise<ReadingList> => {
+    const response = await fetch("/api/lists", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(input),
+    });
+
+    const data = (await response.json().catch(() => ({}))) as {
+      list?: ReadingList;
+      error?: string;
+    };
+
+    if (response.status === 401) {
+      const msg =
+        data.error || "Curator sign-in required to create reading lists.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
+    if (!response.ok || !data.list) {
+      const msg = data.error || "Could not create reading list.";
+      showToast("error", msg);
+      throw new Error(msg);
+    }
+
+    const createdList = data.list;
+    setLists((prev) => [...prev, createdList]);
+    showToast("success", `Created reading list "${createdList.name}".`);
+    return createdList;
+  };
+
+  const handleDeleteList = async (listId: string) => {
+    const response = await fetch(`/api/lists/${encodeURIComponent(listId)}`, {
+      method: "DELETE",
+    });
+
+    const data = (await response.json().catch(() => ({}))) as {
+      deleted?: boolean;
+      id?: string;
+      error?: string;
+    };
+
+    if (response.status === 401) {
+      const msg =
+        data.error || "Curator sign-in required to delete reading lists.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
+    if (!response.ok || !data.deleted) {
+      const msg = data.error || "Could not delete reading list.";
+      showToast("error", msg);
+      throw new Error(msg);
+    }
+
+    setLists((prev) => prev.filter((list) => list.id !== listId));
+    showToast("success", "Reading list deleted.");
+  };
+
+  const handleAddBookToList = async (
+    listId: string,
+    bookId: string,
+  ): Promise<ReadingList> => {
+    const response = await fetch(
+      `/api/lists/${encodeURIComponent(listId)}/items`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ book_id: bookId }),
+      },
+    );
+
+    const data = (await response.json().catch(() => ({}))) as {
+      list?: ReadingList;
+      error?: string;
+    };
+
+    if (response.status === 401) {
+      const msg =
+        data.error || "Curator sign-in required to update reading lists.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
+    if (!response.ok || !data.list) {
+      const msg = data.error || "Could not add volume to reading list.";
+      showToast("error", msg);
+      throw new Error(msg);
+    }
+
+    const updatedList = data.list;
+    setLists((prev) =>
+      prev.map((candidate) =>
+        candidate.id === updatedList.id ? updatedList : candidate,
+      ),
+    );
+    const addedBook = booksById.get(bookId);
+    showToast(
+      "success",
+      addedBook
+        ? `Added "${addedBook.title}" to ${updatedList.name}.`
+        : `Added volume to ${updatedList.name}.`,
+    );
+    return updatedList;
+  };
+
+  const handleReorderList = async (
+    listId: string,
+    bookIds: string[],
+  ): Promise<ReadingList> => {
+    const response = await fetch(
+      `/api/lists/${encodeURIComponent(listId)}/items`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ book_ids: bookIds }),
+      },
+    );
+
+    const data = (await response.json().catch(() => ({}))) as {
+      list?: ReadingList;
+      error?: string;
+    };
+
+    if (response.status === 401) {
+      const msg =
+        data.error || "Curator sign-in required to reorder reading lists.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
+    if (!response.ok || !data.list) {
+      const msg = data.error || "Could not reorder reading list.";
+      showToast("error", msg);
+      throw new Error(msg);
+    }
+
+    const updatedList = data.list;
+    setLists((prev) =>
+      prev.map((candidate) =>
+        candidate.id === updatedList.id ? updatedList : candidate,
+      ),
+    );
+    return updatedList;
+  };
+
+  const handleRemoveBookFromList = async (
+    listId: string,
+    bookId: string,
+  ): Promise<ReadingList> => {
+    const response = await fetch(
+      `/api/lists/${encodeURIComponent(listId)}/items?book_id=${encodeURIComponent(bookId)}`,
+      {
+        method: "DELETE",
+      },
+    );
+
+    const data = (await response.json().catch(() => ({}))) as {
+      list?: ReadingList;
+      deleted?: boolean;
+      error?: string;
+    };
+
+    if (response.status === 401) {
+      const msg =
+        data.error ||
+        "Curator sign-in required to remove volumes from reading lists.";
+      handleUnauthorized(msg);
+      throw new Error(msg);
+    }
+
+    if (!response.ok || !data.list) {
+      const msg = data.error || "Could not remove volume from reading list.";
+      showToast("error", msg);
+      throw new Error(msg);
+    }
+
+    const updatedList = data.list;
+    setLists((prev) =>
+      prev.map((candidate) =>
+        candidate.id === updatedList.id ? updatedList : candidate,
+      ),
+    );
+    showToast("success", `Removed volume from ${updatedList.name}.`);
+    return updatedList;
+  };
+
+  const handleQueueUpNext = async (book: CatalogueBook): Promise<void> => {
+    let queueList = lists.find((list) => list.is_queue);
+    if (!queueList) {
+      queueList = await handleCreateList({
+        name: "Up Next",
+        description: "Ranked volumes queued to read next.",
+        is_queue: true,
+      });
+    }
+
+    if (queueList.items.some((item) => item.book_id === book.id)) {
+      showToast("success", `Already in ${queueList.name}.`);
+      return;
+    }
+
+    await handleAddBookToList(queueList.id, book.id);
+  };
+
   const handleMapTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>) => {
     let nextMode: "similarity" | "tag" | null = null;
     if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
@@ -967,7 +1317,11 @@ export function CatalogueApp({
         ? ledgerTabRef.current
         : nextView === "shelves"
           ? shelvesTabRef.current
-          : timelineTabRef.current;
+          : nextView === "timeline"
+            ? timelineTabRef.current
+            : nextView === "lists"
+              ? listsTabRef.current
+              : commonplaceTabRef.current;
     if (moveFocus) {
       targetRef?.focus();
     }
@@ -1058,6 +1412,32 @@ export function CatalogueApp({
           >
             DECADAL TIMELINE
           </button>
+          <button
+            ref={listsTabRef}
+            id="results-tab-lists"
+            type="button"
+            role="tab"
+            aria-selected={bottomView === "lists"}
+            tabIndex={bottomView === "lists" ? 0 : -1}
+            className="view-tab font-mono"
+            onClick={() => selectResultsTab("lists")}
+            onKeyDown={handleResultsTabKeyDown}
+          >
+            READING LISTS
+          </button>
+          <button
+            ref={commonplaceTabRef}
+            id="results-tab-commonplace"
+            type="button"
+            role="tab"
+            aria-selected={bottomView === "commonplace"}
+            tabIndex={bottomView === "commonplace" ? 0 : -1}
+            className="view-tab font-mono"
+            onClick={() => selectResultsTab("commonplace")}
+            onKeyDown={handleResultsTabKeyDown}
+          >
+            COMMONPLACE
+          </button>
         </div>
       </div>
 
@@ -1119,6 +1499,51 @@ export function CatalogueApp({
           <ChronologicalScroll
             books={filteredCatalogueEntries}
             onBookClick={(book) => setActiveBookId(getBookKey(book))}
+          />
+        )}
+      </div>
+
+      <div
+        role="tabpanel"
+        id="results-panel-lists"
+        aria-labelledby="results-tab-lists"
+        hidden={bottomView !== "lists"}
+      >
+        {bottomView === "lists" && (
+          <ReadingListsView
+            lists={lists}
+            books={catalogueEntries}
+            canEdit={canEdit}
+            onRequireAuth={(reason) => requireCuratorAuth(reason)}
+            onInspectBook={(book) => setActiveBookId(getBookKey(book))}
+            onStartReading={async (book) => {
+              await handleUpdateBook(book.id, { reading_status: "reading" });
+              showToast("success", `Marked "${book.title}" as Reading.`);
+            }}
+            onCreateList={handleCreateList}
+            onDeleteList={handleDeleteList}
+            onAddBookToList={handleAddBookToList}
+            onReorderList={handleReorderList}
+            onRemoveBookFromList={handleRemoveBookFromList}
+          />
+        )}
+      </div>
+
+      <div
+        role="tabpanel"
+        id="results-panel-commonplace"
+        aria-labelledby="results-tab-commonplace"
+        hidden={bottomView !== "commonplace"}
+      >
+        {bottomView === "commonplace" && (
+          <CommonplaceView
+            quotes={quotes}
+            books={catalogueEntries}
+            canEdit={canEdit}
+            onRequireAuth={(reason) => requireCuratorAuth(reason)}
+            onInspectBook={(book) => setActiveBookId(getBookKey(book))}
+            onCreateQuote={handleCreateQuote}
+            onDeleteQuote={handleDeleteQuote}
           />
         )}
       </div>
@@ -1275,7 +1700,11 @@ export function CatalogueApp({
             type="button"
             className="toolbar-btn btn-aleph font-mono"
             onClick={() => {
-              setQuoteIndex(Math.floor(Math.random() * ALEPH_QUOTES.length));
+              setQuoteIndex(
+                alephPool.length > 0
+                  ? Math.floor(Math.random() * alephPool.length)
+                  : 0,
+              );
               setIsAlephOpen(true);
             }}
           >
@@ -1622,6 +2051,8 @@ export function CatalogueApp({
             await handleUpdateBook(book.id, { reading_status: "reading" });
             showToast("success", `Marked "${book.title}" as Reading.`);
           }}
+          onQueueUpNext={handleQueueUpNext}
+          queuedBookIds={queuedBookIds}
         />
       )}
 
@@ -1640,6 +2071,13 @@ export function CatalogueApp({
           connections={connections}
           onCreateConnection={handleCreateConnection}
           onDeleteConnection={handleDeleteConnection}
+          quotes={quotes}
+          lists={lists}
+          onCreateQuote={handleCreateQuote}
+          onDeleteQuote={handleDeleteQuote}
+          onAddBookToList={handleAddBookToList}
+          onRemoveBookFromList={handleRemoveBookFromList}
+          onQueueUpNext={handleQueueUpNext}
           onBookClick={(book) => setActiveBookId(getBookKey(book))}
           onClose={() => setActiveBookId(null)}
           onStartPath={() => {
@@ -1700,7 +2138,7 @@ export function CatalogueApp({
         />
       )}
 
-      {isAlephOpen && (
+      {isAlephOpen && alephPool.length > 0 && (
         <ModalDialog
           open
           onClose={() => setIsAlephOpen(false)}
@@ -1708,10 +2146,18 @@ export function CatalogueApp({
           className="catalogue-dialog--aleph"
         >
           <AlephModalContent
+            meditation={alephPool[quoteIndex % alephPool.length]}
             quoteIndex={quoteIndex}
             onNextQuote={() =>
-              setQuoteIndex((prev) => (prev + 1) % ALEPH_QUOTES.length)
+              setQuoteIndex((prev) => (prev + 1) % alephPool.length)
             }
+            onInspectBook={(bookId) => {
+              const target = booksById.get(bookId);
+              setIsAlephOpen(false);
+              if (target) {
+                setActiveBookId(getBookKey(target));
+              }
+            }}
             onClose={() => setIsAlephOpen(false)}
           />
         </ModalDialog>

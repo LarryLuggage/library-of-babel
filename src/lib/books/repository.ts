@@ -9,11 +9,25 @@ import {
   type StorageMode,
 } from "@/lib/books/catalogue";
 import {
+  type BookQuote,
+  type CreateQuoteInput,
+  type UpdateQuoteInput,
+} from "@/lib/books/commonplace";
+import {
   type CreateConnectionInput,
   type EditorialConnection,
   isConnectionType,
   normalizeConnectionPairKey,
 } from "@/lib/books/connections";
+import {
+  type AddListItemInput,
+  type CreateReadingListInput,
+  type ReadingList,
+  type ReadingListItem,
+  slugifyListName,
+  sortReadingLists,
+  type UpdateReadingListInput,
+} from "@/lib/books/lists";
 import {
   type BulkBookPatch,
   computeBulkUpdatePatch,
@@ -29,13 +43,21 @@ type BookRow = Database["public"]["Tables"]["books"]["Row"];
 type BookInsert = Database["public"]["Tables"]["books"]["Insert"];
 type BookUpdate = Database["public"]["Tables"]["books"]["Update"];
 type BookConnectionRow = Database["public"]["Tables"]["book_connections"]["Row"];
+type BookQuoteRow = Database["public"]["Tables"]["book_quotes"]["Row"];
+type BookQuoteUpdate = Database["public"]["Tables"]["book_quotes"]["Update"];
+type ReadingListRow = Database["public"]["Tables"]["reading_lists"]["Row"];
+type ReadingListUpdate = Database["public"]["Tables"]["reading_lists"]["Update"];
+type ReadingListItemRow =
+  Database["public"]["Tables"]["reading_list_items"]["Row"];
 
 type LocalTrackerState = {
-  version: 1 | 2;
+  version: 1 | 2 | 3;
   overrides: Record<string, Partial<CatalogueBook>>;
   created: CatalogueBook[];
   deleted: string[];
   connections: EditorialConnection[];
+  quotes: BookQuote[];
+  lists: ReadingList[];
 };
 
 export class DuplicateConnectionError extends Error {
@@ -53,6 +75,31 @@ export class MissingBookReferenceError extends Error {
   ) {
     super(message);
     this.name = "MissingBookReferenceError";
+  }
+}
+
+export class DuplicateListError extends Error {
+  constructor(
+    message = "A reading list with this name already exists.",
+  ) {
+    super(message);
+    this.name = "DuplicateListError";
+  }
+}
+
+export class DuplicateListItemError extends Error {
+  constructor(
+    message = "This volume is already on the reading list.",
+  ) {
+    super(message);
+    this.name = "DuplicateListItemError";
+  }
+}
+
+export class MissingListError extends Error {
+  constructor(message = "Reading list not found.") {
+    super(message);
+    this.name = "MissingListError";
   }
 }
 
@@ -115,11 +162,13 @@ async function loadBaseCatalogue(): Promise<CatalogueBook[]> {
 
 function emptyLocalState(): LocalTrackerState {
   return {
-    version: 2,
+    version: 3,
     overrides: {},
     created: [],
     deleted: [],
     connections: [],
+    quotes: [],
+    lists: [],
   };
 }
 
@@ -170,6 +219,165 @@ function normalizeLocalConnection(raw: unknown): EditorialConnection | null {
   };
 }
 
+function normalizeLocalQuote(raw: unknown): BookQuote | null {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const id = typeof record.id === "string" ? record.id.trim() : "";
+  const bookId = typeof record.book_id === "string" ? record.book_id.trim() : "";
+  const quoteText =
+    typeof record.quote_text === "string" ? record.quote_text.trim() : "";
+
+  if (!id || !bookId || !quoteText) {
+    return null;
+  }
+
+  const tags = Array.isArray(record.tags)
+    ? [
+        ...new Set(
+          record.tags
+            .filter((item): item is string => typeof item === "string")
+            .map((item) =>
+              item.trim().replace(/\s+/g, " ").toLocaleLowerCase("en-US"),
+            )
+            .filter(Boolean),
+        ),
+      ]
+    : [];
+
+  const createdAt =
+    typeof record.created_at === "string" && record.created_at.trim()
+      ? record.created_at.trim()
+      : new Date(0).toISOString();
+  const updatedAt =
+    typeof record.updated_at === "string" && record.updated_at.trim()
+      ? record.updated_at.trim()
+      : createdAt;
+
+  return {
+    id,
+    book_id: bookId,
+    quote_text: quoteText,
+    page_number:
+      typeof record.page_number === "string" && record.page_number.trim()
+        ? record.page_number.trim()
+        : null,
+    chapter:
+      typeof record.chapter === "string" && record.chapter.trim()
+        ? record.chapter.trim()
+        : null,
+    note:
+      typeof record.note === "string" && record.note.trim()
+        ? record.note.trim()
+        : null,
+    tags,
+    created_at: createdAt,
+    updated_at: updatedAt,
+  };
+}
+
+function normalizeLocalListItem(
+  raw: unknown,
+  listId: string,
+  fallbackPosition: number,
+): ReadingListItem | null {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const id = typeof record.id === "string" ? record.id.trim() : "";
+  const bookId = typeof record.book_id === "string" ? record.book_id.trim() : "";
+  if (!id || !bookId) {
+    return null;
+  }
+
+  const position =
+    typeof record.position === "number" &&
+    Number.isInteger(record.position) &&
+    record.position >= 0
+      ? record.position
+      : fallbackPosition;
+
+  return {
+    id,
+    list_id: listId,
+    book_id: bookId,
+    position,
+    note:
+      typeof record.note === "string" && record.note.trim()
+        ? record.note.trim()
+        : null,
+    added_at:
+      typeof record.added_at === "string" && record.added_at.trim()
+        ? record.added_at.trim()
+        : new Date(0).toISOString(),
+  };
+}
+
+function normalizeLocalReadingList(raw: unknown): ReadingList | null {
+  if (typeof raw !== "object" || raw === null || Array.isArray(raw)) {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+  const id = typeof record.id === "string" ? record.id.trim() : "";
+  const name = typeof record.name === "string" ? record.name.trim() : "";
+  if (!id || !name) {
+    return null;
+  }
+
+  const slug =
+    typeof record.slug === "string" && record.slug.trim()
+      ? record.slug.trim()
+      : slugifyListName(name);
+
+  const createdAt =
+    typeof record.created_at === "string" && record.created_at.trim()
+      ? record.created_at.trim()
+      : new Date(0).toISOString();
+  const updatedAt =
+    typeof record.updated_at === "string" && record.updated_at.trim()
+      ? record.updated_at.trim()
+      : createdAt;
+
+  const rawItems = Array.isArray(record.items) ? record.items : [];
+  const seenBooks = new Set<string>();
+  const items: ReadingListItem[] = [];
+
+  for (let i = 0; i < rawItems.length; i += 1) {
+    const normalized = normalizeLocalListItem(rawItems[i], id, i);
+    if (!normalized || seenBooks.has(normalized.book_id)) {
+      continue;
+    }
+    seenBooks.add(normalized.book_id);
+    items.push(normalized);
+  }
+
+  items.sort((a, b) => {
+    if (a.position !== b.position) {
+      return a.position - b.position;
+    }
+    return a.added_at.localeCompare(b.added_at);
+  });
+
+  return {
+    id,
+    slug,
+    name,
+    description:
+      typeof record.description === "string" && record.description.trim()
+        ? record.description.trim()
+        : null,
+    is_queue: record.is_queue === true,
+    created_at: createdAt,
+    updated_at: updatedAt,
+    items,
+  };
+}
+
 async function loadLocalState(statePath: string): Promise<LocalTrackerState> {
   try {
     const rawJson = await readFile(statePath, "utf8");
@@ -181,8 +389,23 @@ async function loadLocalState(statePath: string): Promise<LocalTrackerState> {
           .filter((item): item is EditorialConnection => item !== null)
       : [];
 
+    const quotes = Array.isArray(parsed.quotes)
+      ? parsed.quotes
+          .map(normalizeLocalQuote)
+          .filter((item): item is BookQuote => item !== null)
+      : [];
+
+    const lists = Array.isArray(parsed.lists)
+      ? parsed.lists
+          .map(normalizeLocalReadingList)
+          .filter((item): item is ReadingList => item !== null)
+      : [];
+
+    const version =
+      parsed.version === 1 ? 1 : parsed.version === 2 ? 2 : 3;
+
     return {
-      version: parsed.version === 1 ? 1 : 2,
+      version,
       overrides:
         parsed.overrides &&
         typeof parsed.overrides === "object" &&
@@ -194,6 +417,8 @@ async function loadLocalState(statePath: string): Promise<LocalTrackerState> {
         ? parsed.deleted.filter((item): item is string => typeof item === "string")
         : [],
       connections,
+      quotes,
+      lists,
     };
   } catch (error) {
     if (
@@ -217,7 +442,7 @@ async function saveLocalState(
 
   const persistedState: LocalTrackerState = {
     ...state,
-    version: 2,
+    version: 3,
   };
 
   const tmpPath = path.join(
@@ -782,6 +1007,32 @@ export async function bulkUpdateBooks(
   });
 }
 
+function cascadeDeleteBookFromLocalState(
+  state: LocalTrackerState,
+  bookId: string,
+): void {
+  state.connections = state.connections.filter(
+    (conn) => conn.source_book_id !== bookId && conn.target_book_id !== bookId,
+  );
+  state.quotes = state.quotes.filter((quote) => quote.book_id !== bookId);
+
+  const now = new Date().toISOString();
+  state.lists = state.lists.map((list) => {
+    const remaining = list.items.filter((item) => item.book_id !== bookId);
+    if (remaining.length === list.items.length) {
+      return list;
+    }
+    return {
+      ...list,
+      updated_at: now,
+      items: remaining.map((item, index) => ({
+        ...item,
+        position: index,
+      })),
+    };
+  });
+}
+
 export async function deleteBook(id: string): Promise<boolean> {
   if (isSupabaseConfigured()) {
     const supabase = createSupabaseAdminClient();
@@ -810,9 +1061,7 @@ export async function deleteBook(id: string): Promise<boolean> {
     state.created = state.created.filter((book) => book.id !== id);
 
     if (state.created.length !== createdLengthBefore) {
-      state.connections = state.connections.filter(
-        (conn) => conn.source_book_id !== id && conn.target_book_id !== id,
-      );
+      cascadeDeleteBookFromLocalState(state, id);
       await saveLocalState(statePath, state);
       return true;
     }
@@ -830,9 +1079,7 @@ export async function deleteBook(id: string): Promise<boolean> {
 
     state.deleted.push(id);
     delete state.overrides[id];
-    state.connections = state.connections.filter(
-      (conn) => conn.source_book_id !== id && conn.target_book_id !== id,
-    );
+    cascadeDeleteBookFromLocalState(state, id);
     await saveLocalState(statePath, state);
     return true;
   });
@@ -1070,5 +1317,987 @@ export async function deleteConnection(id: string): Promise<boolean> {
 
     await saveLocalState(statePath, state);
     return true;
+  });
+}
+
+async function resolveSupabaseBookKeysByUuid(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  uuids: readonly string[],
+): Promise<Map<string, string>> {
+  const uniqueUuids = [...new Set(uuids)];
+  const uuidToBookId = new Map<string, string>();
+  const ID_BATCH_SIZE = 500;
+
+  for (let i = 0; i < uniqueUuids.length; i += ID_BATCH_SIZE) {
+    const batch = uniqueUuids.slice(i, i + ID_BATCH_SIZE);
+    const { data: bookRows, error } = await supabase
+      .from("books")
+      .select("id, book_key")
+      .in("id", batch);
+
+    if (error) {
+      throw error;
+    }
+
+    for (const bookRow of bookRows ?? []) {
+      uuidToBookId.set(bookRow.id, bookRow.book_key ?? bookRow.id);
+    }
+  }
+
+  return uuidToBookId;
+}
+
+async function loadActiveLocalBookIds(
+  state: LocalTrackerState,
+): Promise<Set<string>> {
+  const baseBooks = await loadBaseCatalogue();
+  const deletedSet = new Set(state.deleted);
+  const activeBookIds = new Set<string>();
+
+  for (const book of baseBooks) {
+    if (!deletedSet.has(book.id)) {
+      activeBookIds.add(book.id);
+    }
+  }
+  for (const book of state.created) {
+    if (!deletedSet.has(book.id)) {
+      activeBookIds.add(book.id);
+    }
+  }
+
+  return activeBookIds;
+}
+
+function mapSupabaseRowToQuote(
+  row: BookQuoteRow,
+  uuidToBookId: ReadonlyMap<string, string>,
+): BookQuote {
+  return {
+    id: row.id,
+    book_id: uuidToBookId.get(row.book_id) ?? row.book_id,
+    quote_text: row.quote_text,
+    page_number: row.page_number,
+    chapter: row.chapter,
+    note: row.note,
+    tags: Array.isArray(row.tags) ? row.tags : [],
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+  };
+}
+
+export async function listQuotes(): Promise<BookQuote[]> {
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseAdminClient();
+    const rows: BookQuoteRow[] = [];
+    let offset = 0;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("book_quotes")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
+        .range(offset, offset + SUPABASE_PAGE_SIZE - 1);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        break;
+      }
+
+      rows.push(...data);
+
+      if (data.length < SUPABASE_PAGE_SIZE) {
+        break;
+      }
+
+      offset += SUPABASE_PAGE_SIZE;
+    }
+
+    if (rows.length === 0) {
+      return [];
+    }
+
+    const uuidToBookId = await resolveSupabaseBookKeysByUuid(
+      supabase,
+      rows.map((row) => row.book_id),
+    );
+
+    return rows.map((row) => mapSupabaseRowToQuote(row, uuidToBookId));
+  }
+
+  const statePath = getStateFilePath();
+  const state = await loadLocalState(statePath);
+  const deletedSet = new Set(state.deleted);
+
+  return state.quotes
+    .filter((quote) => !deletedSet.has(quote.book_id))
+    .sort((a, b) => b.created_at.localeCompare(a.created_at));
+}
+
+export async function createQuote(input: CreateQuoteInput): Promise<BookQuote> {
+  const now = new Date().toISOString();
+
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseAdminClient();
+    const bookRow = await findSupabaseRowByKeyOrId(supabase, input.book_id);
+
+    if (!bookRow) {
+      throw new MissingBookReferenceError("Referenced volume was not found.");
+    }
+
+    const { data, error } = await supabase
+      .from("book_quotes")
+      .insert({
+        book_id: bookRow.id,
+        quote_text: input.quote_text,
+        page_number: input.page_number ?? null,
+        chapter: input.chapter ?? null,
+        note: input.note ?? null,
+        tags: input.tags ?? [],
+        updated_at: now,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      throw error;
+    }
+
+    const uuidToBookId = new Map<string, string>([
+      [bookRow.id, bookRow.book_key ?? bookRow.id],
+    ]);
+    return mapSupabaseRowToQuote(data, uuidToBookId);
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    const activeBookIds = await loadActiveLocalBookIds(state);
+
+    if (!activeBookIds.has(input.book_id)) {
+      throw new MissingBookReferenceError("Referenced volume was not found.");
+    }
+
+    const quote: BookQuote = {
+      id: `qt_${randomUUID()}`,
+      book_id: input.book_id,
+      quote_text: input.quote_text,
+      page_number: input.page_number ?? null,
+      chapter: input.chapter ?? null,
+      note: input.note ?? null,
+      tags: input.tags ?? [],
+      created_at: now,
+      updated_at: now,
+    };
+
+    state.quotes.push(quote);
+    await saveLocalState(statePath, state);
+    return quote;
+  });
+}
+
+export async function updateQuote(
+  id: string,
+  patch: UpdateQuoteInput,
+): Promise<BookQuote | null> {
+  const now = new Date().toISOString();
+
+  if (isSupabaseConfigured()) {
+    if (!UUID_PATTERN.test(id)) {
+      return null;
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const updatePayload: BookQuoteUpdate = {
+      updated_at: now,
+    };
+
+    if (patch.quote_text !== undefined) {
+      updatePayload.quote_text = patch.quote_text;
+    }
+    if (patch.page_number !== undefined) {
+      updatePayload.page_number = patch.page_number;
+    }
+    if (patch.chapter !== undefined) {
+      updatePayload.chapter = patch.chapter;
+    }
+    if (patch.note !== undefined) {
+      updatePayload.note = patch.note;
+    }
+    if (patch.tags !== undefined) {
+      updatePayload.tags = patch.tags;
+    }
+
+    const { data, error } = await supabase
+      .from("book_quotes")
+      .update(updatePayload)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      throw error;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    const uuidToBookId = await resolveSupabaseBookKeysByUuid(supabase, [
+      data.book_id,
+    ]);
+    return mapSupabaseRowToQuote(data, uuidToBookId);
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    const index = state.quotes.findIndex((quote) => quote.id === id);
+
+    if (index === -1 || state.deleted.includes(state.quotes[index].book_id)) {
+      return null;
+    }
+
+    const existing = state.quotes[index];
+    const updated: BookQuote = {
+      ...existing,
+      ...(patch.quote_text !== undefined
+        ? { quote_text: patch.quote_text }
+        : {}),
+      ...(patch.page_number !== undefined
+        ? { page_number: patch.page_number }
+        : {}),
+      ...(patch.chapter !== undefined ? { chapter: patch.chapter } : {}),
+      ...(patch.note !== undefined ? { note: patch.note } : {}),
+      ...(patch.tags !== undefined ? { tags: patch.tags } : {}),
+      updated_at: now,
+    };
+
+    state.quotes[index] = updated;
+    await saveLocalState(statePath, state);
+    return updated;
+  });
+}
+
+export async function deleteQuote(id: string): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    if (!UUID_PATTERN.test(id)) {
+      return false;
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("book_quotes")
+      .delete()
+      .eq("id", id)
+      .select("id");
+
+    if (error) {
+      throw error;
+    }
+
+    return (data?.length ?? 0) > 0;
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    const countBefore = state.quotes.length;
+    state.quotes = state.quotes.filter((quote) => quote.id !== id);
+
+    if (state.quotes.length === countBefore) {
+      return false;
+    }
+
+    await saveLocalState(statePath, state);
+    return true;
+  });
+}
+
+function mapSupabaseRowToListItem(
+  row: ReadingListItemRow,
+  uuidToBookId: ReadonlyMap<string, string>,
+): ReadingListItem {
+  return {
+    id: row.id,
+    list_id: row.list_id,
+    book_id: uuidToBookId.get(row.book_id) ?? row.book_id,
+    position: row.position,
+    note: row.note,
+    added_at: row.added_at,
+  };
+}
+
+function mapSupabaseRowToReadingList(
+  row: ReadingListRow,
+  items: ReadingListItem[],
+): ReadingList {
+  return {
+    id: row.id,
+    slug: row.slug,
+    name: row.name,
+    description: row.description,
+    is_queue: row.is_queue,
+    created_at: row.created_at,
+    updated_at: row.updated_at,
+    items,
+  };
+}
+
+async function loadSupabaseReadingListById(
+  supabase: ReturnType<typeof createSupabaseAdminClient>,
+  listId: string,
+): Promise<ReadingList | null> {
+  const { data: listRow, error: listError } = await supabase
+    .from("reading_lists")
+    .select("*")
+    .eq("id", listId)
+    .maybeSingle();
+
+  if (listError) {
+    throw listError;
+  }
+
+  if (!listRow) {
+    return null;
+  }
+
+  const { data: itemRows, error: itemError } = await supabase
+    .from("reading_list_items")
+    .select("*")
+    .eq("list_id", listId)
+    .order("position", { ascending: true })
+    .order("added_at", { ascending: true })
+    .order("id", { ascending: true });
+
+  if (itemError) {
+    throw itemError;
+  }
+
+  const rows = itemRows ?? [];
+  const uuidToBookId =
+    rows.length > 0
+      ? await resolveSupabaseBookKeysByUuid(
+          supabase,
+          rows.map((r) => r.book_id),
+        )
+      : new Map<string, string>();
+
+  const items = rows.map((row) => mapSupabaseRowToListItem(row, uuidToBookId));
+  return mapSupabaseRowToReadingList(listRow, items);
+}
+
+export async function listReadingLists(): Promise<ReadingList[]> {
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseAdminClient();
+    const listRows: ReadingListRow[] = [];
+    let listOffset = 0;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("reading_lists")
+        .select("*")
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(listOffset, listOffset + SUPABASE_PAGE_SIZE - 1);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        break;
+      }
+
+      listRows.push(...data);
+
+      if (data.length < SUPABASE_PAGE_SIZE) {
+        break;
+      }
+
+      listOffset += SUPABASE_PAGE_SIZE;
+    }
+
+    if (listRows.length === 0) {
+      return [];
+    }
+
+    const itemRows: ReadingListItemRow[] = [];
+    let itemOffset = 0;
+
+    while (true) {
+      const { data, error } = await supabase
+        .from("reading_list_items")
+        .select("*")
+        .order("position", { ascending: true })
+        .order("added_at", { ascending: true })
+        .order("id", { ascending: true })
+        .range(itemOffset, itemOffset + SUPABASE_PAGE_SIZE - 1);
+
+      if (error) {
+        throw error;
+      }
+
+      if (!data || data.length === 0) {
+        break;
+      }
+
+      itemRows.push(...data);
+
+      if (data.length < SUPABASE_PAGE_SIZE) {
+        break;
+      }
+
+      itemOffset += SUPABASE_PAGE_SIZE;
+    }
+
+    const uuidToBookId =
+      itemRows.length > 0
+        ? await resolveSupabaseBookKeysByUuid(
+            supabase,
+            itemRows.map((row) => row.book_id),
+          )
+        : new Map<string, string>();
+
+    const itemsByListId = new Map<string, ReadingListItem[]>();
+    for (const row of itemRows) {
+      const listItems = itemsByListId.get(row.list_id) ?? [];
+      listItems.push(mapSupabaseRowToListItem(row, uuidToBookId));
+      itemsByListId.set(row.list_id, listItems);
+    }
+
+    const assembled = listRows.map((row) =>
+      mapSupabaseRowToReadingList(row, itemsByListId.get(row.id) ?? []),
+    );
+    return sortReadingLists(assembled);
+  }
+
+  const statePath = getStateFilePath();
+  const state = await loadLocalState(statePath);
+  const deletedSet = new Set(state.deleted);
+
+  const sanitized = state.lists.map((list) => ({
+    ...list,
+    items: list.items
+      .filter((item) => !deletedSet.has(item.book_id))
+      .sort((a, b) => {
+        if (a.position !== b.position) {
+          return a.position - b.position;
+        }
+        return a.added_at.localeCompare(b.added_at);
+      }),
+  }));
+
+  return sortReadingLists(sanitized);
+}
+
+export async function createReadingList(
+  input: CreateReadingListInput,
+): Promise<ReadingList> {
+  const now = new Date().toISOString();
+  const slug = slugifyListName(input.name);
+
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("reading_lists")
+      .insert({
+        slug,
+        name: input.name,
+        description: input.description ?? null,
+        is_queue: input.is_queue ?? false,
+        updated_at: now,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      if (isUniqueViolationError(error)) {
+        throw new DuplicateListError();
+      }
+      throw error;
+    }
+
+    return mapSupabaseRowToReadingList(data, []);
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    if (state.lists.some((list) => list.slug === slug)) {
+      throw new DuplicateListError();
+    }
+
+    const list: ReadingList = {
+      id: `lst_${randomUUID()}`,
+      slug,
+      name: input.name,
+      description: input.description ?? null,
+      is_queue: input.is_queue ?? false,
+      created_at: now,
+      updated_at: now,
+      items: [],
+    };
+
+    state.lists.push(list);
+    await saveLocalState(statePath, state);
+    return list;
+  });
+}
+
+export async function updateReadingList(
+  id: string,
+  patch: UpdateReadingListInput,
+): Promise<ReadingList | null> {
+  const now = new Date().toISOString();
+
+  if (isSupabaseConfigured()) {
+    if (!UUID_PATTERN.test(id)) {
+      return null;
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const updatePayload: ReadingListUpdate = {
+      updated_at: now,
+    };
+
+    if (patch.name !== undefined) {
+      updatePayload.name = patch.name;
+      updatePayload.slug = slugifyListName(patch.name);
+    }
+    if (patch.description !== undefined) {
+      updatePayload.description = patch.description;
+    }
+    if (patch.is_queue !== undefined) {
+      updatePayload.is_queue = patch.is_queue;
+    }
+
+    const { data, error } = await supabase
+      .from("reading_lists")
+      .update(updatePayload)
+      .eq("id", id)
+      .select("*")
+      .maybeSingle();
+
+    if (error) {
+      if (isUniqueViolationError(error)) {
+        throw new DuplicateListError();
+      }
+      throw error;
+    }
+
+    if (!data) {
+      return null;
+    }
+
+    return loadSupabaseReadingListById(supabase, data.id);
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    const index = state.lists.findIndex((list) => list.id === id);
+
+    if (index === -1) {
+      return null;
+    }
+
+    const existing = state.lists[index];
+    const nextName = patch.name !== undefined ? patch.name : existing.name;
+    const nextSlug =
+      patch.name !== undefined ? slugifyListName(patch.name) : existing.slug;
+
+    if (
+      state.lists.some((list) => list.id !== id && list.slug === nextSlug)
+    ) {
+      throw new DuplicateListError();
+    }
+
+    const updated: ReadingList = {
+      ...existing,
+      name: nextName,
+      slug: nextSlug,
+      ...(patch.description !== undefined
+        ? { description: patch.description }
+        : {}),
+      ...(patch.is_queue !== undefined ? { is_queue: patch.is_queue } : {}),
+      updated_at: now,
+    };
+
+    state.lists[index] = updated;
+    await saveLocalState(statePath, state);
+    return updated;
+  });
+}
+
+export async function deleteReadingList(id: string): Promise<boolean> {
+  if (isSupabaseConfigured()) {
+    if (!UUID_PATTERN.test(id)) {
+      return false;
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const { data, error } = await supabase
+      .from("reading_lists")
+      .delete()
+      .eq("id", id)
+      .select("id");
+
+    if (error) {
+      throw error;
+    }
+
+    return (data?.length ?? 0) > 0;
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    const countBefore = state.lists.length;
+    state.lists = state.lists.filter((list) => list.id !== id);
+
+    if (state.lists.length === countBefore) {
+      return false;
+    }
+
+    await saveLocalState(statePath, state);
+    return true;
+  });
+}
+
+export async function addBookToReadingList(
+  listId: string,
+  input: AddListItemInput,
+): Promise<{ list: ReadingList; item: ReadingListItem }> {
+  const now = new Date().toISOString();
+
+  if (isSupabaseConfigured()) {
+    if (!UUID_PATTERN.test(listId)) {
+      throw new MissingListError();
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const [{ data: listRow, error: listError }, bookRow] = await Promise.all([
+      supabase
+        .from("reading_lists")
+        .select("id")
+        .eq("id", listId)
+        .maybeSingle(),
+      findSupabaseRowByKeyOrId(supabase, input.book_id),
+    ]);
+
+    if (listError) {
+      throw listError;
+    }
+    if (!listRow) {
+      throw new MissingListError();
+    }
+    if (!bookRow) {
+      throw new MissingBookReferenceError("Referenced volume was not found.");
+    }
+
+    const { data: tailRow, error: tailError } = await supabase
+      .from("reading_list_items")
+      .select("position")
+      .eq("list_id", listId)
+      .order("position", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (tailError) {
+      throw tailError;
+    }
+
+    const nextPosition = tailRow ? tailRow.position + 1 : 0;
+
+    const { data: insertedItem, error: insertError } = await supabase
+      .from("reading_list_items")
+      .insert({
+        list_id: listId,
+        book_id: bookRow.id,
+        position: nextPosition,
+        note: input.note ?? null,
+      })
+      .select("*")
+      .single();
+
+    if (insertError) {
+      if (isUniqueViolationError(insertError)) {
+        throw new DuplicateListItemError();
+      }
+      throw insertError;
+    }
+
+    const { error: touchError } = await supabase
+      .from("reading_lists")
+      .update({ updated_at: now })
+      .eq("id", listId);
+
+    if (touchError) {
+      throw touchError;
+    }
+
+    const list = await loadSupabaseReadingListById(supabase, listId);
+    if (!list) {
+      throw new MissingListError();
+    }
+
+    const uuidToBookId = new Map<string, string>([
+      [bookRow.id, bookRow.book_key ?? bookRow.id],
+    ]);
+    return {
+      list,
+      item: mapSupabaseRowToListItem(insertedItem, uuidToBookId),
+    };
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    const listIndex = state.lists.findIndex((list) => list.id === listId);
+
+    if (listIndex === -1) {
+      throw new MissingListError();
+    }
+
+    const activeBookIds = await loadActiveLocalBookIds(state);
+    if (!activeBookIds.has(input.book_id)) {
+      throw new MissingBookReferenceError("Referenced volume was not found.");
+    }
+
+    const list = state.lists[listIndex];
+    if (list.items.some((item) => item.book_id === input.book_id)) {
+      throw new DuplicateListItemError();
+    }
+
+    const nextPosition =
+      list.items.length === 0
+        ? 0
+        : Math.max(...list.items.map((item) => item.position)) + 1;
+
+    const item: ReadingListItem = {
+      id: `lsti_${randomUUID()}`,
+      list_id: listId,
+      book_id: input.book_id,
+      position: nextPosition,
+      note: input.note ?? null,
+      added_at: now,
+    };
+
+    const updatedList: ReadingList = {
+      ...list,
+      updated_at: now,
+      items: [...list.items, item],
+    };
+
+    state.lists[listIndex] = updatedList;
+    await saveLocalState(statePath, state);
+    return { list: updatedList, item };
+  });
+}
+
+function computeReorderedItems(
+  currentItems: readonly ReadingListItem[],
+  requestedBookIds: readonly string[],
+): ReadingListItem[] {
+  const itemByBookId = new Map<string, ReadingListItem>();
+  for (const item of currentItems) {
+    itemByBookId.set(item.book_id, item);
+  }
+
+  const ordered: ReadingListItem[] = [];
+  const placed = new Set<string>();
+
+  for (const bookId of requestedBookIds) {
+    if (placed.has(bookId)) {
+      continue;
+    }
+    const item = itemByBookId.get(bookId);
+    if (item) {
+      placed.add(bookId);
+      ordered.push(item);
+    }
+  }
+
+  for (const item of currentItems) {
+    if (!placed.has(item.book_id)) {
+      placed.add(item.book_id);
+      ordered.push(item);
+    }
+  }
+
+  return ordered.map((item, index) => ({
+    ...item,
+    position: index,
+  }));
+}
+
+export async function reorderReadingListItems(
+  listId: string,
+  bookIds: readonly string[],
+): Promise<ReadingList | null> {
+  const now = new Date().toISOString();
+
+  if (isSupabaseConfigured()) {
+    if (!UUID_PATTERN.test(listId)) {
+      return null;
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const currentList = await loadSupabaseReadingListById(supabase, listId);
+    if (!currentList) {
+      return null;
+    }
+
+    const reordered = computeReorderedItems(currentList.items, bookIds);
+
+    for (const item of reordered) {
+      const { error } = await supabase
+        .from("reading_list_items")
+        .update({ position: item.position })
+        .eq("id", item.id);
+
+      if (error) {
+        throw error;
+      }
+    }
+
+    const { error: touchError } = await supabase
+      .from("reading_lists")
+      .update({ updated_at: now })
+      .eq("id", listId);
+
+    if (touchError) {
+      throw touchError;
+    }
+
+    return {
+      ...currentList,
+      updated_at: now,
+      items: reordered,
+    };
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    const listIndex = state.lists.findIndex((list) => list.id === listId);
+
+    if (listIndex === -1) {
+      return null;
+    }
+
+    const list = state.lists[listIndex];
+    const reordered = computeReorderedItems(list.items, bookIds);
+    const updatedList: ReadingList = {
+      ...list,
+      updated_at: now,
+      items: reordered,
+    };
+
+    state.lists[listIndex] = updatedList;
+    await saveLocalState(statePath, state);
+    return updatedList;
+  });
+}
+
+export async function removeBookFromReadingList(
+  listId: string,
+  bookId: string,
+): Promise<{ list: ReadingList; deleted: boolean } | null> {
+  const now = new Date().toISOString();
+
+  if (isSupabaseConfigured()) {
+    if (!UUID_PATTERN.test(listId)) {
+      return null;
+    }
+
+    const supabase = createSupabaseAdminClient();
+    const currentList = await loadSupabaseReadingListById(supabase, listId);
+    if (!currentList) {
+      return null;
+    }
+
+    const targetItem = currentList.items.find(
+      (item) => item.book_id === bookId,
+    );
+    if (!targetItem) {
+      return { list: currentList, deleted: false };
+    }
+
+    const { error: deleteError } = await supabase
+      .from("reading_list_items")
+      .delete()
+      .eq("id", targetItem.id);
+
+    if (deleteError) {
+      throw deleteError;
+    }
+
+    const remaining = currentList.items
+      .filter((item) => item.id !== targetItem.id)
+      .map((item, index) => ({ ...item, position: index }));
+
+    for (const item of remaining) {
+      const { error } = await supabase
+        .from("reading_list_items")
+        .update({ position: item.position })
+        .eq("id", item.id);
+
+      if (error) {
+        throw error;
+      }
+    }
+
+    const { error: touchError } = await supabase
+      .from("reading_lists")
+      .update({ updated_at: now })
+      .eq("id", listId);
+
+    if (touchError) {
+      throw touchError;
+    }
+
+    return {
+      list: {
+        ...currentList,
+        updated_at: now,
+        items: remaining,
+      },
+      deleted: true,
+    };
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const state = await loadLocalState(statePath);
+    const listIndex = state.lists.findIndex((list) => list.id === listId);
+
+    if (listIndex === -1) {
+      return null;
+    }
+
+    const list = state.lists[listIndex];
+    const remaining = list.items.filter((item) => item.book_id !== bookId);
+
+    if (remaining.length === list.items.length) {
+      return { list, deleted: false };
+    }
+
+    const updatedList: ReadingList = {
+      ...list,
+      updated_at: now,
+      items: remaining.map((item, index) => ({
+        ...item,
+        position: index,
+      })),
+    };
+
+    state.lists[listIndex] = updatedList;
+    await saveLocalState(statePath, state);
+    return { list: updatedList, deleted: true };
   });
 }

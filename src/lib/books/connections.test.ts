@@ -298,11 +298,11 @@ describe("local connection persistence in repository", () => {
       }),
     ).rejects.toBeInstanceOf(DuplicateConnectionError);
 
-    // Persisted file should be upgraded to version 2
+    // Persisted file should be upgraded to version 3
     const persistedRaw = JSON.parse(
       await readFile(statePath, "utf8"),
     ) as { version: number; connections: EditorialConnection[] };
-    expect(persistedRaw.version).toBe(2);
+    expect(persistedRaw.version).toBe(3);
     expect(persistedRaw.connections).toHaveLength(1);
 
     // Deleting the custom book prunes the connection automatically

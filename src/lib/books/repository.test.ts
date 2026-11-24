@@ -5,13 +5,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import * as supabaseAdmin from "@/lib/supabase/admin";
 import {
+  addBookToReadingList,
   bulkUpdateBooks,
   createBook,
+  createQuote,
+  createReadingList,
   deleteBook,
+  deleteQuote,
+  deleteReadingList,
+  DuplicateListError,
+  DuplicateListItemError,
   getStorageMode,
   isSupabaseConfigured,
   listBooks,
+  listQuotes,
+  listReadingLists,
+  MissingBookReferenceError,
+  removeBookFromReadingList,
+  reorderReadingListItems,
   updateBook,
+  updateQuote,
+  updateReadingList,
 } from "./repository";
 import type { CreateBookInput } from "./validation";
 
@@ -204,6 +218,103 @@ describe("local book tracker repository", () => {
     expect(reloadedCreated.reading_status).toBe("finished");
     expect(reloadedCreated.shelf).toBe(19);
     expect(reloadedCreated.tags).toEqual(["initial tag", "curated-bulk"]);
+  });
+
+  it("supports local quote and reading-list CRUD and cascades cleanup when deleting a book", async () => {
+    const initial = await listBooks();
+    const baseBook = initial.books[0];
+    const createdBook = await createBook({
+      ...BASE_CREATE_INPUT,
+      title: "Cascade Test Volume",
+    });
+
+    // Missing book reference rejected
+    await expect(
+      createQuote({
+        book_id: "nonexistent-book",
+        quote_text: "Orphan quote",
+      }),
+    ).rejects.toBeInstanceOf(MissingBookReferenceError);
+
+    // Quote CRUD
+    const q1 = await createQuote({
+      book_id: createdBook.id,
+      quote_text: "First passage",
+      page_number: "12",
+      tags: ["memory"],
+    });
+    const q2 = await createQuote({
+      book_id: baseBook.id,
+      quote_text: "Second passage",
+      chapter: "Prologue",
+      tags: ["time"],
+    });
+    expect(await listQuotes()).toHaveLength(2);
+
+    const updatedQ2 = await updateQuote(q2.id, {
+      note: "Annotated margin",
+      tags: ["time", "history"],
+    });
+    expect(updatedQ2?.note).toBe("Annotated margin");
+    expect(updatedQ2?.tags).toEqual(["time", "history"]);
+
+    // Reading list CRUD + duplicate guards + reorder + remove
+    const queue = await createReadingList({
+      name: "Up Next",
+      description: "Priority reading order",
+      is_queue: true,
+    });
+    const shelfList = await createReadingList({
+      name: "Autumn Canon",
+      is_queue: false,
+    });
+    await expect(
+      createReadingList({ name: "up next!" }),
+    ).rejects.toBeInstanceOf(DuplicateListError);
+
+    const listed = await listReadingLists();
+    expect(listed.map((l) => l.id)).toEqual([queue.id, shelfList.id]);
+
+    await addBookToReadingList(queue.id, { book_id: createdBook.id });
+    await addBookToReadingList(queue.id, { book_id: baseBook.id });
+    await expect(
+      addBookToReadingList(queue.id, { book_id: createdBook.id }),
+    ).rejects.toBeInstanceOf(DuplicateListItemError);
+
+    const reordered = await reorderReadingListItems(queue.id, [
+      baseBook.id,
+      createdBook.id,
+    ]);
+    expect(reordered?.items.map((i) => i.book_id)).toEqual([
+      baseBook.id,
+      createdBook.id,
+    ]);
+
+    const renamed = await updateReadingList(shelfList.id, {
+      name: "Winter Canon",
+    });
+    expect(renamed?.slug).toBe("winter-canon");
+
+    // Deleting createdBook cascades its quote and its list item (re-normalizing positions)
+    expect(await deleteBook(createdBook.id)).toBe(true);
+
+    const quotesAfterDelete = await listQuotes();
+    expect(quotesAfterDelete.map((q) => q.id)).toEqual([q2.id]);
+
+    const listsAfterDelete = await listReadingLists();
+    const queueAfterDelete = listsAfterDelete.find((l) => l.id === queue.id)!;
+    expect(queueAfterDelete.items.map((i) => i.book_id)).toEqual([baseBook.id]);
+    expect(queueAfterDelete.items[0].position).toBe(0);
+
+    // Explicit remove + delete list + delete quote
+    const removed = await removeBookFromReadingList(queue.id, baseBook.id);
+    expect(removed?.deleted).toBe(true);
+    expect(removed?.list.items).toEqual([]);
+
+    expect(await deleteQuote(q1.id)).toBe(false);
+    expect(await deleteQuote(q2.id)).toBe(true);
+    expect(await deleteReadingList(queue.id)).toBe(true);
+    expect(await deleteReadingList(shelfList.id)).toBe(true);
   });
 });
 

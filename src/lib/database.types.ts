@@ -132,6 +132,122 @@ export type Database = {
           },
         ];
       };
+      book_quotes: {
+        Row: {
+          book_id: string;
+          chapter: string | null;
+          created_at: string;
+          id: string;
+          note: string | null;
+          page_number: string | null;
+          quote_text: string;
+          tags: string[];
+          updated_at: string;
+        };
+        Insert: {
+          book_id: string;
+          chapter?: string | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          page_number?: string | null;
+          quote_text: string;
+          tags?: string[];
+          updated_at?: string;
+        };
+        Update: {
+          book_id?: string;
+          chapter?: string | null;
+          created_at?: string;
+          id?: string;
+          note?: string | null;
+          page_number?: string | null;
+          quote_text?: string;
+          tags?: string[];
+          updated_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "book_quotes_book_id_fkey";
+            columns: ["book_id"];
+            isOneToOne: false;
+            referencedRelation: "books";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+      reading_lists: {
+        Row: {
+          created_at: string;
+          description: string | null;
+          id: string;
+          is_queue: boolean;
+          name: string;
+          slug: string;
+          updated_at: string;
+        };
+        Insert: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_queue?: boolean;
+          name: string;
+          slug: string;
+          updated_at?: string;
+        };
+        Update: {
+          created_at?: string;
+          description?: string | null;
+          id?: string;
+          is_queue?: boolean;
+          name?: string;
+          slug?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
+      reading_list_items: {
+        Row: {
+          added_at: string;
+          book_id: string;
+          id: string;
+          list_id: string;
+          note: string | null;
+          position: number;
+        };
+        Insert: {
+          added_at?: string;
+          book_id: string;
+          id?: string;
+          list_id: string;
+          note?: string | null;
+          position?: number;
+        };
+        Update: {
+          added_at?: string;
+          book_id?: string;
+          id?: string;
+          list_id?: string;
+          note?: string | null;
+          position?: number;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reading_list_items_list_id_fkey";
+            columns: ["list_id"];
+            isOneToOne: false;
+            referencedRelation: "reading_lists";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "reading_list_items_book_id_fkey";
+            columns: ["book_id"];
+            isOneToOne: false;
+            referencedRelation: "books";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
