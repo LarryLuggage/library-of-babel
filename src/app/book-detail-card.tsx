@@ -121,6 +121,7 @@ function BookDetailContent({
   onBookClick,
   onClose,
   onStartPath,
+  onRecommendSimilar,
   onTagClick,
   onEditBook,
   onUpdateBook,
@@ -139,6 +140,7 @@ function BookDetailContent({
   onBookClick: (book: LedgerBook) => void;
   onClose: () => void;
   onStartPath: () => void;
+  onRecommendSimilar?: () => void;
   onTagClick: (tag: string) => void;
   onEditBook: () => void;
   onUpdateBook: (bookId: string, patch: BookUpdatePatch) => Promise<CatalogueBook>;
@@ -1496,14 +1498,26 @@ function BookDetailContent({
         </section>
 
         <div className="card-primary-actions card-action-bar">
-          <button
-            type="button"
-            className="btn-action-primary"
-            onClick={onStartPath}
-            disabled={isDeleting}
-          >
-            Start a path from this volume
-          </button>
+          <div className="card-primary-action-row">
+            <button
+              type="button"
+              className="btn-action-primary"
+              onClick={onStartPath}
+              disabled={isDeleting}
+            >
+              Start a path from this volume
+            </button>
+            {onRecommendSimilar && (
+              <button
+                type="button"
+                className="btn-action-secondary"
+                onClick={onRecommendSimilar}
+                disabled={isDeleting}
+              >
+                Similar unread
+              </button>
+            )}
+          </div>
           {canEdit && (
             <>
               <div className="card-secondary-actions">
@@ -1600,6 +1614,7 @@ export function BookDetailCard({
   onBookClick,
   onClose,
   onStartPath,
+  onRecommendSimilar,
   onTagClick,
   onEditBook,
   onUpdateBook,
@@ -1618,6 +1633,7 @@ export function BookDetailCard({
   onBookClick: (book: LedgerBook) => void;
   onClose: () => void;
   onStartPath: () => void;
+  onRecommendSimilar?: () => void;
   onTagClick: (tag: string) => void;
   onEditBook: () => void;
   onUpdateBook: (bookId: string, patch: BookUpdatePatch) => Promise<CatalogueBook>;
@@ -1644,6 +1660,7 @@ export function BookDetailCard({
         onBookClick={onBookClick}
         onClose={onClose}
         onStartPath={onStartPath}
+        onRecommendSimilar={onRecommendSimilar}
         onTagClick={onTagClick}
         onEditBook={onEditBook}
         onUpdateBook={onUpdateBook}

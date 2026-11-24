@@ -1,4 +1,5 @@
 import { getServerCuratorSession } from "@/lib/auth/curator";
+import { isLibrarianConfigured } from "@/lib/books/librarian";
 import { listBooks, listConnections } from "@/lib/books/repository";
 import { CatalogueApp } from "./catalogue-app";
 
@@ -17,6 +18,7 @@ export default async function HomePage() {
       initialConnections={connections}
       storageMode={storageMode}
       initialAuth={initialAuth}
+      librarianEnabled={isLibrarianConfigured()}
     />
   );
 }

@@ -182,3 +182,20 @@ With active live curation on production (`877` volumes, `226` reading statuses, 
 * Curators can triage missing metadata and true duplicates, batch-update reading status/shelf/division/tags in one request, selectively enrich individual books in-app, and scan ISBN barcodes on mobile without bloating the initial catalogue JavaScript bundle.
 * All `105` Vitest unit and route tests across `14` suites, `eslint`, `tsc --noEmit`, and `next build` pass cleanly; live Chromium QA confirmed duplicate triage (`2` true groups), bulk mode, live 1-Click Enrich persistence, ISBN scanner mount, and `0px` mobile horizontal overflow.
 * Milestone B (local taste-graph *"What Should I Read Next?"* shelf recommender + optional Gemini AI Librarian chat) is queued next once Milestone A is committed.
+
+## ADR 10: Local Taste-Graph Shelf Recommender and Curator-Gated Gemini AI Reference Librarian
+
+### Date
+2026-11-24
+
+### Context
+With `877` live volumes, `226` reading statuses, `108` ratings, and curated `book_connections`, deciding what unread volume on the shelves to pick up next required manually cross-referencing filters, eras, and past favorites. At the same time, introducing optional generative AI ("AI Librarian") on a public Vercel deployment required strict catalogue grounding (zero hallucinated titles) and strict quota protection so unauthenticated visitors could never exhaust the owner's `GEMINI_API_KEY`.
+
+### Decision
+* **Zero-Key Local Taste-Graph Engine (`src/lib/books/recommender.ts`)**: Built a pure client-safe recommendation engine scoring unread shelf volumes from weighted ratings (`5★`..`3★`), finished/reading history, gentle `dnf`/low-rating penalties, curated `book_connections` boosts, IDF-weighted display tags, division/sub-category affinity, and era proximity, with `Best Match`, `Stretch Picks`, `Favorite Authors`, `seedBookId` ("Similar unread") anchoring, a 2-book-per-author diversity cap, and a cold-start *"Catalogue Highlights"* fallback.
+* **Curator-Gated Grounded Gemini AI Librarian (`src/lib/books/librarian.ts`, `src/app/api/librarian/route.ts`)**: Implemented server-side natural-language cue parsing (`shortlistCatalogueForPrompt`) selecting up to `60` real candidate volumes per query and calling Gemini's `generateContent` REST endpoint (`gemini-2.5-flash` default, structured JSON output, `15000ms` timeout, zero extra npm dependencies) with strict post-validation dropping any unknown/hallucinated `book_id`. Whenever `GEMINI_API_KEY` is configured, `POST /api/librarian` enforces `requireCuratorAuth(request)` (`401` when unauthenticated) and a per-IP `15 req / 15 min` rate limit (`429`); when `GEMINI_API_KEY` is unset or when a public visitor browses without curator sign-in, the UI falls back cleanly to zero-cost **Local Shelf Search**.
+* **Dual-Tab Reader's Advisory UI (`src/app/read-next-modal.tsx`, `src/app/page.tsx`, `src/app/catalogue-app.tsx`, `src/app/book-detail-card.tsx`)**: Exposed a `"Read Next"` toolbar button and per-volume `"Similar unread"` trigger opening an accessible native `<ModalDialog>` with an ARIA `role="tablist"` switching between `Shelf Recommender` and `AI Librarian`.
+
+### Consequences
+* Readers get instant, explainable unread shelf recommendations offline or online with zero external dependencies or schema migrations, and curators can optionally enable Gemini AI synthesis by setting `GEMINI_API_KEY` in `.env.local` or Vercel without exposing API quota to public traffic.
+* All `120` Vitest tests across `17` suites, `eslint`, `tsc --noEmit`, `next build`, and desktop (`1280x800`) + mobile (`390x844`) Chromium visual inspections pass cleanly (`0` console errors, `0` failed requests, `0px` page horizontal overflow).

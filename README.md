@@ -14,6 +14,8 @@ Interactive bibliographic knowledge graph, physical shelf atlas, and personal re
 - **Book Editor, ISBN Scanner & Multi-Source Lookup**: Create/edit modal with `@zxing/browser` barcode scanning and `GET /api/books/lookup` integration querying Open Library (+ top-3 work records), optional Google Books, and optional Wikipedia fallback enrichment (`?enrich=1`).
 - **Duplicate Clustering & Bulk Editing**: Prioritized union-find duplicate detection that keeps numbered multi-volume works (`Vol. 1` vs `Vol. 2`, `Part I` vs `Part II`, `#1` vs `#2`) separate, paired with `POST /api/books/bulk` batch updates for status, shelf, division, and tag additions/removals (capped at 20 tags).
 - **Reading Analytics & Safe Exports**: Summary metrics, completion rate, rating histogram, yearly finished totals, division/era breakdowns, loaned-out tracker, and RFC-4180 CSV (with spreadsheet formula-injection neutralization) and JSON downloads.
+- **Read Next Shelf Recommender**: Deterministic taste-profile recommendation engine (`src/lib/books/recommender.ts`) scoring unread volumes by ratings, curated `book_connections`, IDF-weighted subject tags, author/division affinity, and era proximity—supporting `best_match`, `stretch` (under-explored divisions/eras), `same_authors`, seed-book anchoring, and cold-start fallbacks.
+- **Grounded AI Reference Librarian**: Conversational shelf discovery (`POST /api/librarian`) that shortlists the catalogue by natural-language cues (era/century, shelf range, unread intent, keywords, and taste profile). Runs in zero-key deterministic **Local Shelf Search** mode by default, or upgrades to structured JSON Gemini responses (with strict `book_id` grounding validation, curator authentication, and per-IP rate limiting) when `GEMINI_API_KEY` is configured.
 - **Passphrase Curator Authentication**: HMAC-SHA256 signed HTTP-only `babel_curator_session` cookie (30-day TTL), constant-time SHA-256 verification, and 10-failure / 15-minute IP rate limiting (`429`).
 
 ---
@@ -66,6 +68,8 @@ Variables defined in `.env.example` (plus optional local state path override):
 | `BOOK_OWNER_PASSPHRASE` | **Required in production** | Curator passphrase used to mint and verify signed `babel_curator_session` cookies. Optional in local dev. |
 | `BOOK_SESSION_SECRET` | Optional | Explicit HMAC signing secret for curator session cookies (defaults to a SHA-256 key derived from `BOOK_OWNER_PASSPHRASE`). |
 | `GOOGLE_BOOKS_API_KEY` | Optional | Enables Google Books alongside Open Library in `/api/books/lookup` and `npm run enrich:books`. |
+| `GEMINI_API_KEY` | Optional | Enables the Gemini-backed AI Reference Librarian in `POST /api/librarian` (requires curator sign-in when configured; falls back to Local Shelf Search when unset). |
+| `GEMINI_MODEL` | Optional | Overrides the Gemini model used by `POST /api/librarian` (defaults to `gemini-2.5-flash`). |
 | `BOOK_TRACKER_STATE_PATH` | Optional (local mode) | Overrides the default `data/book-tracker-state.json` persistence path. |
 
 ---
@@ -107,6 +111,7 @@ curl -X POST http://localhost:3000/api/books/seed \
 | `/api/books/seed` | `POST` | `BOOK_SEED_TOKEN` Bearer | Privileged bulk seed upsert into Supabase `public.books`. |
 | `/api/connections` | `GET`, `POST` | `GET`: Public, `POST`: Curator | List or create curated editorial links between two volumes (`409` on duplicate undirected pair). |
 | `/api/connections/[id]` | `DELETE` | Curator | Delete a curated editorial connection. |
+| `/api/librarian` | `POST` | Curator when `GEMINI_API_KEY` is set (rate-limited); Public in Local Shelf Search mode | Conversational catalogue discovery returning grounded recommendations from your shelves (strictly post-validated against real catalogue `book_id`s in Gemini mode). |
 
 ---
 
@@ -120,7 +125,7 @@ curl -X POST http://localhost:3000/api/books/seed \
    - `SUPABASE_SECRET_KEY`
    - `BOOK_OWNER_PASSPHRASE` (**mandatory**: in `NODE_ENV=production`, mutating routes return `503` if unset)
    - `BOOK_SEED_TOKEN`
-   - Optional: `BOOK_SESSION_SECRET`, `GOOGLE_BOOKS_API_KEY`
+   - Optional: `BOOK_SESSION_SECRET`, `GOOGLE_BOOKS_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`
 4. **Seed Production Data** (if deploying against a fresh database):
 
 ```bash

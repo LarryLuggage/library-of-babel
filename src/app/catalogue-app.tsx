@@ -48,6 +48,7 @@ import { ChronologicalScroll } from "./chronological-scroll";
 import { PhysicalShelfView } from "./physical-shelf-view";
 import { PathfinderModal } from "./pathfinder-modal";
 import { ReadingStatsModal } from "./reading-stats-modal";
+import { ReadNextModal } from "./read-next-modal";
 import { ModalDialog, useDialogClose } from "./modal-dialog";
 
 type StatusFilterValue = "" | ReadingStatus | "loaned";
@@ -198,11 +199,13 @@ export function CatalogueApp({
   initialConnections,
   storageMode,
   initialAuth,
+  librarianEnabled = false,
 }: {
   initialBooks: CatalogueBook[];
   initialConnections: EditorialConnection[];
   storageMode: StorageMode;
   initialAuth: CuratorAuthState;
+  librarianEnabled?: boolean;
 }) {
   const [books, setBooks] = useState<CatalogueBook[]>(initialBooks);
   const [prevInitialBooks, setPrevInitialBooks] = useState(initialBooks);
@@ -270,6 +273,10 @@ export function CatalogueApp({
     book?: CatalogueBook;
   } | null>(null);
   const [isStatsOpen, setIsStatsOpen] = useState(false);
+  const [isReadNextOpen, setIsReadNextOpen] = useState(false);
+  const [readNextSeedBookId, setReadNextSeedBookId] = useState<string | null>(
+    null,
+  );
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [authPromptReason, setAuthPromptReason] = useState<string | null>(null);
   const pendingAuthActionRef = useRef<(() => void) | null>(null);
@@ -846,6 +853,7 @@ export function CatalogueApp({
     );
     setActiveBookId((prev) => (prev === bookId ? null : prev));
     setPathfinderSourceId((prev) => (prev === bookId ? null : prev));
+    setReadNextSeedBookId((prev) => (prev === bookId ? null : prev));
     showToast("success", `Removed "${bookTitle}" from the catalogue.`);
   };
 
@@ -1203,6 +1211,21 @@ export function CatalogueApp({
 
       <section className="catalogue-toolbar-section" aria-label="Catalogue actions">
         <div className="catalogue-toolbar">
+          <button
+            type="button"
+            className="toolbar-btn font-mono"
+            onClick={() => {
+              setReadNextSeedBookId(null);
+              setIsReadNextOpen(true);
+            }}
+          >
+            <span aria-hidden="true">✦</span>
+            <span className="toolbar-btn-copy">
+              <strong>Read Next</strong>
+              <small>Shelf picks &amp; Librarian</small>
+            </span>
+          </button>
+
           <button
             type="button"
             className="toolbar-btn font-mono"
@@ -1578,6 +1601,30 @@ export function CatalogueApp({
         />
       )}
 
+      {isReadNextOpen && (
+        <ReadNextModal
+          isOpen={isReadNextOpen}
+          onClose={() => setIsReadNextOpen(false)}
+          books={catalogueEntries}
+          connections={connections}
+          divisions={divisions
+            .map((division) => division.name)
+            .filter((name) => name !== "Unclassified")}
+          initialSeedBookId={readNextSeedBookId}
+          librarianEnabled={librarianEnabled}
+          canEdit={canEdit}
+          onRequireAuth={(reason) => requireCuratorAuth(reason)}
+          onInspectBook={(book) => {
+            setIsReadNextOpen(false);
+            setActiveBookId(getBookKey(book));
+          }}
+          onStartReading={async (book) => {
+            await handleUpdateBook(book.id, { reading_status: "reading" });
+            showToast("success", `Marked "${book.title}" as Reading.`);
+          }}
+        />
+      )}
+
       {activeBook && (
         <BookDetailCard
           key={getBookKey(activeBook)}
@@ -1599,6 +1646,12 @@ export function CatalogueApp({
             const sourceBook = activeBook;
             setActiveBookId(null);
             openPathfinder(sourceBook);
+          }}
+          onRecommendSimilar={() => {
+            const seedBook = activeBook;
+            setActiveBookId(null);
+            setReadNextSeedBookId(seedBook.id);
+            setIsReadNextOpen(true);
           }}
           onTagClick={setActiveTag}
           onEditBook={() => {
