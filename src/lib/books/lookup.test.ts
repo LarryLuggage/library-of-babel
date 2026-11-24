@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { GET as LOOKUP_GET } from "@/app/api/books/lookup/route";
 import {
   detectIsbn,
   lookupBibliographicCandidates,
@@ -265,5 +266,274 @@ describe("lookupBibliographicCandidates", () => {
     await expect(
       lookupBibliographicCandidates("Borges", failingFetch),
     ).rejects.toThrow();
+  });
+
+  it("enriches missing summary and BCE year from Wikipedia when enrich=true and rejects person-bio/disambig pages", async () => {
+    vi.stubEnv("GOOGLE_BOOKS_API_KEY", "");
+
+    const calls: string[] = [];
+    const mockFetch: typeof fetch = async (input) => {
+      const url = typeof input === "string" ? input : input.toString();
+      calls.push(url);
+
+      if (url.startsWith("https://openlibrary.org/search.json")) {
+        return Response.json({
+          docs: [
+            {
+              key: "/works/OL50W",
+              title: "The Republic",
+              author_name: ["Plato"],
+              publisher: ["Penguin Classics"],
+              subject: ["Political philosophy"],
+            },
+          ],
+        });
+      }
+
+      if (url === "https://openlibrary.org/works/OL50W.json") {
+        return Response.json({});
+      }
+
+      if (
+        url.startsWith("https://en.wikipedia.org/w/api.php") &&
+        url.includes("list=search")
+      ) {
+        return Response.json({
+          query: {
+            search: [
+              { pageid: 101, title: "Plato" },
+              { pageid: 102, title: "Republic (disambiguation)" },
+              { pageid: 103, title: "Republic (Plato)" },
+            ],
+          },
+        });
+      }
+
+      if (
+        url.startsWith("https://en.wikipedia.org/w/api.php") &&
+        url.includes("prop=extracts")
+      ) {
+        return Response.json({
+          query: {
+            pages: {
+              "101": {
+                pageid: 101,
+                title: "Plato",
+                extract:
+                  "Plato (428/427 – 348/347 BC) was an ancient Greek philosopher of the Classical period whose book Republic became famous.",
+                categories: [{ title: "Category:348 BC deaths" }],
+              },
+              "102": {
+                pageid: 102,
+                title: "Republic (disambiguation)",
+                extract: "Republic may refer to:",
+                categories: [{ title: "Category:Disambiguation pages" }],
+              },
+              "103": {
+                pageid: 103,
+                title: "Republic (Plato)",
+                extract:
+                  "The Republic is a Socratic dialogue, authored by Plato around 375 BCE, concerning justice, the order and character of the just city-state, and the just man.",
+                categories: [{ title: "Category:Dialogues of Plato" }],
+              },
+            },
+          },
+        });
+      }
+
+      throw new Error(`Unexpected URL: ${url}`);
+    };
+
+    const results = await lookupBibliographicCandidates(
+      "The Republic Plato",
+      mockFetch,
+      { enrich: true },
+    );
+
+    expect(results).toHaveLength(1);
+    expect(results[0].source).toBe("open_library");
+    expect(results[0].publish_year).toBe(-375);
+    expect(results[0].summary).toContain("Socratic dialogue");
+    expect(calls.some((url) => url.includes("en.wikipedia.org"))).toBe(true);
+  });
+
+  it("appends a wikipedia candidate when Open Library returns nothing and truncates long summaries <= 420 chars", async () => {
+    vi.stubEnv("GOOGLE_BOOKS_API_KEY", "");
+
+    const longSentence =
+      "Ficciones is a 1944 collection of short stories by Argentine writer Jorge Luis Borges. " +
+      "It gathers his early labyrinthine tales of infinite libraries, detective puzzles, and speculative metaphysics into two celebrated sections that reshaped twentieth-century world literature. " +
+      "Later editions expanded the second section with additional tales exploring mirrors, memory, imaginary encyclopedias, and philosophical paradoxes across centuries of erudite invention and subtle irony.";
+
+    const mockFetch: typeof fetch = async (input) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.startsWith("https://openlibrary.org/search.json")) {
+        return Response.json({ docs: [] });
+      }
+      if (url.includes("list=search")) {
+        return Response.json({
+          query: { search: [{ pageid: 201, title: "Ficciones" }] },
+        });
+      }
+      if (url.includes("prop=extracts")) {
+        return Response.json({
+          query: {
+            pages: {
+              "201": {
+                pageid: 201,
+                title: "Ficciones",
+                extract: longSentence,
+                categories: [{ title: "Category:1944 short story collections" }],
+              },
+            },
+          },
+        });
+      }
+      return new Response("Not Found", { status: 404 });
+    };
+
+    const results = await lookupBibliographicCandidates("Ficciones", mockFetch, {
+      enrich: true,
+    });
+
+    expect(results).toHaveLength(1);
+    expect(results[0]).toMatchObject({
+      title: "Ficciones",
+      author: "Jorge Luis Borges",
+      publish_year: 1944,
+      source: "wikipedia",
+    });
+    expect(results[0].summary).not.toBeNull();
+    expect(results[0].summary!.length).toBeLessThanOrEqual(420);
+  });
+
+  it("preserves Open Library results if Wikipedia fails and skips Wikipedia for ISBN or complete candidates", async () => {
+    vi.stubEnv("GOOGLE_BOOKS_API_KEY", "");
+
+    let wikiCalls = 0;
+    const mockFetchFailingWiki: typeof fetch = async (input) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.startsWith("https://openlibrary.org/search.json")) {
+        return Response.json({
+          docs: [
+            {
+              key: "/works/OL1W",
+              title: "Incomplete Book",
+              author_name: ["Some Author"],
+            },
+          ],
+        });
+      }
+      if (url.startsWith("https://openlibrary.org/works/")) {
+        return Response.json({});
+      }
+      if (url.includes("en.wikipedia.org")) {
+        wikiCalls += 1;
+        return new Response("Service Unavailable", { status: 503 });
+      }
+      throw new Error(`Unexpected URL ${url}`);
+    };
+
+    const fallbackResults = await lookupBibliographicCandidates(
+      "Incomplete Book",
+      mockFetchFailingWiki,
+      { enrich: true },
+    );
+    expect(wikiCalls).toBe(1);
+    expect(fallbackResults).toHaveLength(1);
+    expect(fallbackResults[0].title).toBe("Incomplete Book");
+
+    // Skips Wikipedia when ISBN is searched
+    wikiCalls = 0;
+    await lookupBibliographicCandidates("9780140184327", mockFetchFailingWiki, {
+      enrich: true,
+    });
+    expect(wikiCalls).toBe(0);
+
+    // Skips Wikipedia when a candidate already has both summary and publish_year
+    let completeWikiCalls = 0;
+    const completeFetch: typeof fetch = async (input) => {
+      const url = typeof input === "string" ? input : input.toString();
+      if (url.startsWith("https://openlibrary.org/search.json")) {
+        return Response.json({
+          docs: [
+            {
+              key: "/works/OL2W",
+              title: "Complete Book",
+              author_name: ["Author"],
+              first_publish_year: 1999,
+            },
+          ],
+        });
+      }
+      if (url === "https://openlibrary.org/works/OL2W.json") {
+        return Response.json({ description: "Already has summary." });
+      }
+      if (url.includes("en.wikipedia.org")) {
+        completeWikiCalls += 1;
+      }
+      return new Response("Not Found", { status: 404 });
+    };
+
+    const completeResults = await lookupBibliographicCandidates(
+      "Complete Book",
+      completeFetch,
+      { enrich: true },
+    );
+    expect(completeResults[0].summary).toBe("Already has summary.");
+    expect(completeWikiCalls).toBe(0);
+  });
+
+  it("wires enrich=1 query param through GET /api/books/lookup", async () => {
+    vi.stubEnv("GOOGLE_BOOKS_API_KEY", "");
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockImplementation(async (input) => {
+        const url = typeof input === "string" ? input : input.toString();
+        if (url.startsWith("https://openlibrary.org/search.json")) {
+          return Response.json({ docs: [] });
+        }
+        if (url.includes("list=search")) {
+          return Response.json({
+            query: { search: [{ pageid: 301, title: "Poetics (Aristotle)" }] },
+          });
+        }
+        if (url.includes("prop=extracts")) {
+          return Response.json({
+            query: {
+              pages: {
+                "301": {
+                  pageid: 301,
+                  title: "Poetics (Aristotle)",
+                  extract:
+                    "Poetics by Aristotle is the earliest surviving work of Greek dramatic theory, written around 335 BC.",
+                  categories: [{ title: "Category:Works by Aristotle" }],
+                },
+              },
+            },
+          });
+        }
+        return new Response("Not Found", { status: 404 });
+      });
+
+    const response = await LOOKUP_GET(
+      new Request("http://localhost/api/books/lookup?q=Poetics&enrich=1"),
+    );
+    expect(response.status).toBe(200);
+    const body = (await response.json()) as {
+      candidates: Array<{
+        title: string;
+        publish_year: number | null;
+        source: string;
+      }>;
+    };
+    expect(body.candidates).toHaveLength(1);
+    expect(body.candidates[0]).toMatchObject({
+      title: "Poetics",
+      publish_year: -335,
+      source: "wikipedia",
+    });
+    expect(fetchSpy).toHaveBeenCalled();
+    fetchSpy.mockRestore();
   });
 });

@@ -14,6 +14,10 @@ import {
   isConnectionType,
   normalizeConnectionPairKey,
 } from "@/lib/books/connections";
+import {
+  type BulkBookPatch,
+  computeBulkUpdatePatch,
+} from "@/lib/books/triage";
 import type {
   CreateBookInput,
   UpdateBookInput,
@@ -51,6 +55,11 @@ export class MissingBookReferenceError extends Error {
     this.name = "MissingBookReferenceError";
   }
 }
+
+export type BulkUpdateResult = {
+  updated: CatalogueBook[];
+  skipped: Array<{ id: string; reason: string }>;
+};
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -429,6 +438,98 @@ export async function createBook(input: CreateBookInput): Promise<CatalogueBook>
   });
 }
 
+function isUniqueViolationError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "23505"
+  );
+}
+
+function buildCategoryFields(
+  existing: Pick<BookRow, "top_category" | "sub_category">,
+  patch: Pick<UpdateBookInput, "top_category" | "sub_category">,
+): Pick<BookUpdate, "top_category" | "sub_category" | "category"> {
+  const fields: Pick<BookUpdate, "top_category" | "sub_category" | "category"> =
+    {};
+
+  if (patch.top_category !== undefined) {
+    fields.top_category = patch.top_category;
+  }
+  if (patch.sub_category !== undefined) {
+    fields.sub_category = patch.sub_category;
+  }
+  if (patch.top_category !== undefined || patch.sub_category !== undefined) {
+    const nextTop =
+      patch.top_category !== undefined
+        ? patch.top_category
+        : existing.top_category;
+    const nextSub =
+      patch.sub_category !== undefined
+        ? patch.sub_category
+        : existing.sub_category;
+    fields.category = nextSub ?? nextTop ?? UNCATEGORIZED_CATEGORY;
+  }
+
+  return fields;
+}
+
+function buildSupabaseUpdatePayload(
+  existing: Pick<BookRow, "top_category" | "sub_category">,
+  patch: UpdateBookInput,
+): BookUpdate {
+  const updatePayload: BookUpdate = {
+    updated_at: new Date().toISOString(),
+    ...buildCategoryFields(existing, patch),
+  };
+
+  if (patch.title !== undefined) {
+    updatePayload.title = patch.title;
+  }
+  if (patch.author !== undefined) {
+    updatePayload.author = patch.author;
+  }
+  if (patch.edition !== undefined) {
+    updatePayload.edition = patch.edition || null;
+  }
+  if (patch.shelf !== undefined) {
+    updatePayload.shelf_row = patch.shelf;
+  }
+  if (patch.position !== undefined) {
+    updatePayload.position = patch.position || null;
+  }
+  if (patch.summary !== undefined) {
+    updatePayload.summary = patch.summary;
+  }
+  if (patch.tags !== undefined) {
+    updatePayload.tags = patch.tags;
+  }
+  if (patch.publish_year !== undefined) {
+    updatePayload.publish_year = patch.publish_year;
+  }
+  if (patch.reading_status !== undefined) {
+    updatePayload.reading_status = patch.reading_status;
+  }
+  if (patch.rating !== undefined) {
+    updatePayload.rating = patch.rating;
+  }
+  if (patch.date_started !== undefined) {
+    updatePayload.date_started = patch.date_started;
+  }
+  if (patch.date_finished !== undefined) {
+    updatePayload.date_finished = patch.date_finished;
+  }
+  if (patch.personal_notes !== undefined) {
+    updatePayload.personal_notes = patch.personal_notes;
+  }
+  if (patch.loaned_to !== undefined) {
+    updatePayload.loaned_to = patch.loaned_to;
+  }
+
+  return updatePayload;
+}
+
 export async function updateBook(
   id: string,
   patch: UpdateBookInput,
@@ -441,72 +542,7 @@ export async function updateBook(
       return null;
     }
 
-    const updatePayload: BookUpdate = {
-      updated_at: new Date().toISOString(),
-    };
-
-    if (patch.title !== undefined) {
-      updatePayload.title = patch.title;
-    }
-    if (patch.author !== undefined) {
-      updatePayload.author = patch.author;
-    }
-    if (patch.edition !== undefined) {
-      updatePayload.edition = patch.edition || null;
-    }
-    if (patch.shelf !== undefined) {
-      updatePayload.shelf_row = patch.shelf;
-    }
-    if (patch.position !== undefined) {
-      updatePayload.position = patch.position || null;
-    }
-    if (patch.top_category !== undefined) {
-      updatePayload.top_category = patch.top_category;
-    }
-    if (patch.sub_category !== undefined) {
-      updatePayload.sub_category = patch.sub_category;
-    }
-    if (
-      patch.top_category !== undefined ||
-      patch.sub_category !== undefined
-    ) {
-      const nextTop =
-        patch.top_category !== undefined
-          ? patch.top_category
-          : existing.top_category;
-      const nextSub =
-        patch.sub_category !== undefined
-          ? patch.sub_category
-          : existing.sub_category;
-      updatePayload.category = nextSub ?? nextTop ?? UNCATEGORIZED_CATEGORY;
-    }
-    if (patch.summary !== undefined) {
-      updatePayload.summary = patch.summary;
-    }
-    if (patch.tags !== undefined) {
-      updatePayload.tags = patch.tags;
-    }
-    if (patch.publish_year !== undefined) {
-      updatePayload.publish_year = patch.publish_year;
-    }
-    if (patch.reading_status !== undefined) {
-      updatePayload.reading_status = patch.reading_status;
-    }
-    if (patch.rating !== undefined) {
-      updatePayload.rating = patch.rating;
-    }
-    if (patch.date_started !== undefined) {
-      updatePayload.date_started = patch.date_started;
-    }
-    if (patch.date_finished !== undefined) {
-      updatePayload.date_finished = patch.date_finished;
-    }
-    if (patch.personal_notes !== undefined) {
-      updatePayload.personal_notes = patch.personal_notes;
-    }
-    if (patch.loaned_to !== undefined) {
-      updatePayload.loaned_to = patch.loaned_to;
-    }
+    const updatePayload = buildSupabaseUpdatePayload(existing, patch);
 
     const { data, error } = await supabase
       .from("books")
@@ -562,6 +598,187 @@ export async function updateBook(
     });
     await saveLocalState(statePath, state);
     return updated;
+  });
+}
+
+export async function bulkUpdateBooks(
+  ids: readonly string[],
+  patch: BulkBookPatch,
+): Promise<BulkUpdateResult> {
+  const dedupedIds: string[] = [];
+  const seenIds = new Set<string>();
+  for (const rawId of ids) {
+    const trimmed = rawId.trim();
+    if (trimmed && !seenIds.has(trimmed)) {
+      seenIds.add(trimmed);
+      dedupedIds.push(trimmed);
+    }
+  }
+
+  if (dedupedIds.length === 0) {
+    return { updated: [], skipped: [] };
+  }
+
+  if (isSupabaseConfigured()) {
+    const supabase = createSupabaseAdminClient();
+    const rowByIdentifier = new Map<string, BookRow>();
+
+    const { data: keyRows, error: keyLookupError } = await supabase
+      .from("books")
+      .select("*")
+      .in("book_key", dedupedIds);
+
+    if (keyLookupError) {
+      throw keyLookupError;
+    }
+
+    for (const row of keyRows ?? []) {
+      if (row.book_key) {
+        rowByIdentifier.set(row.book_key, row);
+      }
+      rowByIdentifier.set(row.id, row);
+    }
+
+    const missingUuidIds = dedupedIds.filter(
+      (id) => !rowByIdentifier.has(id) && UUID_PATTERN.test(id),
+    );
+    if (missingUuidIds.length > 0) {
+      const { data: uuidRows, error: uuidLookupError } = await supabase
+        .from("books")
+        .select("*")
+        .in("id", missingUuidIds);
+
+      if (uuidLookupError) {
+        throw uuidLookupError;
+      }
+
+      for (const row of uuidRows ?? []) {
+        if (row.book_key) {
+          rowByIdentifier.set(row.book_key, row);
+        }
+        rowByIdentifier.set(row.id, row);
+      }
+    }
+
+    const updated: CatalogueBook[] = [];
+    const skipped: Array<{ id: string; reason: string }> = [];
+    const processedRowUuids = new Set<string>();
+
+    for (const id of dedupedIds) {
+      const existing = rowByIdentifier.get(id);
+      if (!existing) {
+        skipped.push({ id, reason: "Book not found." });
+        continue;
+      }
+
+      if (processedRowUuids.has(existing.id)) {
+        continue;
+      }
+      processedRowUuids.add(existing.id);
+
+      const existingBook = mapSupabaseRowToBook(existing);
+      const updatePatch = computeBulkUpdatePatch(existingBook, patch);
+      const updatePayload = buildSupabaseUpdatePayload(existing, updatePatch);
+
+      const { data, error } = await supabase
+        .from("books")
+        .update(updatePayload)
+        .eq("id", existing.id)
+        .select("*")
+        .single();
+
+      if (error) {
+        if (isUniqueViolationError(error)) {
+          skipped.push({
+            id,
+            reason: "A volume with this shelf copy identity already exists.",
+          });
+          continue;
+        }
+        throw error;
+      }
+
+      updated.push(mapSupabaseRowToBook(data));
+    }
+
+    return { updated, skipped };
+  }
+
+  const statePath = getStateFilePath();
+  return withStateLock(statePath, async () => {
+    const [baseBooks, state] = await Promise.all([
+      loadBaseCatalogue(),
+      loadLocalState(statePath),
+    ]);
+
+    const deletedSet = new Set(state.deleted);
+    const createdIndexById = new Map<string, number>();
+    for (let i = 0; i < state.created.length; i += 1) {
+      createdIndexById.set(state.created[i].id, i);
+    }
+
+    const baseBookById = new Map<string, CatalogueBook>();
+    for (const book of baseBooks) {
+      baseBookById.set(book.id, book);
+    }
+
+    const updated: CatalogueBook[] = [];
+    const skipped: Array<{ id: string; reason: string }> = [];
+
+    for (const id of dedupedIds) {
+      if (deletedSet.has(id)) {
+        skipped.push({ id, reason: "Book not found." });
+        continue;
+      }
+
+      const createdIndex = createdIndexById.get(id);
+      if (createdIndex !== undefined) {
+        const currentBook = normalizeCatalogueBook(
+          state.created[createdIndex] as Record<string, unknown>,
+        );
+        const updatePatch = computeBulkUpdatePatch(currentBook, patch);
+        const nextBook = normalizeCatalogueBook({
+          ...currentBook,
+          ...updatePatch,
+          id,
+        });
+        state.created[createdIndex] = nextBook;
+        updated.push(nextBook);
+        continue;
+      }
+
+      const baseBook = baseBookById.get(id);
+      if (!baseBook) {
+        skipped.push({ id, reason: "Book not found." });
+        continue;
+      }
+
+      const currentOverride = state.overrides[id] ?? {};
+      const currentBook = normalizeCatalogueBook({
+        ...baseBook,
+        ...currentOverride,
+        id,
+      });
+      const updatePatch = computeBulkUpdatePatch(currentBook, patch);
+      const nextOverride: Partial<CatalogueBook> = {
+        ...currentOverride,
+        ...updatePatch,
+      };
+      state.overrides[id] = nextOverride;
+
+      const nextBook = normalizeCatalogueBook({
+        ...baseBook,
+        ...nextOverride,
+        id,
+      });
+      updated.push(nextBook);
+    }
+
+    if (updated.length > 0) {
+      await saveLocalState(statePath, state);
+    }
+
+    return { updated, skipped };
   });
 }
 

@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  validateBulkBooksInput,
   validateCreateBookInput,
   validateUpdateBookInput,
 } from "./validation";
@@ -138,5 +139,78 @@ describe("validateUpdateBookInput", () => {
     expect(validateUpdateBookInput({ date_finished: "2026-02-30" }).ok).toBe(
       false,
     );
+  });
+});
+
+describe("validateBulkBooksInput", () => {
+  it("normalizes and deduplicates ids and parses valid bulk patches", () => {
+    const result = validateBulkBooksInput({
+      ids: [" bk_1 ", "bk_2", "bk_1"],
+      patch: {
+        reading_status: "finished",
+        shelf: 14,
+        top_category: "   ",
+        add_tags: "Philosophy,  Critical Theory , philosophy",
+        remove_tags: ["Old Tag", "old tag"],
+      },
+    });
+
+    expect(result.ok).toBe(true);
+    if (!result.ok) return;
+
+    expect(result.data).toEqual({
+      ids: ["bk_1", "bk_2"],
+      patch: {
+        reading_status: "finished",
+        shelf: 14,
+        top_category: null,
+        add_tags: ["philosophy", "critical theory"],
+        remove_tags: ["old tag"],
+      },
+    });
+  });
+
+  it("rejects non-objects, empty/oversized/blank ids, empty/unknown patches, and invalid fields", () => {
+    expect(validateBulkBooksInput(null).ok).toBe(false);
+    expect(validateBulkBooksInput([]).ok).toBe(false);
+    expect(
+      validateBulkBooksInput({ ids: [], patch: { shelf: 1 } }).ok,
+    ).toBe(false);
+    expect(
+      validateBulkBooksInput({ ids: ["   "], patch: { shelf: 1 } }).ok,
+    ).toBe(false);
+
+    const tooManyIds = Array.from({ length: 201 }, (_, idx) => `bk_${idx}`);
+    expect(
+      validateBulkBooksInput({ ids: tooManyIds, patch: { shelf: 1 } }).ok,
+    ).toBe(false);
+
+    const exactly200Ids = Array.from({ length: 200 }, (_, idx) => `bk_${idx}`);
+    expect(
+      validateBulkBooksInput({ ids: exactly200Ids, patch: { shelf: 1 } }).ok,
+    ).toBe(true);
+
+    expect(validateBulkBooksInput({ ids: ["bk_1"], patch: {} }).ok).toBe(false);
+    expect(
+      validateBulkBooksInput({ ids: ["bk_1"], patch: { add_tags: [] } }).ok,
+    ).toBe(false);
+    expect(
+      validateBulkBooksInput({ ids: ["bk_1"], patch: { title: "Blocked" } }).ok,
+    ).toBe(false);
+    expect(
+      validateBulkBooksInput({ ids: ["bk_1"], patch: { shelf: -3 } }).ok,
+    ).toBe(false);
+    expect(
+      validateBulkBooksInput({
+        ids: ["bk_1"],
+        patch: { reading_status: "archived" },
+      }).ok,
+    ).toBe(false);
+    expect(
+      validateBulkBooksInput({
+        ids: ["bk_1"],
+        patch: { add_tags: 42 },
+      }).ok,
+    ).toBe(false);
   });
 });

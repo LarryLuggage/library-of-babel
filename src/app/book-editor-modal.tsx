@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useId, useRef, useState } from "react";
 import {
   formatPublishYear,
@@ -12,6 +13,26 @@ import {
 } from "@/lib/books/catalogue";
 import type { LookupCandidate } from "@/lib/books/lookup";
 import { ModalDialog, useDialogClose } from "./modal-dialog";
+
+const IsbnScanner = dynamic(() => import("./isbn-scanner"), {
+  ssr: false,
+  loading: () => <p className="editor-lookup-empty">Loading ISBN scanner…</p>,
+});
+
+function formatLookupSource(
+  source: LookupCandidate["source"] | string,
+): string {
+  switch (source) {
+    case "open_library":
+      return "Open Library";
+    case "google_books":
+      return "Google Books";
+    case "wikipedia":
+      return "Wikipedia";
+    default:
+      return source;
+  }
+}
 
 function BookEditorForm({
   mode,
@@ -42,6 +63,9 @@ function BookEditorForm({
   const formPrefix = useId();
   const divisionListId = `${formPrefix}-divisions`;
   const lookupInputId = `${formPrefix}-lookup`;
+  const scannerRegionId = `${formPrefix}-scanner`;
+  const editLookupRegionId = `${formPrefix}-edit-lookup`;
+  const fillMissingCheckboxId = `${formPrefix}-fill-missing`;
 
   const titleRef = useRef<HTMLInputElement>(null);
   const authorRef = useRef<HTMLInputElement>(null);
@@ -78,8 +102,10 @@ function BookEditorForm({
     "title" | "author" | "shelf" | "publish_year" | null
   >(null);
 
-  // Quick bibliographic lookup state (create mode only)
-  const [lookupQuery, setLookupQuery] = useState("");
+  // Quick bibliographic lookup & ISBN scanner state
+  const [lookupQuery, setLookupQuery] = useState(() =>
+    mode === "edit" && book ? `${book.title} ${book.author}`.trim() : "",
+  );
   const [isLookingUp, setIsLookingUp] = useState(false);
   const [hasLookedUp, setHasLookedUp] = useState(false);
   const [lookupCandidates, setLookupCandidates] = useState<LookupCandidate[]>(
@@ -90,11 +116,18 @@ function BookEditorForm({
   const [selectedCandidateIndex, setSelectedCandidateIndex] = useState<
     number | null
   >(null);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [isEditLookupOpen, setIsEditLookupOpen] = useState(false);
+  const [fillMissingOnly, setFillMissingOnly] = useState(mode === "edit");
 
-  const handleLookup = async () => {
-    const trimmed = lookupQuery.trim();
+  const handleLookup = async (
+    overrideQuery?: string,
+    options?: { enrich?: boolean; initialNotice?: string },
+  ) => {
+    const trimmed = (overrideQuery ?? lookupQuery).trim();
+    const shouldEnrich = options?.enrich ?? mode === "edit";
     setLookupError("");
-    setLookupNotice("");
+    setLookupNotice(options?.initialNotice ?? "");
     setSelectedCandidateIndex(null);
 
     if (trimmed.length < 2) {
@@ -105,7 +138,7 @@ function BookEditorForm({
     setIsLookingUp(true);
     try {
       const response = await fetch(
-        `/api/books/lookup?q=${encodeURIComponent(trimmed)}`,
+        `/api/books/lookup?q=${encodeURIComponent(trimmed)}${shouldEnrich ? "&enrich=1" : ""}`,
       );
       const data = (await response.json().catch(() => ({}))) as {
         candidates?: LookupCandidate[];
@@ -136,6 +169,15 @@ function BookEditorForm({
     }
   };
 
+  const handleIsbnDetected = (isbn: string) => {
+    setIsScannerOpen(false);
+    setLookupQuery(isbn);
+    void handleLookup(isbn, {
+      enrich: mode === "edit",
+      initialNotice: `Scanned ISBN ${isbn}.`,
+    });
+  };
+
   const handleLookupKeyDown = (
     event: React.KeyboardEvent<HTMLInputElement>,
   ) => {
@@ -149,19 +191,58 @@ function BookEditorForm({
     candidate: LookupCandidate,
     index: number,
   ) => {
+    setSelectedCandidateIndex(index);
+    setErrorMsg("");
+    setInvalidField(null);
+
+    if (mode === "edit" && fillMissingOnly) {
+      const filledFields: string[] = [];
+
+      if (!title.trim() && candidate.title.trim()) {
+        setTitle(candidate.title);
+        filledFields.push("title");
+      }
+      if (!author.trim() && candidate.author.trim()) {
+        setAuthor(candidate.author);
+        filledFields.push("author");
+      }
+      if (!edition.trim() && candidate.edition.trim()) {
+        setEdition(candidate.edition);
+        filledFields.push("edition");
+      }
+      if (!publishYear.trim() && candidate.publish_year !== null) {
+        setPublishYear(String(candidate.publish_year));
+        filledFields.push("publish year");
+      }
+      if (!tagsText.trim() && candidate.tags.length > 0) {
+        setTagsText(candidate.tags.slice(0, 20).join(", "));
+        filledFields.push("tags");
+      }
+      if (!summary.trim() && candidate.summary?.trim()) {
+        setSummary(candidate.summary);
+        filledFields.push("summary");
+      }
+
+      setLookupNotice(
+        filledFields.length > 0
+          ? `Filled missing ${filledFields.join(", ")} — review before saving.`
+          : "All available fields on that candidate are already populated on this volume.",
+      );
+      return;
+    }
+
     setTitle(candidate.title);
     setAuthor(candidate.author);
     setEdition(candidate.edition);
     setPublishYear(
       candidate.publish_year !== null ? String(candidate.publish_year) : "",
     );
-    setTagsText(candidate.tags.join(", "));
+    setTagsText(candidate.tags.slice(0, 20).join(", "));
     setSummary(candidate.summary ?? "");
-    setSelectedCandidateIndex(index);
-    setErrorMsg("");
-    setInvalidField(null);
     setLookupNotice(
-      "Filled bibliographic details — verify shelf and position before saving.",
+      mode === "create"
+        ? "Filled bibliographic details — verify shelf and position before saving."
+        : "Applied candidate bibliographic details — review before saving.",
     );
   };
 
@@ -329,9 +410,40 @@ function BookEditorForm({
         aria-labelledby={titleId}
         noValidate
       >
-        {mode === "create" && (
-          <fieldset className="editor-lookup-panel">
-            <legend>Quick bibliographic lookup</legend>
+        {mode === "edit" && (
+          <div className="editor-lookup-disclosure">
+            <button
+              type="button"
+              className="pathfinder-btn btn-secondary font-mono editor-lookup-toggle"
+              aria-expanded={isEditLookupOpen}
+              aria-controls={editLookupRegionId}
+              onClick={() => {
+                setIsEditLookupOpen((prev) => {
+                  const next = !prev;
+                  if (!next) {
+                    setIsScannerOpen(false);
+                  }
+                  return next;
+                });
+              }}
+            >
+              {isEditLookupOpen
+                ? "Hide Find / Enrich metadata"
+                : "Find / Enrich metadata"}
+            </button>
+          </div>
+        )}
+
+        {(mode === "create" || isEditLookupOpen) && (
+          <fieldset
+            id={mode === "edit" ? editLookupRegionId : undefined}
+            className="editor-lookup-panel"
+          >
+            <legend>
+              {mode === "edit"
+                ? "Find & enrich bibliographic metadata"
+                : "Quick bibliographic lookup"}
+            </legend>
 
             <div className="editor-lookup-controls">
               <div className="editor-field editor-lookup-input-wrap">
@@ -351,14 +463,53 @@ function BookEditorForm({
                   placeholder="e.g., Ficciones Borges or 9780802130303"
                 />
               </div>
-              <button
-                type="button"
-                className="pathfinder-btn btn-secondary font-mono editor-lookup-btn"
-                onClick={() => void handleLookup()}
-                disabled={isLookingUp || isSaving}
-              >
-                {isLookingUp ? "SEARCHING..." : "Lookup"}
-              </button>
+              <div className="editor-lookup-btn-group">
+                <button
+                  type="button"
+                  className="pathfinder-btn btn-secondary font-mono editor-lookup-btn"
+                  onClick={() => void handleLookup()}
+                  disabled={isLookingUp || isSaving}
+                >
+                  {isLookingUp ? "SEARCHING..." : "Lookup"}
+                </button>
+                <button
+                  type="button"
+                  className="pathfinder-btn btn-secondary font-mono editor-lookup-btn"
+                  aria-expanded={isScannerOpen}
+                  aria-controls={scannerRegionId}
+                  onClick={() => setIsScannerOpen((prev) => !prev)}
+                  disabled={isSaving}
+                >
+                  {isScannerOpen ? "Close scanner" : "Scan ISBN"}
+                </button>
+              </div>
+            </div>
+
+            {mode === "edit" && (
+              <div className="editor-checkbox-row">
+                <input
+                  id={fillMissingCheckboxId}
+                  type="checkbox"
+                  checked={fillMissingOnly}
+                  onChange={(event) => setFillMissingOnly(event.target.checked)}
+                />
+                <label htmlFor={fillMissingCheckboxId}>
+                  Fill missing fields only
+                </label>
+              </div>
+            )}
+
+            <div
+              id={scannerRegionId}
+              className="editor-scanner-wrap"
+              hidden={!isScannerOpen}
+            >
+              {isScannerOpen && (
+                <IsbnScanner
+                  onDetected={handleIsbnDetected}
+                  onClose={() => setIsScannerOpen(false)}
+                />
+              )}
             </div>
 
             {lookupError && (
@@ -415,9 +566,7 @@ function BookEditorForm({
                           </span>
                         </span>
                         <span className="editor-lookup-source font-mono">
-                          {candidate.source === "open_library"
-                            ? "Open Library"
-                            : "Google Books"}
+                          {formatLookupSource(candidate.source)}
                         </span>
                       </button>
                     </li>
@@ -426,6 +575,9 @@ function BookEditorForm({
               </ul>
             )}
           </fieldset>
+        )}
+        {mode === "edit" && !isEditLookupOpen && (
+          <div id={editLookupRegionId} hidden />
         )}
 
         <div className="editor-grid">

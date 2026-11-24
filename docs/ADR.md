@@ -162,3 +162,23 @@ Prior to Track 2, the static catalogue (`shelf_catalog_full.json`) had significa
 * Canonical catalogue coverage rose from `343 -> 569` summaries (`0` broken/bio/dot-split/key-drift findings), `689 -> 766` publication years (`26` BCE, `16` Early CE), and `705 -> 765` tagged volumes, while `npm run clean:catalogue` confirmed `0` further changes on re-run.
 * Live Supabase `public.books` now reflects `568` summaries, `764` years (`26` BCE, `16` Early CE), and `762` tagged rows across `877` active records with `0` untouched rows and zero loss of curator state.
 * All `81` Vitest tests across `12` suites, `eslint`, `tsc --noEmit`, `next build`, and desktop (`1280x800`) + mobile (`390x844`) Chromium visual inspections pass; Track 4 (Playwright E2E, CI, and `README.md`) remains deferred until approved.
+
+## ADR 9: Bulk Curator Operations, Metadata & Duplicate Triage, On-Demand ISBN Barcode Scanning, and Production Documentation
+
+### Date
+2026-11-23
+
+### Context
+With active live curation on production (`877` volumes, `226` reading statuses, `108` ratings) and `311` remaining volumes still missing summaries or years, maintaining shelf locations, tags, reading statuses, and occasional duplicate/split records one book at a time created unnecessary friction. Furthermore, adding newly acquired physical books on mobile required manually typing ISBNs, and `README.md` remained a 45-line Phase 1 stub that no longer documented the full application, environment variables, migrations, or enrichment CLI.
+
+### Decision
+* **Deterministic Curator Triage & Duplicate Detection (`src/lib/books/triage.ts`, `src/app/curator-triage-panel.tsx`)**: Added pure helpers (`getMissingMetadataReasons`, `findPotentialDuplicateGroups`, `computeTriageCounts`, `computeBulkUpdatePatch`) wired into a `Curator triage` filter in `CatalogueApp`. Duplicate clustering preserves volume/part markers (`Vol. 1` vs `Vol. 2`), normalizes diacritics/subtitles, and requires non-conflicting author surnames on same-shelf matches so distinct authors sharing generic anthology titles (e.g., *Selected Poems*) are never false-grouped. Deletions remain explicit, curator-gated, and 2-step confirmed.
+* **Auth-Gated Batch Mutations (`POST /api/books/bulk`, `src/lib/books/validation.ts`, `src/lib/books/repository.ts`, `src/app/catalogue-ledger.tsx`)**: Added `validateBulkBooksInput` (`1..200` deduplicated IDs, non-empty patch) and `bulkUpdateBooks()` supporting atomic single-lock writes in Local Mode and per-row collision-safe updates (`23505` reported in `skipped`) in Supabase Mode. Added accessible multi-select checkboxes and a collapsible sticky `<form>` Bulk Action Bar in `CatalogueLedger` requiring an explicit submit button.
+* **Wikipedia-Backed 1-Click Enrich (`src/lib/books/lookup.ts`, `src/app/book-detail-card.tsx`, `src/app/book-editor-modal.tsx`)**: Extended `/api/books/lookup` with an optional `?enrich=1` English Wikipedia summary/year fallback (`4000ms` timeout, biography/disambiguation guards) powering an inline selective field-diff preview on incomplete book detail cards and a collapsed `"Find / Enrich metadata"` disclosure in edit mode.
+* **Lazy-Loaded Dual-Engine ISBN Barcode Scanner (`src/app/isbn-scanner.tsx`)**: Added `@zxing/browser` and `@zxing/library`, loaded exclusively on demand via `next/dynamic(..., { ssr: false })` and dynamic `import()` when the curator opens `"Scan ISBN"`. Uses native `BarcodeDetector` (`ean_13`, `ean_8`) when available, falls back to ZXing on iOS Safari/Firefox, always stops `MediaStream` tracks cleanly, and includes a `"Scan barcode from photo"` `<input type="file" capture="environment">` fallback.
+* **Production Documentation (`README.md`)**: Replaced the Phase 1 stub with complete documentation of views, curator auth, Local vs. Supabase storage modes, `.env.example` variables, both migrations, seeding, Vercel deployment, enrichment scripts, and test/build commands.
+
+### Consequences
+* Curators can triage missing metadata and true duplicates, batch-update reading status/shelf/division/tags in one request, selectively enrich individual books in-app, and scan ISBN barcodes on mobile without bloating the initial catalogue JavaScript bundle.
+* All `105` Vitest unit and route tests across `14` suites, `eslint`, `tsc --noEmit`, and `next build` pass cleanly; live Chromium QA confirmed duplicate triage (`2` true groups), bulk mode, live 1-Click Enrich persistence, ISBN scanner mount, and `0px` mobile horizontal overflow.
+* Milestone B (local taste-graph *"What Should I Read Next?"* shelf recommender + optional Gemini AI Librarian chat) is queued next once Milestone A is committed.

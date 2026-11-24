@@ -26,8 +26,16 @@ import {
   normalizeConnectionPairKey,
   type EditorialConnection,
 } from "@/lib/books/connections";
+import {
+  computeTriageCounts,
+  getDuplicateBookIdSet,
+  getMissingMetadataReasons,
+  type BulkBookPatch,
+  type TriageFilter,
+} from "@/lib/books/triage";
 import { CatalogueConstellation } from "./catalogue-constellation";
 import { CatalogueLedger } from "./catalogue-ledger";
+import { CuratorTriagePanel } from "./curator-triage-panel";
 import {
   BookDetailCard,
   type BookUpdatePatch,
@@ -177,6 +185,14 @@ function getSearchText(book: CatalogueBook): string {
 const RESULTS_TABS = ["ledger", "shelves", "timeline"] as const;
 type ResultsTab = (typeof RESULTS_TABS)[number];
 
+const TRIAGE_FILTER_CHIP_LABELS: Record<Exclude<TriageFilter, "">, string> = {
+  missing_any: "Triage: Missing any metadata",
+  missing_summary: "Triage: Missing summary",
+  missing_year: "Triage: Missing publish year",
+  missing_tags: "Triage: Missing subjects",
+  duplicates: "Triage: Possible duplicates",
+};
+
 export function CatalogueApp({
   initialBooks,
   initialConnections,
@@ -223,6 +239,14 @@ export function CatalogueApp({
   const [shelfFilter, setShelfFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("");
   const [authorInitial, setAuthorInitial] = useState("");
+  const [triageFilter, setTriageFilter] = useState<TriageFilter>("");
+
+  // Bulk Curator Mode
+  const [isBulkMode, setIsBulkMode] = useState(false);
+  const [selectedBookIds, setSelectedBookIds] = useState<Set<string>>(
+    () => new Set(),
+  );
+  const [isApplyingBulk, setIsApplyingBulk] = useState(false);
 
   // Tabs
   const [mapMode, setMapMode] = useState<"similarity" | "tag">("similarity");
@@ -282,6 +306,13 @@ export function CatalogueApp({
   const subjectSelectId = `${searchIdPrefix}-subject`;
   const shelfSelectId = `${searchIdPrefix}-shelf`;
   const statusSelectId = `${searchIdPrefix}-status`;
+  const triageSelectId = `${searchIdPrefix}-triage`;
+
+  const triageSummary = useMemo(() => computeTriageCounts(books), [books]);
+  const duplicateIdSet = useMemo(
+    () => getDuplicateBookIdSet(triageSummary.duplicateGroups),
+    [triageSummary.duplicateGroups],
+  );
 
   const catalogueEntries = useMemo<LedgerBook[]>(
     () =>
@@ -382,6 +413,39 @@ export function CatalogueApp({
       if (authorInitial && getAuthorInitial(book.author) !== authorInitial) {
         return false;
       }
+      if (triageFilter) {
+        if (triageFilter === "duplicates") {
+          if (
+            !duplicateIdSet.has(book.id) &&
+            !duplicateIdSet.has(getBookKey(book))
+          ) {
+            return false;
+          }
+        } else {
+          const missingReasons = getMissingMetadataReasons(book);
+          if (triageFilter === "missing_any" && missingReasons.length === 0) {
+            return false;
+          }
+          if (
+            triageFilter === "missing_summary" &&
+            !missingReasons.includes("summary")
+          ) {
+            return false;
+          }
+          if (
+            triageFilter === "missing_year" &&
+            !missingReasons.includes("publish_year")
+          ) {
+            return false;
+          }
+          if (
+            triageFilter === "missing_tags" &&
+            !missingReasons.includes("tags")
+          ) {
+            return false;
+          }
+        }
+      }
       return true;
     });
   }, [
@@ -389,9 +453,11 @@ export function CatalogueApp({
     catalogueEntries,
     catalogueQuery,
     divisionFilter,
+    duplicateIdSet,
     shelfFilter,
     statusFilter,
     tagFilter,
+    triageFilter,
   ]);
 
   const hasCatalogueFilters = Boolean(
@@ -400,7 +466,8 @@ export function CatalogueApp({
       tagFilter ||
       shelfFilter ||
       statusFilter ||
-      authorInitial,
+      authorInitial ||
+      triageFilter,
   );
 
   const activeFilterChips = useMemo(() => {
@@ -451,6 +518,13 @@ export function CatalogueApp({
         clear: () => setAuthorInitial(""),
       });
     }
+    if (triageFilter) {
+      chips.push({
+        key: "triage",
+        label: TRIAGE_FILTER_CHIP_LABELS[triageFilter],
+        clear: () => setTriageFilter(""),
+      });
+    }
     return chips;
   }, [
     authorInitial,
@@ -459,6 +533,7 @@ export function CatalogueApp({
     shelfFilter,
     statusFilter,
     tagFilter,
+    triageFilter,
   ]);
 
   const clearCatalogueFilters = () => {
@@ -468,6 +543,7 @@ export function CatalogueApp({
     setShelfFilter("");
     setStatusFilter("");
     setAuthorInitial("");
+    setTriageFilter("");
   };
 
   const activeBook = useMemo(() => {
@@ -545,6 +621,7 @@ export function CatalogueApp({
 
   const handleUnauthorized = (reason?: string) => {
     setAuthState({ authRequired: true, isCurator: false });
+    setIsBulkMode(false);
     requireCuratorAuth(
       reason ?? "Your curator session has expired. Please sign in to continue.",
     );
@@ -567,6 +644,8 @@ export function CatalogueApp({
         authRequired: data.authRequired ?? authState.authRequired,
         isCurator: Boolean(data.isCurator),
       });
+      setIsBulkMode(false);
+      setSelectedBookIds(new Set());
       showToast("success", "Signed out of curator mode.");
     } catch {
       showToast("error", "Network error while signing out.");
@@ -607,12 +686,123 @@ export function CatalogueApp({
 
     const updated = data.book;
     setBooks((prev) =>
-      prev.map((candidate) => (candidate.id === bookId ? updated : candidate)),
+      prev.map((candidate) =>
+        candidate.id === bookId ||
+        getBookKey(candidate) === bookId ||
+        candidate.id === updated.id
+          ? updated
+          : candidate,
+      ),
     );
-    if (activeBookId === bookId) {
+    if (activeBookId === bookId || activeBookId === getBookKey(updated)) {
       setActiveBookId(getBookKey(updated));
     }
     return updated;
+  };
+
+  const handleToggleBulkMode = () => {
+    if (isBulkMode) {
+      setIsBulkMode(false);
+      setSelectedBookIds(new Set());
+      return;
+    }
+    if (!canEdit) {
+      requireCuratorAuth(
+        "Curator sign-in is required before making bulk catalogue changes.",
+        () => setIsBulkMode(true),
+      );
+      return;
+    }
+    setIsBulkMode(true);
+  };
+
+  const handleToggleSelect = (bookId: string) => {
+    setSelectedBookIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(bookId)) {
+        next.delete(bookId);
+      } else {
+        next.add(bookId);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectVisible = (visibleBooks: readonly LedgerBook[]) => {
+    setSelectedBookIds((prev) => {
+      const next = new Set(prev);
+      for (const book of visibleBooks) {
+        next.add(book.id);
+      }
+      return next;
+    });
+  };
+
+  const handleClearSelection = () => {
+    setSelectedBookIds(new Set());
+  };
+
+  const handleBulkUpdate = async (patch: BulkBookPatch) => {
+    const validBookIds = new Set(books.map((book) => book.id));
+    const ids = [...selectedBookIds].filter((id) => validBookIds.has(id));
+    if (ids.length === 0) {
+      return;
+    }
+
+    setIsApplyingBulk(true);
+    try {
+      const response = await fetch("/api/books/bulk", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, patch }),
+      });
+
+      const data = (await response.json().catch(() => ({}))) as {
+        updated?: CatalogueBook[];
+        skipped?: Array<{ id: string; reason: string }>;
+        error?: string;
+      };
+
+      if (response.status === 401) {
+        const msg =
+          data.error || "Curator sign-in required to apply bulk updates.";
+        handleUnauthorized(msg);
+        throw new Error(msg);
+      }
+
+      if (!response.ok || !Array.isArray(data.updated)) {
+        const msg = data.error || "Could not apply bulk catalogue updates.";
+        showToast("error", msg);
+        throw new Error(msg);
+      }
+
+      const updatedList = data.updated;
+      const skippedList = Array.isArray(data.skipped) ? data.skipped : [];
+      const updatedById = new Map<string, CatalogueBook>();
+      for (const updated of updatedList) {
+        updatedById.set(updated.id, updated);
+        updatedById.set(getBookKey(updated), updated);
+      }
+
+      setBooks((prev) =>
+        prev.map(
+          (candidate) =>
+            updatedById.get(candidate.id) ??
+            updatedById.get(getBookKey(candidate)) ??
+            candidate,
+        ),
+      );
+
+      setSelectedBookIds(new Set());
+      const skippedNote =
+        skippedList.length > 0 ? ` (${skippedList.length} skipped)` : "";
+      showToast(
+        "success",
+        `Updated ${updatedList.length} ${updatedList.length === 1 ? "volume" : "volumes"}${skippedNote}.`,
+      );
+    } finally {
+      setIsApplyingBulk(false);
+    }
   };
 
   const handleDeleteBook = async (bookId: string, bookTitle: string) => {
@@ -642,6 +832,12 @@ export function CatalogueApp({
     }
 
     setBooks((prev) => prev.filter((candidate) => candidate.id !== bookId));
+    setSelectedBookIds((prev) => {
+      if (!prev.has(bookId)) return prev;
+      const next = new Set(prev);
+      next.delete(bookId);
+      return next;
+    });
     setConnections((prev) =>
       prev.filter(
         (conn) =>
@@ -796,6 +992,19 @@ export function CatalogueApp({
       className="catalogue-results-section"
       aria-label="Catalogue volume views"
     >
+      {triageFilter && (
+        <CuratorTriagePanel
+          triageFilter={triageFilter}
+          duplicateGroups={triageSummary.duplicateGroups}
+          triageSummary={triageSummary}
+          canEdit={canEdit}
+          onInspectBook={(book) => setActiveBookId(getBookKey(book))}
+          onDeleteBook={handleDeleteBook}
+          onRequestAuth={requireCuratorAuth}
+          onClearTriage={() => setTriageFilter("")}
+        />
+      )}
+
       <div className="view-tabs-container bottom-tabs-container">
         <div
           className="view-tabs"
@@ -859,9 +1068,21 @@ export function CatalogueApp({
               shelfFilter,
               statusFilter,
               authorInitial,
+              triageFilter,
             ].join("|")}
             entries={filteredCatalogueEntries}
             onBookClick={(book) => setActiveBookId(getBookKey(book))}
+            isBulkMode={isBulkMode}
+            onToggleBulkMode={handleToggleBulkMode}
+            selectedIds={selectedBookIds}
+            onToggleSelect={handleToggleSelect}
+            onSelectVisible={handleSelectVisible}
+            onClearSelection={handleClearSelection}
+            divisions={divisions
+              .map((division) => division.name)
+              .filter((name) => name !== "Unclassified")}
+            onApplyBulkUpdate={handleBulkUpdate}
+            isApplyingBulk={isApplyingBulk}
           />
         )}
       </div>
@@ -1138,6 +1359,34 @@ export function CatalogueApp({
                   </option>
                 ))}
                 <option value="loaned">Loaned out</option>
+              </select>
+            </div>
+
+            <div className="catalogue-search-field">
+              <label htmlFor={triageSelectId}>Curator triage</label>
+              <select
+                id={triageSelectId}
+                value={triageFilter}
+                onChange={(event) =>
+                  setTriageFilter(event.target.value as TriageFilter)
+                }
+              >
+                <option value="">All records</option>
+                <option value="missing_any">
+                  Missing any metadata ({triageSummary.missing_any})
+                </option>
+                <option value="missing_summary">
+                  Missing summary ({triageSummary.missing_summary})
+                </option>
+                <option value="missing_year">
+                  Missing publish year ({triageSummary.missing_year})
+                </option>
+                <option value="missing_tags">
+                  Missing subjects ({triageSummary.missing_tags})
+                </option>
+                <option value="duplicates">
+                  Possible duplicates ({triageSummary.duplicates})
+                </option>
               </select>
             </div>
           </div>

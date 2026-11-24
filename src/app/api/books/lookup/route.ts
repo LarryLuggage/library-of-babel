@@ -6,6 +6,7 @@ export const dynamic = "force-dynamic";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const query = (searchParams.get("q") ?? "").trim();
+  const enrich = searchParams.get("enrich") === "1";
 
   if (query.length < 2) {
     return Response.json(
@@ -18,7 +19,9 @@ export async function GET(request: Request) {
   }
 
   try {
-    const candidates = await lookupBibliographicCandidates(query);
+    const candidates = await lookupBibliographicCandidates(query, fetch, {
+      enrich,
+    });
     return Response.json({ candidates });
   } catch (error) {
     console.error("Bibliographic lookup failed:", error);

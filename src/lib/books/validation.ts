@@ -2,6 +2,7 @@ import {
   READING_STATUS_VALUES,
   type ReadingStatus,
 } from "./catalogue";
+import type { BulkBookPatch } from "./triage";
 
 export type CreateBookInput = {
   title: string;
@@ -24,14 +25,27 @@ export type CreateBookInput = {
 
 export type UpdateBookInput = Partial<CreateBookInput>;
 
+export type BulkBooksInput = {
+  ids: string[];
+  patch: BulkBookPatch;
+};
+
 export type ValidationResult<T> =
   | { ok: true; data: T }
   | { ok: false; error: string; errors: string[] };
 
 const MAX_TAGS_COUNT = 20;
+const MAX_BULK_BOOK_IDS = 200;
 const MIN_PUBLISH_YEAR = -3000;
 const MAX_PUBLISH_YEAR = 2100;
 const ISO_DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
+const ALLOWED_BULK_PATCH_KEYS = new Set([
+  "reading_status",
+  "shelf",
+  "top_category",
+  "add_tags",
+  "remove_tags",
+]);
 
 function isPlainRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -106,7 +120,11 @@ function parsePublishYear(value: unknown, errors: string[]): number | null {
   return value;
 }
 
-function parseTags(value: unknown, errors: string[]): string[] {
+function parseTags(
+  value: unknown,
+  errors: string[],
+  fieldName = "tags",
+): string[] {
   if (value === undefined || value === null) {
     return [];
   }
@@ -121,7 +139,7 @@ function parseTags(value: unknown, errors: string[]): string[] {
     rawItems = value;
   } else {
     errors.push(
-      "tags must be an array of strings or a comma-separated string.",
+      `${fieldName} must be an array of strings or a comma-separated string.`,
     );
     return [];
   }
@@ -139,7 +157,9 @@ function parseTags(value: unknown, errors: string[]): string[] {
   }
 
   if (normalized.length > MAX_TAGS_COUNT) {
-    errors.push(`tags must contain at most ${MAX_TAGS_COUNT} unique entries.`);
+    errors.push(
+      `${fieldName} must contain at most ${MAX_TAGS_COUNT} unique entries.`,
+    );
     return [];
   }
 
@@ -383,4 +403,102 @@ export function validateUpdateBookInput(
   }
 
   return buildResult(data, errors);
+}
+
+function parseBulkBookIds(value: unknown, errors: string[]): string[] {
+  if (!Array.isArray(value) || value.length === 0) {
+    errors.push(
+      `ids must be an array of 1 to ${MAX_BULK_BOOK_IDS} non-empty strings.`,
+    );
+    return [];
+  }
+
+  if (value.length > MAX_BULK_BOOK_IDS) {
+    errors.push(`ids may contain at most ${MAX_BULK_BOOK_IDS} entries.`);
+    return [];
+  }
+
+  const seen = new Set<string>();
+  const ids: string[] = [];
+
+  for (const rawId of value) {
+    if (typeof rawId !== "string" || rawId.trim().length === 0) {
+      errors.push("Each entry in ids must be a non-empty string.");
+      return [];
+    }
+    const trimmed = rawId.trim();
+    if (!seen.has(trimmed)) {
+      seen.add(trimmed);
+      ids.push(trimmed);
+    }
+  }
+
+  return ids;
+}
+
+/**
+ * Validates and normalizes a bulk book update request (`{ ids, patch }`).
+ */
+export function validateBulkBooksInput(
+  payload: unknown,
+): ValidationResult<BulkBooksInput> {
+  if (!isPlainRecord(payload)) {
+    const message = "Request body must be a JSON object.";
+    return { ok: false, error: message, errors: [message] };
+  }
+
+  const errors: string[] = [];
+  const ids = parseBulkBookIds(payload.ids, errors);
+  const patchData: BulkBookPatch = {};
+
+  if (!isPlainRecord(payload.patch)) {
+    errors.push("patch must be a JSON object.");
+  } else {
+    const rawPatch = payload.patch;
+
+    for (const key of Object.keys(rawPatch)) {
+      if (!ALLOWED_BULK_PATCH_KEYS.has(key)) {
+        errors.push(`Unsupported bulk patch field: ${key}.`);
+      }
+    }
+
+    if (rawPatch.reading_status !== undefined) {
+      patchData.reading_status = parseReadingStatus(
+        rawPatch.reading_status,
+        errors,
+      );
+    }
+    if (rawPatch.shelf !== undefined) {
+      patchData.shelf = parseShelf(rawPatch.shelf, errors);
+    }
+    if (rawPatch.top_category !== undefined) {
+      patchData.top_category = parseNullableString(
+        rawPatch.top_category,
+        "top_category",
+        errors,
+      );
+    }
+    if (rawPatch.add_tags !== undefined) {
+      const addTags = parseTags(rawPatch.add_tags, errors, "add_tags");
+      if (addTags.length > 0) {
+        patchData.add_tags = addTags;
+      }
+    }
+    if (rawPatch.remove_tags !== undefined) {
+      const removeTags = parseTags(
+        rawPatch.remove_tags,
+        errors,
+        "remove_tags",
+      );
+      if (removeTags.length > 0) {
+        patchData.remove_tags = removeTags;
+      }
+    }
+
+    if (errors.length === 0 && Object.keys(patchData).length === 0) {
+      errors.push("At least one bulk update field must be provided.");
+    }
+  }
+
+  return buildResult({ ids, patch: patchData }, errors);
 }

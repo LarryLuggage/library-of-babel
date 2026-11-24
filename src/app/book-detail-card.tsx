@@ -19,7 +19,63 @@ import {
   type ConnectionType,
   type EditorialConnection,
 } from "@/lib/books/connections";
+import type { LookupCandidate } from "@/lib/books/lookup";
 import { ModalDialog, useDialogClose } from "./modal-dialog";
+
+function formatLookupSource(
+  source: LookupCandidate["source"] | string,
+): string {
+  switch (source) {
+    case "open_library":
+      return "Open Library";
+    case "google_books":
+      return "Google Books";
+    case "wikipedia":
+      return "Wikipedia";
+    default:
+      return source;
+  }
+}
+
+type EnrichFieldKey = "summary" | "publish_year" | "tags" | "edition";
+
+type EnrichFieldSelection = Record<EnrichFieldKey, boolean>;
+
+function getDefaultEnrichSelection(
+  book: LedgerBook,
+  displayTags: readonly string[],
+  candidate: LookupCandidate | undefined,
+): EnrichFieldSelection {
+  if (!candidate) {
+    return {
+      summary: false,
+      publish_year: false,
+      tags: false,
+      edition: false,
+    };
+  }
+
+  return {
+    summary: !book.summary?.trim() && Boolean(candidate.summary?.trim()),
+    publish_year: book.publish_year === null && candidate.publish_year !== null,
+    tags: displayTags.length === 0 && candidate.tags.length > 0,
+    edition: !book.edition.trim() && Boolean(candidate.edition.trim()),
+  };
+}
+
+function candidateHasAnyEnrichableField(
+  candidate: LookupCandidate | undefined,
+): boolean {
+  if (!candidate) {
+    return false;
+  }
+  return Boolean(
+    candidate.summary?.trim() ||
+      candidate.publish_year !== null ||
+      candidate.tags.length > 0 ||
+      candidate.edition.trim(),
+  );
+}
 
 function getLocalTodayIsoDate(): string {
   const now = new Date();
@@ -32,6 +88,10 @@ function getLocalTodayIsoDate(): string {
 export type BookUpdatePatch = Partial<
   Pick<
     CatalogueBook,
+    | "edition"
+    | "summary"
+    | "publish_year"
+    | "tags"
     | "reading_status"
     | "rating"
     | "date_started"
@@ -94,9 +154,24 @@ function BookDetailContent({
   const targetListboxId = `${idPrefix}-link-target-options`;
   const connectionTypeId = `${idPrefix}-link-type`;
   const connectionNoteId = `${idPrefix}-link-note`;
+  const enrichPanelId = `${idPrefix}-enrich-panel`;
+  const enrichSummaryCheckId = `${idPrefix}-enrich-summary`;
+  const enrichYearCheckId = `${idPrefix}-enrich-year`;
+  const enrichTagsCheckId = `${idPrefix}-enrich-tags`;
+  const enrichEditionCheckId = `${idPrefix}-enrich-edition`;
 
   const cancelDeleteRef = useRef<HTMLButtonElement>(null);
   const targetPickerRef = useRef<HTMLDivElement>(null);
+  const enrichAbortRef = useRef<AbortController | null>(null);
+  const latestBookIdRef = useRef(book.id);
+
+  useEffect(() => {
+    latestBookIdRef.current = book.id;
+    return () => {
+      enrichAbortRef.current?.abort();
+      enrichAbortRef.current = null;
+    };
+  }, [book.id]);
 
   const [dateFinished, setDateFinished] = useState(book.date_finished ?? "");
   const [loanedTo, setLoanedTo] = useState(book.loaned_to ?? "");
@@ -152,10 +227,53 @@ function BookDetailContent({
     message: string;
   } | null>(null);
 
+  // 1-Click Enrich via Lookup state
+  const [syncedEnrichBookId, setSyncedEnrichBookId] = useState(book.id);
+  const [isEnrichOpen, setIsEnrichOpen] = useState(false);
+  const [isFetchingEnrich, setIsFetchingEnrich] = useState(false);
+  const [hasFetchedEnrich, setHasFetchedEnrich] = useState(false);
+  const [enrichCandidates, setEnrichCandidates] = useState<LookupCandidate[]>(
+    [],
+  );
+  const [enrichCandidateIndex, setEnrichCandidateIndex] = useState(0);
+  const [selectedEnrichFields, setSelectedEnrichFields] =
+    useState<EnrichFieldSelection>({
+      summary: false,
+      publish_year: false,
+      tags: false,
+      edition: false,
+    });
+  const [isApplyingEnrich, setIsApplyingEnrich] = useState(false);
+  const [enrichError, setEnrichError] = useState("");
+  const [enrichNotice, setEnrichNotice] = useState("");
+
+  if (syncedEnrichBookId !== book.id) {
+    setSyncedEnrichBookId(book.id);
+    setIsEnrichOpen(false);
+    setIsFetchingEnrich(false);
+    setHasFetchedEnrich(false);
+    setEnrichCandidates([]);
+    setEnrichCandidateIndex(0);
+    setSelectedEnrichFields({
+      summary: false,
+      publish_year: false,
+      tags: false,
+      edition: false,
+    });
+    setIsApplyingEnrich(false);
+    setEnrichError("");
+    setEnrichNotice("");
+  }
+
   const displayTags = useMemo(
     () => filterDisplayTags(book.tags),
     [book.tags],
   );
+
+  const isMissingEnrichableMetadata =
+    !book.summary?.trim() ||
+    book.publish_year === null ||
+    displayTags.length === 0;
 
   const currentBookKey = getBookKey(book);
 
@@ -429,6 +547,182 @@ function BookDetailContent({
     }
   };
 
+  const runEnrichLookup = async () => {
+    enrichAbortRef.current?.abort();
+    const controller = new AbortController();
+    enrichAbortRef.current = controller;
+    const requestBookId = book.id;
+
+    setIsFetchingEnrich(true);
+    setEnrichError("");
+    setEnrichNotice("");
+
+    try {
+      const query = `${book.title} ${book.author}`.trim();
+      const response = await fetch(
+        `/api/books/lookup?q=${encodeURIComponent(query)}&enrich=1`,
+        { signal: controller.signal },
+      );
+      const data = (await response.json().catch(() => ({}))) as {
+        candidates?: LookupCandidate[];
+        error?: string;
+      };
+
+      if (controller.signal.aborted || latestBookIdRef.current !== requestBookId) {
+        return;
+      }
+
+      if (!response.ok) {
+        setEnrichError(
+          data.error || "Could not reach bibliographic enrichment service.",
+        );
+        setEnrichCandidates([]);
+        setHasFetchedEnrich(true);
+        return;
+      }
+
+      const list = Array.isArray(data.candidates) ? data.candidates : [];
+      const preferredIndex = list.findIndex((candidate) => {
+        const defaults = getDefaultEnrichSelection(book, displayTags, candidate);
+        return (
+          defaults.summary ||
+          defaults.publish_year ||
+          defaults.tags ||
+          defaults.edition
+        );
+      });
+      const initialIndex = preferredIndex >= 0 ? preferredIndex : 0;
+
+      setEnrichCandidates(list);
+      setEnrichCandidateIndex(initialIndex);
+      setSelectedEnrichFields(
+        getDefaultEnrichSelection(book, displayTags, list[initialIndex]),
+      );
+      setHasFetchedEnrich(true);
+    } catch (error) {
+      if (
+        controller.signal.aborted ||
+        (error instanceof DOMException && error.name === "AbortError")
+      ) {
+        return;
+      }
+      setEnrichError("Network error while fetching metadata candidates.");
+      setEnrichCandidates([]);
+      setHasFetchedEnrich(true);
+    } finally {
+      if (!controller.signal.aborted && latestBookIdRef.current === requestBookId) {
+        setIsFetchingEnrich(false);
+      }
+    }
+  };
+
+  const handleToggleEnrichPanel = () => {
+    if (isEnrichOpen) {
+      setIsEnrichOpen(false);
+      return;
+    }
+    setIsEnrichOpen(true);
+    setEnrichNotice("");
+    if ((!hasFetchedEnrich || (enrichError && enrichCandidates.length === 0)) && !isFetchingEnrich) {
+      void runEnrichLookup();
+    }
+  };
+
+  const handleSwitchEnrichCandidate = (nextIndex: number) => {
+    if (nextIndex < 0 || nextIndex >= enrichCandidates.length) {
+      return;
+    }
+    setEnrichCandidateIndex(nextIndex);
+    setSelectedEnrichFields(
+      getDefaultEnrichSelection(book, displayTags, enrichCandidates[nextIndex]),
+    );
+    setEnrichError("");
+  };
+
+  const activeEnrichCandidate = enrichCandidates[enrichCandidateIndex];
+  const anyCandidateEnrichable = enrichCandidates.some(
+    candidateHasAnyEnrichableField,
+  );
+  const selectedEnrichCount = activeEnrichCandidate
+    ? (selectedEnrichFields.summary && Boolean(activeEnrichCandidate.summary?.trim())
+        ? 1
+        : 0) +
+      (selectedEnrichFields.publish_year &&
+      activeEnrichCandidate.publish_year !== null
+        ? 1
+        : 0) +
+      (selectedEnrichFields.tags && activeEnrichCandidate.tags.length > 0
+        ? 1
+        : 0) +
+      (selectedEnrichFields.edition &&
+      Boolean(activeEnrichCandidate.edition.trim())
+        ? 1
+        : 0)
+    : 0;
+
+  const handleApplyEnrich = async () => {
+    if (!activeEnrichCandidate || selectedEnrichCount === 0) {
+      return;
+    }
+
+    const patch: BookUpdatePatch = {};
+
+    if (
+      selectedEnrichFields.summary &&
+      activeEnrichCandidate.summary?.trim()
+    ) {
+      patch.summary = activeEnrichCandidate.summary.trim();
+    }
+    if (
+      selectedEnrichFields.publish_year &&
+      activeEnrichCandidate.publish_year !== null
+    ) {
+      patch.publish_year = activeEnrichCandidate.publish_year;
+    }
+    if (selectedEnrichFields.tags && activeEnrichCandidate.tags.length > 0) {
+      const mergedTags: string[] = [];
+      const seen = new Set<string>();
+      for (const rawTag of [...book.tags, ...activeEnrichCandidate.tags]) {
+        const cleaned = rawTag.trim().replace(/\s+/g, " ");
+        const normalizedKey = cleaned.toLocaleLowerCase("en-US");
+        if (!cleaned || seen.has(normalizedKey)) {
+          continue;
+        }
+        seen.add(normalizedKey);
+        mergedTags.push(cleaned);
+        if (mergedTags.length >= 20) {
+          break;
+        }
+      }
+      patch.tags = mergedTags;
+    }
+    if (selectedEnrichFields.edition && activeEnrichCandidate.edition.trim()) {
+      patch.edition = activeEnrichCandidate.edition.trim();
+    }
+
+    if (Object.keys(patch).length === 0) {
+      return;
+    }
+
+    setIsApplyingEnrich(true);
+    setEnrichError("");
+    setEnrichNotice("");
+
+    try {
+      await onUpdateBook(book.id, patch);
+      setIsEnrichOpen(false);
+      setEnrichNotice("Applied selected metadata to this volume.");
+    } catch (error) {
+      setEnrichError(
+        error instanceof Error
+          ? error.message
+          : "Could not apply enriched metadata.",
+      );
+    } finally {
+      setIsApplyingEnrich(false);
+    }
+  };
+
   const formattedPublishYear = formatPublishYear(book.publish_year);
 
   return (
@@ -494,6 +788,321 @@ function BookDetailContent({
               ))}
             </div>
           </div>
+        )}
+
+        {canEdit && (isMissingEnrichableMetadata || enrichNotice) && (
+          <section
+            className="detail-enrich-panel"
+            aria-label="1-Click Enrich via Lookup"
+          >
+            <div className="detail-enrich-header">
+              <div className="detail-enrich-heading">
+                <h4>1-Click Enrich via Lookup</h4>
+                {isMissingEnrichableMetadata && (
+                  <p className="detail-enrich-caption">
+                    Missing{" "}
+                    {[
+                      !book.summary?.trim() && "summary",
+                      book.publish_year === null && "publish year",
+                      displayTags.length === 0 && "subjects",
+                    ]
+                      .filter(Boolean)
+                      .join(", ")}
+                    .
+                  </p>
+                )}
+              </div>
+              {isMissingEnrichableMetadata && (
+                <button
+                  type="button"
+                  className="btn-link-toggle font-mono"
+                  aria-expanded={isEnrichOpen}
+                  aria-controls={enrichPanelId}
+                  disabled={isApplyingEnrich || isDeleting}
+                  onClick={handleToggleEnrichPanel}
+                >
+                  {isEnrichOpen
+                    ? "Hide enrich"
+                    : "Enrich Missing Metadata"}
+                </button>
+              )}
+            </div>
+
+            {enrichNotice && !isEnrichOpen && (
+              <p
+                className="tracker-feedback tracker-feedback--success"
+                role="status"
+              >
+                {enrichNotice}
+              </p>
+            )}
+
+            <div
+              id={enrichPanelId}
+              className="detail-enrich-body"
+              hidden={!isEnrichOpen}
+            >
+              {isEnrichOpen && (
+                <>
+                  {isFetchingEnrich && (
+                    <p className="detail-enrich-loading">
+                      Searching bibliographic sources for missing metadata…
+                    </p>
+                  )}
+
+                  {enrichError && (
+                    <div className="detail-enrich-error-row">
+                      <p
+                        className="tracker-feedback tracker-feedback--error"
+                        role="alert"
+                      >
+                        {enrichError}
+                      </p>
+                      {enrichCandidates.length === 0 && !isFetchingEnrich && (
+                        <button
+                          type="button"
+                          className="btn-link-toggle font-mono"
+                          onClick={() => void runEnrichLookup()}
+                        >
+                          Retry
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  {!isFetchingEnrich &&
+                    hasFetchedEnrich &&
+                    !enrichError &&
+                    !anyCandidateEnrichable && (
+                      <p className="detail-enrich-empty" role="status">
+                        No enrichable metadata fields were found for this
+                        volume.
+                      </p>
+                    )}
+
+                  {!isFetchingEnrich &&
+                    hasFetchedEnrich &&
+                    anyCandidateEnrichable &&
+                    activeEnrichCandidate && (
+                      <div className="detail-enrich-diff">
+                        <div className="detail-enrich-candidate-bar">
+                          <div className="detail-enrich-candidate-title">
+                            <cite>{activeEnrichCandidate.title}</cite>
+                            <span>
+                              {activeEnrichCandidate.author} ·{" "}
+                              <strong className="font-mono">
+                                {formatLookupSource(
+                                  activeEnrichCandidate.source,
+                                )}
+                              </strong>
+                            </span>
+                          </div>
+                          {enrichCandidates.length > 1 && (
+                            <div className="detail-enrich-pager">
+                              <button
+                                type="button"
+                                className="btn-link-toggle font-mono"
+                                disabled={
+                                  enrichCandidateIndex === 0 || isApplyingEnrich
+                                }
+                                onClick={() =>
+                                  handleSwitchEnrichCandidate(
+                                    enrichCandidateIndex - 1,
+                                  )
+                                }
+                              >
+                                Prev
+                              </button>
+                              <span className="detail-enrich-page-label font-mono">
+                                {enrichCandidateIndex + 1} /{" "}
+                                {enrichCandidates.length}
+                              </span>
+                              <button
+                                type="button"
+                                className="btn-link-toggle font-mono"
+                                disabled={
+                                  enrichCandidateIndex >=
+                                    enrichCandidates.length - 1 ||
+                                  isApplyingEnrich
+                                }
+                                onClick={() =>
+                                  handleSwitchEnrichCandidate(
+                                    enrichCandidateIndex + 1,
+                                  )
+                                }
+                              >
+                                Next
+                              </button>
+                            </div>
+                          )}
+                        </div>
+
+                        {!candidateHasAnyEnrichableField(
+                          activeEnrichCandidate,
+                        ) ? (
+                          <p className="detail-enrich-empty">
+                            This candidate carries no summary, publish year,
+                            tags, or edition fields. Switch to another candidate
+                            to compare.
+                          </p>
+                        ) : (
+                          <ul className="detail-enrich-fields">
+                            {activeEnrichCandidate.summary?.trim() && (
+                              <li className="detail-enrich-field-row">
+                                <div className="detail-enrich-check-row">
+                                  <input
+                                    id={enrichSummaryCheckId}
+                                    type="checkbox"
+                                    checked={selectedEnrichFields.summary}
+                                    disabled={isApplyingEnrich}
+                                    onChange={(event) =>
+                                      setSelectedEnrichFields((prev) => ({
+                                        ...prev,
+                                        summary: event.target.checked,
+                                      }))
+                                    }
+                                  />
+                                  <label htmlFor={enrichSummaryCheckId}>
+                                    Summary
+                                    {!book.summary?.trim() && (
+                                      <span className="detail-enrich-missing-tag font-mono">
+                                        missing
+                                      </span>
+                                    )}
+                                  </label>
+                                </div>
+                                <p className="detail-enrich-preview">
+                                  {activeEnrichCandidate.summary.trim()}
+                                </p>
+                              </li>
+                            )}
+
+                            {activeEnrichCandidate.publish_year !== null && (
+                              <li className="detail-enrich-field-row">
+                                <div className="detail-enrich-check-row">
+                                  <input
+                                    id={enrichYearCheckId}
+                                    type="checkbox"
+                                    checked={selectedEnrichFields.publish_year}
+                                    disabled={isApplyingEnrich}
+                                    onChange={(event) =>
+                                      setSelectedEnrichFields((prev) => ({
+                                        ...prev,
+                                        publish_year: event.target.checked,
+                                      }))
+                                    }
+                                  />
+                                  <label htmlFor={enrichYearCheckId}>
+                                    Publish year
+                                    {book.publish_year === null && (
+                                      <span className="detail-enrich-missing-tag font-mono">
+                                        missing
+                                      </span>
+                                    )}
+                                  </label>
+                                </div>
+                                <p className="detail-enrich-preview">
+                                  {formatPublishYear(
+                                    activeEnrichCandidate.publish_year,
+                                  )}
+                                  {book.publish_year !== null &&
+                                    ` (current: ${formatPublishYear(book.publish_year)})`}
+                                </p>
+                              </li>
+                            )}
+
+                            {activeEnrichCandidate.tags.length > 0 && (
+                              <li className="detail-enrich-field-row">
+                                <div className="detail-enrich-check-row">
+                                  <input
+                                    id={enrichTagsCheckId}
+                                    type="checkbox"
+                                    checked={selectedEnrichFields.tags}
+                                    disabled={isApplyingEnrich}
+                                    onChange={(event) =>
+                                      setSelectedEnrichFields((prev) => ({
+                                        ...prev,
+                                        tags: event.target.checked,
+                                      }))
+                                    }
+                                  />
+                                  <label htmlFor={enrichTagsCheckId}>
+                                    Tags
+                                    {displayTags.length === 0 && (
+                                      <span className="detail-enrich-missing-tag font-mono">
+                                        missing
+                                      </span>
+                                    )}
+                                  </label>
+                                </div>
+                                <p className="detail-enrich-preview">
+                                  {activeEnrichCandidate.tags.join(", ")}
+                                </p>
+                              </li>
+                            )}
+
+                            {activeEnrichCandidate.edition.trim() && (
+                              <li className="detail-enrich-field-row">
+                                <div className="detail-enrich-check-row">
+                                  <input
+                                    id={enrichEditionCheckId}
+                                    type="checkbox"
+                                    checked={selectedEnrichFields.edition}
+                                    disabled={isApplyingEnrich}
+                                    onChange={(event) =>
+                                      setSelectedEnrichFields((prev) => ({
+                                        ...prev,
+                                        edition: event.target.checked,
+                                      }))
+                                    }
+                                  />
+                                  <label htmlFor={enrichEditionCheckId}>
+                                    Edition
+                                    {!book.edition.trim() && (
+                                      <span className="detail-enrich-missing-tag font-mono">
+                                        missing
+                                      </span>
+                                    )}
+                                  </label>
+                                </div>
+                                <p className="detail-enrich-preview">
+                                  {activeEnrichCandidate.edition.trim()}
+                                  {book.edition.trim() &&
+                                    ` (current: ${book.edition.trim()})`}
+                                </p>
+                              </li>
+                            )}
+                          </ul>
+                        )}
+
+                        <div className="detail-enrich-actions">
+                          <button
+                            type="button"
+                            className="btn-tracker-save"
+                            disabled={
+                              isApplyingEnrich || selectedEnrichCount === 0
+                            }
+                            onClick={() => void handleApplyEnrich()}
+                          >
+                            {isApplyingEnrich
+                              ? "Applying..."
+                              : "Apply selected"}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-action-secondary"
+                            disabled={isApplyingEnrich}
+                            onClick={() => setIsEnrichOpen(false)}
+                          >
+                            Dismiss
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                </>
+              )}
+            </div>
+          </section>
         )}
 
         <section
