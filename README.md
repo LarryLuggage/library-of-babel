@@ -19,6 +19,28 @@ Interactive bibliographic knowledge graph, physical shelf atlas, and personal re
 - **Custom Reading Lists & Ranked Up Next Queue**: Curator-authored reading lists (`reading_lists`, `reading_list_items`) with a pinned ranked **Up Next** queue (`is_queue`), item reordering, inline book-card membership chips, and automatic cascade cleanup on volume deletion.
 - **Grounded AI Reference Librarian**: Conversational shelf discovery (`POST /api/librarian`) that shortlists the catalogue by natural-language cues (era/century, shelf range, unread intent, keywords, and taste profile). Runs in zero-key deterministic **Local Shelf Search** mode by default, or upgrades to structured JSON Gemini responses (with strict `book_id` grounding validation, curator authentication, and per-IP rate limiting) when `GEMINI_API_KEY` is configured.
 - **Passphrase Curator Authentication**: HMAC-SHA256 signed HTTP-only `babel_curator_session` cookie (30-day TTL), constant-time SHA-256 verification, and 10-failure / 15-minute IP rate limiting (`429`).
+- **Deep-Linkable URLs & Installable PWA**: Every book modal, reading list, shelf elevation, commonplace archive, and active filter state synchronizes cleanly to query parameters with dynamic page titles, Open Graph previews, web app manifest, and a safe static-icon service worker.
+
+---
+
+## Deep-Linkable URLs & Mobile PWA Installation
+
+### Deep-Linkable URLs
+
+Catalogue views, modals, and filters are serialized directly in the URL query string so any shelf, volume, or reading list can be bookmarked or shared:
+
+- `?book=<book_id>` — Opens the archival index card modal for a specific volume.
+- `?view=shelves|timeline|lists|commonplace` — Switches directly to Physical Shelves, Decadal Timeline, Reading Lists, or the Commonplace Book (defaults to the Shelf Ledger).
+- `?list=<slug>` — Opens a specific reading list (automatically implies `view=lists`).
+- `?shelf=<number>` — Focuses a physical shelf in either the Ledger or Physical Shelves view.
+- Filter parameters — `?q=`, `?division=`, `?tag=`, `?status=unread|reading|finished|dnf|loaned`, `?triage=missing_any|missing_summary|missing_year|missing_tags|duplicates`, and `?author=A..Z|#`.
+
+### Mobile PWA Installation
+
+Library of Babel ships with a Next.js Web App Manifest (`/manifest.webmanifest`), Apple touch icon, and a network-first service worker (`public/sw.js`) that caches only static app icons (never `/api/*` or HTML responses):
+
+- **iOS (Safari)**: Open the catalogue in Safari, tap the **Share** button, and choose **Add to Home Screen**.
+- **Android / Desktop (Chrome or Edge)**: Open the catalogue and select **Install app** from the address bar or browser menu.
 
 ---
 

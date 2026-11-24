@@ -18,7 +18,6 @@ import {
   READING_STATUS_VALUES,
   type CatalogueBook,
   type LedgerBook,
-  type ReadingStatus,
   type StorageMode,
 } from "@/lib/books/catalogue";
 import type { CuratorAuthState } from "@/lib/auth/curator";
@@ -40,6 +39,16 @@ import {
   type BulkBookPatch,
   type TriageFilter,
 } from "@/lib/books/triage";
+import {
+  buildDynamicPageTitle,
+  buildShareUrl,
+  DEFAULT_CATALOGUE_URL_STATE,
+  parseCatalogueSearchParams,
+  serializeCatalogueUrlState,
+  type CatalogueStatusFilter,
+  type CatalogueUrlState,
+  type CatalogueViewTab,
+} from "@/lib/books/url-state";
 import { CatalogueConstellation } from "./catalogue-constellation";
 import { CatalogueLedger } from "./catalogue-ledger";
 import { CommonplaceView } from "./commonplace-view";
@@ -60,7 +69,16 @@ import { ReadingStatsModal } from "./reading-stats-modal";
 import { ReadNextModal } from "./read-next-modal";
 import { ModalDialog, useDialogClose } from "./modal-dialog";
 
-type StatusFilterValue = "" | ReadingStatus | "loaned";
+function resolveBookKeyParam(
+  bookParam: string | null,
+  allBooks: readonly CatalogueBook[],
+): string | null {
+  if (!bookParam) return null;
+  const match = allBooks.find(
+    (candidate) => getBookKey(candidate) === bookParam || candidate.id === bookParam,
+  );
+  return match ? getBookKey(match) : null;
+}
 
 function subscribeReducedMotion(callback: () => void) {
   const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -203,14 +221,14 @@ function getSearchText(book: CatalogueBook): string {
     .toLocaleLowerCase("en-US");
 }
 
-const RESULTS_TABS = [
+const RESULTS_TABS: readonly CatalogueViewTab[] = [
   "ledger",
   "shelves",
   "timeline",
   "lists",
   "commonplace",
-] as const;
-type ResultsTab = (typeof RESULTS_TABS)[number];
+];
+type ResultsTab = CatalogueViewTab;
 
 const TRIAGE_FILTER_CHIP_LABELS: Record<Exclude<TriageFilter, "">, string> = {
   missing_any: "Triage: Missing any metadata",
@@ -228,6 +246,7 @@ export function CatalogueApp({
   storageMode,
   initialAuth,
   librarianEnabled = false,
+  initialUrlState = DEFAULT_CATALOGUE_URL_STATE,
 }: {
   initialBooks: CatalogueBook[];
   initialConnections: EditorialConnection[];
@@ -236,6 +255,7 @@ export function CatalogueApp({
   storageMode: StorageMode;
   initialAuth: CuratorAuthState;
   librarianEnabled?: boolean;
+  initialUrlState?: CatalogueUrlState;
 }) {
   const [books, setBooks] = useState<CatalogueBook[]>(initialBooks);
   const [prevInitialBooks, setPrevInitialBooks] = useState(initialBooks);
@@ -280,13 +300,17 @@ export function CatalogueApp({
   const canEdit = !authState.authRequired || authState.isCurator;
 
   // Filters
-  const [catalogueQuery, setCatalogueQuery] = useState("");
-  const [divisionFilter, setDivisionFilter] = useState("");
-  const [tagFilter, setTagFilter] = useState("");
-  const [shelfFilter, setShelfFilter] = useState("");
-  const [statusFilter, setStatusFilter] = useState<StatusFilterValue>("");
-  const [authorInitial, setAuthorInitial] = useState("");
-  const [triageFilter, setTriageFilter] = useState<TriageFilter>("");
+  const [catalogueQuery, setCatalogueQuery] = useState(initialUrlState.q);
+  const [divisionFilter, setDivisionFilter] = useState(initialUrlState.division);
+  const [tagFilter, setTagFilter] = useState(initialUrlState.tag);
+  const [shelfFilter, setShelfFilter] = useState(initialUrlState.shelf);
+  const [statusFilter, setStatusFilter] = useState<CatalogueStatusFilter>(
+    initialUrlState.status,
+  );
+  const [authorInitial, setAuthorInitial] = useState(initialUrlState.author);
+  const [triageFilter, setTriageFilter] = useState<TriageFilter>(
+    initialUrlState.triage,
+  );
 
   // Bulk Curator Mode
   const [isBulkMode, setIsBulkMode] = useState(false);
@@ -297,7 +321,10 @@ export function CatalogueApp({
 
   // Tabs
   const [mapMode, setMapMode] = useState<"similarity" | "tag">("similarity");
-  const [bottomView, setBottomView] = useState<ResultsTab>("ledger");
+  const [bottomView, setBottomView] = useState<ResultsTab>(initialUrlState.view);
+  const [selectedListSlug, setSelectedListSlug] = useState<string | null>(
+    initialUrlState.list,
+  );
 
   const similarityTabRef = useRef<HTMLButtonElement>(null);
   const tagTabRef = useRef<HTMLButtonElement>(null);
@@ -308,7 +335,9 @@ export function CatalogueApp({
   const commonplaceTabRef = useRef<HTMLButtonElement>(null);
 
   // Modals / Overlays
-  const [activeBookId, setActiveBookId] = useState<string | null>(null);
+  const [activeBookId, setActiveBookId] = useState<string | null>(() =>
+    resolveBookKeyParam(initialUrlState.book, initialBooks),
+  );
   const [activeTag, setActiveTag] = useState<string | null>(null);
   const [isPathfinderOpen, setIsPathfinderOpen] = useState(false);
   const [pathfinderSourceId, setPathfinderSourceId] = useState<string | null>(
@@ -633,6 +662,137 @@ export function CatalogueApp({
       ) ?? null
     );
   }, [activeBookId, catalogueEntries]);
+
+  const currentUrlState = useMemo<CatalogueUrlState>(
+    () => ({
+      view: bottomView,
+      book: activeBook ? getBookKey(activeBook) : null,
+      list: bottomView === "lists" ? selectedListSlug : null,
+      q: catalogueQuery,
+      division: divisionFilter,
+      tag: tagFilter,
+      shelf: shelfFilter,
+      status: statusFilter,
+      triage: triageFilter,
+      author: authorInitial,
+    }),
+    [
+      activeBook,
+      authorInitial,
+      bottomView,
+      catalogueQuery,
+      divisionFilter,
+      selectedListSlug,
+      shelfFilter,
+      statusFilter,
+      tagFilter,
+      triageFilter,
+    ],
+  );
+
+  const prevQueryRef = useRef(catalogueQuery);
+  const isInitialUrlSyncRef = useRef(true);
+  const booksRef = useRef(books);
+
+  useEffect(() => {
+    booksRef.current = books;
+  }, [books]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const queryChanged = prevQueryRef.current !== catalogueQuery;
+    prevQueryRef.current = catalogueQuery;
+
+    if (isInitialUrlSyncRef.current) {
+      isInitialUrlSyncRef.current = false;
+      return;
+    }
+
+    const syncUrl = () => {
+      const nextSearch = serializeCatalogueUrlState(currentUrlState);
+      const nextUrl = `${window.location.pathname}${nextSearch}${window.location.hash}`;
+      const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+      if (nextUrl !== currentUrl) {
+        window.history.replaceState(null, "", nextUrl);
+      }
+    };
+
+    if (queryChanged) {
+      const timeout = window.setTimeout(syncUrl, 250);
+      return () => window.clearTimeout(timeout);
+    }
+
+    syncUrl();
+  }, [catalogueQuery, currentUrlState]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handlePopState = () => {
+      const parsed = parseCatalogueSearchParams(
+        new URLSearchParams(window.location.search),
+      );
+      prevQueryRef.current = parsed.q;
+      setCatalogueQuery(parsed.q);
+      setDivisionFilter(parsed.division);
+      setTagFilter(parsed.tag);
+      setShelfFilter(parsed.shelf);
+      setStatusFilter(parsed.status);
+      setTriageFilter(parsed.triage);
+      setAuthorInitial(parsed.author);
+      setBottomView(parsed.view);
+      setSelectedListSlug(parsed.list);
+      setActiveBookId(resolveBookKeyParam(parsed.book, booksRef.current));
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  useEffect(() => {
+    document.title = buildDynamicPageTitle(currentUrlState, books, lists);
+  }, [books, currentUrlState, lists]);
+
+  const copyShareLink = async (
+    stateOverride: Partial<CatalogueUrlState>,
+    label: string,
+  ) => {
+    if (typeof window === "undefined") return;
+    const url = buildShareUrl(
+      window.location.origin,
+      window.location.pathname,
+      stateOverride,
+    );
+
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url);
+        showToast("success", `Copied link to ${label}.`);
+        return;
+      }
+    } catch {
+      // Fall back to execCommand below
+    }
+
+    try {
+      const textarea = document.createElement("textarea");
+      textarea.value = url;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      textarea.style.pointerEvents = "none";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      document.body.removeChild(textarea);
+      if (copied) {
+        showToast("success", `Copied link to ${label}.`);
+      } else {
+        showToast("error", "Could not copy link to clipboard.");
+      }
+    } catch {
+      showToast("error", "Could not copy link to clipboard.");
+    }
+  };
 
   const pathfinderSourceBook = useMemo(() => {
     if (!pathfinderSourceId) return null;
@@ -1141,7 +1301,11 @@ export function CatalogueApp({
       throw new Error(msg);
     }
 
+    const deletedList = lists.find((list) => list.id === listId);
     setLists((prev) => prev.filter((list) => list.id !== listId));
+    if (deletedList && selectedListSlug === deletedList.slug) {
+      setSelectedListSlug(null);
+    }
     showToast("success", "Reading list deleted.");
   };
 
@@ -1514,6 +1678,14 @@ export function CatalogueApp({
             lists={lists}
             books={catalogueEntries}
             canEdit={canEdit}
+            activeListSlug={selectedListSlug}
+            onSelectListSlug={setSelectedListSlug}
+            onCopyListLink={(list) =>
+              void copyShareLink(
+                { view: "lists", list: list.slug },
+                `"${list.name}"`,
+              )
+            }
             onRequireAuth={(reason) => requireCuratorAuth(reason)}
             onInspectBook={(book) => setActiveBookId(getBookKey(book))}
             onStartReading={async (book) => {
@@ -1801,7 +1973,7 @@ export function CatalogueApp({
                 id={statusSelectId}
                 value={statusFilter}
                 onChange={(event) =>
-                  setStatusFilter(event.target.value as StatusFilterValue)
+                  setStatusFilter(event.target.value as CatalogueStatusFilter)
                 }
               >
                 <option value="">All statuses</option>
@@ -1875,13 +2047,27 @@ export function CatalogueApp({
             )}
           </div>
           {hasCatalogueFilters && (
-            <button
-              type="button"
-              className="clear-search-btn"
-              onClick={clearCatalogueFilters}
-            >
-              Clear search
-            </button>
+            <div className="catalogue-search-status-actions">
+              <button
+                type="button"
+                className="copy-link-btn font-mono"
+                onClick={() =>
+                  void copyShareLink(
+                    { ...currentUrlState, book: null },
+                    "filtered catalogue view",
+                  )
+                }
+              >
+                Copy view link
+              </button>
+              <button
+                type="button"
+                className="clear-search-btn"
+                onClick={clearCatalogueFilters}
+              >
+                Clear search
+              </button>
+            </div>
           )}
         </div>
       </section>
@@ -2091,6 +2277,12 @@ export function CatalogueApp({
             setReadNextSeedBookId(seedBook.id);
             setIsReadNextOpen(true);
           }}
+          onCopyLink={() =>
+            void copyShareLink(
+              { book: getBookKey(activeBook) },
+              `"${activeBook.title}"`,
+            )
+          }
           onTagClick={setActiveTag}
           onEditBook={() => {
             if (!canEdit) {

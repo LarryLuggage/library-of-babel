@@ -217,3 +217,19 @@ While `books.personal_notes` stored a single unstructured note per volume and `r
 * Curators can save and search passages across the entire library, surface their own saved passages inside *The Aleph*, build custom syllabi or ranked *"Up Next"* queues, and reorder items via accessible keyboard/touch `Move up`/`Move down` controls across both desktop and mobile.
 * All `133` Vitest tests across `21` suites, `eslint`, `tsc --noEmit`, `next build`, and desktop (`1280x800`) + mobile (`390x844`) Chromium visual inspections pass cleanly (`0` console errors, `0` failed requests, `0px` horizontal overflow).
 * Phase 4B (Deep-Linkable URLs & Installable Mobile PWA) is ready to draft next so deep links cover all 5 views (`ledger`, `shelves`, `timeline`, `lists`, `commonplace`) and `?list=<slug>` out of the box.
+
+## ADR 12: Deep-Linkable URL State, Dynamic SSR Metadata, and Installable Mobile PWA
+
+### Date
+2026-11-24
+
+### Context
+Previously, active catalogue views (`ledger`, `shelves`, `timeline`, `lists`, `commonplace`), selected reading lists, shelf/search filters, and open volume detail cards existed only in ephemeral React state—reloading reset the view and users could not share direct links to a specific book, shelf, or reading list. Additionally, `src/app/layout.tsx` lacked mobile web-app manifest metadata, home-screen icons, and OpenGraph preview cards for iOS Add to Home Screen and Android/Desktop PWA installation.
+
+### Decision
+* **Canonical URL State (`src/lib/books/url-state.ts`, `src/app/page.tsx`, `src/app/catalogue-app.tsx`)**: Implemented pure, validated query-parameter parsing and serialization (`?book=`, `?view=`, `?list=`, `?q=`, `?division=`, `?tag=`, `?shelf=`, `?status=`, `?triage=`, `?author=`) with React `cache()`-memoized SSR data loading shared between Next.js 16 `generateMetadata({ searchParams })` and `HomePage({ searchParams })`. Client state syncs bi-directionally via `history.replaceState` (250ms debounce for text search, immediate for tabs/books/lists/filters), `popstate`, and dynamic `document.title` updates, paired with `"Copy link"` / `"Copy view link"` / `"Copy list link"` clipboard actions.
+* **Installable Mobile PWA & Archival Branding (`src/app/manifest.ts`, `src/app/opengraph-image.tsx`, `src/app/layout.tsx`, `public/icons/*`, `public/sw.js`, `src/app/pwa-register.tsx`)**: Added Next.js `MetadataRoute.Manifest`, archival hexagonal-gallery PNG icons (`192x192`, `512x512`, `180x180` Apple Touch), a static `next/og` `1200x630` OpenGraph card, `viewport` + `appleWebApp` metadata, and a safe static-icon service worker (`public/sw.js`) that exclusively caches `/icons/*` and never caches `/api/*` or dynamic HTML pages.
+
+### Consequences
+* Every book, shelf, reading list, commonplace view, and filter combination is shareable and reload-safe with dynamic `<title>` and OpenGraph descriptions, and the app installs cleanly to iOS and Android/Desktop home screens with zero external npm dependencies or database migrations.
+* All `144` Vitest tests across `22` suites, `eslint`, `tsc --noEmit`, `next build` (`/manifest.webmanifest`, `/opengraph-image`), and desktop (`1280x800`) + mobile (`390x844`) Chromium visual verifications pass with `0` console errors, `0` failed requests, and `0px` horizontal overflow.

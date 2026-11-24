@@ -454,6 +454,53 @@ body {
   gap: 0.65rem 1rem;
 }
 
+.catalogue-search-status-actions,
+.reading-list-panel-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 100%;
+}
+
+.copy-link-btn {
+  align-items: center;
+  background: var(--catalogue-cardstock);
+  border: 1px solid var(--catalogue-green);
+  border-radius: 3px;
+  color: var(--catalogue-green);
+  cursor: pointer;
+  display: inline-flex;
+  font: 700 0.76rem/1.2 var(--font-mono);
+  gap: 0.35rem;
+  justify-content: center;
+  max-width: 100%;
+  padding: 0.55rem 0.85rem;
+  text-transform: uppercase;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+  white-space: nowrap;
+}
+
+.copy-link-btn:hover:not(:disabled),
+.copy-link-btn:focus-visible {
+  background: var(--catalogue-green);
+  border-color: var(--catalogue-green);
+  color: var(--catalogue-paper-light);
+}
+
+.copy-link-btn:focus-visible {
+  outline: 3px solid rgba(40, 77, 67, 0.44);
+  outline-offset: 2px;
+}
+
+.copy-link-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
 .catalogue-search-status p,
 .catalogue-load-more p {
   color: var(--catalogue-faded-ink);
@@ -2238,13 +2285,21 @@ dialog.catalogue-dialog--aleph::backdrop {
 }
 
 .card-primary-action-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
 }
 
-.card-primary-action-row:has(> :only-child) {
-  grid-template-columns: 1fr;
+.card-primary-action-row > .btn-action-primary {
+  flex: 1 1 13rem;
+}
+
+.card-primary-action-row > .btn-action-secondary {
+  flex: 1 1 9rem;
+}
+
+.card-primary-action-row > .copy-link-btn {
+  flex: 0 1 auto;
 }
 
 .card-action-bar .btn-action-primary {
@@ -6368,7 +6423,16 @@ dialog.catalogue-dialog--aleph::backdrop {
   }
 
   .card-primary-action-row {
+    display: grid;
     grid-template-columns: 1fr;
+  }
+
+  .catalogue-search-status-actions {
+    width: 100%;
+  }
+
+  .catalogue-search-status-actions > button {
+    flex: 1 1 auto;
   }
 
   .librarian-entry--user {
@@ -6436,6 +6500,7 @@ dialog.catalogue-dialog--aleph::backdrop {
   .curator-status-btn,
   .filter-chip,
   .clear-search-btn,
+  .copy-link-btn,
   .catalogue-load-more button,
   .division-toggle-btn,
   .catalogue-alphabet a,
@@ -6518,7 +6583,8 @@ dialog.catalogue-dialog--aleph::backdrop {
   .commonplace-tag-pill,
   .reading-list-pill,
   .reading-list-rank,
-  .detail-list-pill {
+  .detail-list-pill,
+  .copy-link-btn {
     forced-color-adjust: auto;
     border: 1px solid ButtonText;
   }
@@ -6565,7 +6631,8 @@ dialog.catalogue-dialog--aleph::backdrop {
   .librarian-starter-chip,
   .librarian-pick-btn,
   .commonplace-tag-pill,
-  .reading-list-pill {
+  .reading-list-pill,
+  .copy-link-btn {
     transition: none;
   }
 }

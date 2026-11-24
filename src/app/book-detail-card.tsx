@@ -135,6 +135,7 @@ function BookDetailContent({
   onClose,
   onStartPath,
   onRecommendSimilar,
+  onCopyLink,
   onTagClick,
   onEditBook,
   onUpdateBook,
@@ -161,6 +162,7 @@ function BookDetailContent({
   onClose: () => void;
   onStartPath: () => void;
   onRecommendSimilar?: () => void;
+  onCopyLink?: () => void;
   onTagClick: (tag: string) => void;
   onEditBook: () => void;
   onUpdateBook: (bookId: string, patch: BookUpdatePatch) => Promise<CatalogueBook>;
@@ -1976,6 +1978,17 @@ function BookDetailContent({
                 Similar unread
               </button>
             )}
+            {onCopyLink && (
+              <button
+                type="button"
+                className="copy-link-btn font-mono"
+                onClick={onCopyLink}
+                disabled={isDeleting}
+                aria-label={`Copy direct link to ${book.title}`}
+              >
+                Copy link
+              </button>
+            )}
           </div>
           {canEdit && (
             <>
@@ -2081,6 +2094,7 @@ export function BookDetailCard({
   onClose,
   onStartPath,
   onRecommendSimilar,
+  onCopyLink,
   onTagClick,
   onEditBook,
   onUpdateBook,
@@ -2107,6 +2121,7 @@ export function BookDetailCard({
   onClose: () => void;
   onStartPath: () => void;
   onRecommendSimilar?: () => void;
+  onCopyLink?: () => void;
   onTagClick: (tag: string) => void;
   onEditBook: () => void;
   onUpdateBook: (bookId: string, patch: BookUpdatePatch) => Promise<CatalogueBook>;
@@ -2141,6 +2156,7 @@ export function BookDetailCard({
         onClose={onClose}
         onStartPath={onStartPath}
         onRecommendSimilar={onRecommendSimilar}
+        onCopyLink={onCopyLink}
         onTagClick={onTagClick}
         onEditBook={onEditBook}
         onUpdateBook={onUpdateBook}

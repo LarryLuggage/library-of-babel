@@ -18,6 +18,9 @@ export interface ReadingListsViewProps {
   lists: ReadingList[];
   books: LedgerBook[];
   canEdit: boolean;
+  activeListSlug?: string | null;
+  onSelectListSlug?: (slug: string | null) => void;
+  onCopyListLink?: (list: ReadingList) => void;
   onRequireAuth: (reason: string) => void;
   onInspectBook: (book: LedgerBook) => void;
   onStartReading: (book: LedgerBook) => Promise<void>;
@@ -32,6 +35,9 @@ export function ReadingListsView({
   lists,
   books,
   canEdit,
+  activeListSlug = null,
+  onSelectListSlug,
+  onCopyListLink,
   onRequireAuth,
   onInspectBook,
   onStartReading,
@@ -55,16 +61,27 @@ export function ReadingListsView({
   );
 
   const [selectedListId, setSelectedListId] = useState<string | null>(
-    () => sortedLists[0]?.id ?? null,
+    () =>
+      (activeListSlug
+        ? sortedLists.find((list) => list.slug === activeListSlug)?.id
+        : null) ??
+      sortedLists[0]?.id ??
+      null,
   );
   const tabRefs = useRef<Map<string, HTMLButtonElement | null>>(new Map());
 
   const activeList = useMemo(() => {
     if (sortedLists.length === 0) return null;
+    if (activeListSlug) {
+      const matchedBySlug = sortedLists.find(
+        (list) => list.slug === activeListSlug,
+      );
+      if (matchedBySlug) return matchedBySlug;
+    }
     return (
       sortedLists.find((list) => list.id === selectedListId) ?? sortedLists[0]
     );
-  }, [selectedListId, sortedLists]);
+  }, [activeListSlug, selectedListId, sortedLists]);
 
   // Create form state
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -134,6 +151,7 @@ export function ReadingListsView({
         is_queue: true,
       });
       setSelectedListId(created.id);
+      onSelectListSlug?.(created.slug);
     } catch {
       // Error toast is handled by parent
     } finally {
@@ -164,6 +182,7 @@ export function ReadingListsView({
       setNewIsQueue(false);
       setShowCreateForm(false);
       setSelectedListId(created.id);
+      onSelectListSlug?.(created.slug);
     } catch (error) {
       setCreateError(
         error instanceof Error ? error.message : "Could not create list.",
@@ -192,6 +211,7 @@ export function ReadingListsView({
     event.preventDefault();
     const nextList = sortedLists[nextIndex];
     setSelectedListId(nextList.id);
+    onSelectListSlug?.(nextList.slug);
     setConfirmingDeleteListId(null);
     setAddBookError(null);
     tabRefs.current.get(nextList.id)?.focus();
@@ -229,8 +249,9 @@ export function ReadingListsView({
     try {
       await onDeleteList(listId);
       setConfirmingDeleteListId(null);
-      if (selectedListId === listId) {
+      if (selectedListId === listId || activeList?.id === listId) {
         setSelectedListId(null);
+        onSelectListSlug?.(null);
       }
     } catch {
       // Error toast is handled by parent
@@ -440,6 +461,7 @@ export function ReadingListsView({
                   className="reading-list-pill"
                   onClick={() => {
                     setSelectedListId(list.id);
+                    onSelectListSlug?.(list.slug);
                     setConfirmingDeleteListId(null);
                     setAddBookError(null);
                   }}
@@ -483,42 +505,59 @@ export function ReadingListsView({
                   )}
                 </div>
 
-                {canEdit && (
-                  <div className="reading-list-panel-delete">
-                    {confirmingDeleteListId === activeList.id ? (
-                      <div className="commonplace-delete-confirm">
-                        <button
-                          type="button"
-                          className="btn-action-danger commonplace-action-btn"
-                          disabled={isDeletingList}
-                          onClick={() =>
-                            void handleConfirmDeleteList(activeList.id)
-                          }
-                          aria-label={`Confirm delete reading list ${activeList.name}`}
-                        >
-                          {isDeletingList ? "Deleting..." : "Confirm delete"}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-action-secondary commonplace-action-btn"
-                          disabled={isDeletingList}
-                          onClick={() => setConfirmingDeleteListId(null)}
-                          aria-label={`Cancel deleting reading list ${activeList.name}`}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    ) : (
+                {(onCopyListLink || canEdit) && (
+                  <div className="reading-list-panel-actions">
+                    {onCopyListLink && (
                       <button
                         type="button"
-                        className="btn-action-danger-outline commonplace-action-btn"
-                        onClick={() =>
-                          setConfirmingDeleteListId(activeList.id)
-                        }
-                        aria-label={`Delete reading list ${activeList.name}`}
+                        className="copy-link-btn font-mono"
+                        onClick={() => onCopyListLink(activeList)}
+                        aria-label={`Copy link to ${activeList.name}`}
                       >
-                        Delete list
+                        Copy list link
                       </button>
+                    )}
+
+                    {canEdit && (
+                      <div className="reading-list-panel-delete">
+                        {confirmingDeleteListId === activeList.id ? (
+                          <div className="commonplace-delete-confirm">
+                            <button
+                              type="button"
+                              className="btn-action-danger commonplace-action-btn"
+                              disabled={isDeletingList}
+                              onClick={() =>
+                                void handleConfirmDeleteList(activeList.id)
+                              }
+                              aria-label={`Confirm delete reading list ${activeList.name}`}
+                            >
+                              {isDeletingList
+                                ? "Deleting..."
+                                : "Confirm delete"}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-action-secondary commonplace-action-btn"
+                              disabled={isDeletingList}
+                              onClick={() => setConfirmingDeleteListId(null)}
+                              aria-label={`Cancel deleting reading list ${activeList.name}`}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            className="btn-action-danger-outline commonplace-action-btn"
+                            onClick={() =>
+                              setConfirmingDeleteListId(activeList.id)
+                            }
+                            aria-label={`Delete reading list ${activeList.name}`}
+                          >
+                            Delete list
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
                 )}
